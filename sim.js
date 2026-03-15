@@ -12,7 +12,7 @@ const { shuffle, drawCards } = require("./draw");
 const { loadCards } = require("./cards");
 const { optimizeHand } = require("./optimizer");
 
-const CSV_PATH = path.join(__dirname, "Slay_the_Spire_2_-_Cards.csv");
+const CSV_PATH = path.join(__dirname, "cards.csv");
 const N = 10000;
 
 // ─── RELIC DEFINITIONS ───────────────────────────────────────────────────────
