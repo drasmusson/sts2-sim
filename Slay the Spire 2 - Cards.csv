@@ -1,0 +1,7 @@
+Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Notes
+Strike,Attack,1,6,0,0,0,0,0,0,
+Strike+,Attack,1,9,0,0,0,0,0,0,
+Defend,Skill,1,0,5,0,0,0,0,0,
+Defend+,Skill,1,0,8,0,0,0,0,0,
+Bash,Attack,2,8,0,0,0,0,2,0,
+Bash+,Attack,2,10,0,0,0,0,3,0,
