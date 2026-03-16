@@ -131,6 +131,31 @@ test("frost orb: no attack damage contribution", () => {
   assert.equal(damage, 0);
 });
 
+// ─── strGain ─────────────────────────────────────────────────────────────────
+
+const strDb = {
+  Inflame: makeCard({ strGain: 2, cost: 1 }),
+  Strike:  makeCard({ damage: 6, cost: 1 }),
+};
+
+test("strGain: does not boost own damage", () => {
+  // A card that both deals damage and gains strength should not buff itself
+  const card = makeCard({ damage: 6, strGain: 2 });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 6);
+});
+
+test("strGain: boosts subsequent attack damage", () => {
+  // Inflame (str+2) then Strike (6 dmg) → 0 + (6+2) = 8
+  const { totalDamage } = simulateCombo(["Inflame", "Strike"], strDb, basePlayer);
+  assert.equal(totalDamage, 8);
+});
+
+test("strGain card sorts before damage card", () => {
+  const ordered = optimalComboOrder(["Strike", "Inflame"], strDb, basePlayer, "dmg");
+  assert.equal(ordered[0], "Inflame");
+});
+
 // ─── optimalComboOrder ────────────────────────────────────────────────────────
 
 const db = {
