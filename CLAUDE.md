@@ -1,7 +1,7 @@
 # sts2-sim — Claude Code Context
 
 ## What this project is
-A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a given deck configuration and finds the optimal play using a knapsack optimizer.
+A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a given deck configuration and finds the optimal play using subset enumeration.
 
 ## How to run
 ```bash
@@ -23,6 +23,12 @@ node sim.js --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 - `--focus N` — flat bonus to all orb outputs (damage for lightning, block for frost)
 - `--poison-triggers N` — how many times poison ticks per turn (default 1; set to 2 if Accelerant is in play, and reduce `--energy` by 1)
 
+**Player state workarounds**
+These are pre-existing effects that can't be modelled as cards in the draw pile. Apply them as flags and adjust energy manually where needed:
+- Strength from a prior-turn Power (e.g. Inflame): `--strength N`
+- Accelerant already in play: `--poison-triggers 2 --energy <energy-1>`
+- Enemy already Vulnerable before your turn: `--vulnerable`
+
 ## Card data
 - `cards.csv` is the canonical card database — the version in the repo may be stale
 - If a fresh `cards.csv` has been provided, use that version
@@ -39,8 +45,18 @@ node sim.js --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 
 ## Key design decisions
 
+### Optimizer: subset enumeration, not knapsack
+`topPlays` enumerates all affordable subsets (up to 2^7 = 128 for a 7-card hand) rather than using the knapsack DP in `optimizer.js`. This was a deliberate choice: subset enumeration supports returning diverse top-3 plays and correctly handles intra-turn play ordering (cards are sorted within each combo before scoring). The knapsack remains in `optimizer.js` but is not used in the main sim path.
+
+### Intra-turn play ordering
+Cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison. This means Bash correctly buffs subsequent cards without buffing itself — passing `--vulnerable` is for enemies that are already vulnerable *before* your turn, not for Bash's on-hit effect.
+
 ### Damage types
-Indirect damage (poison, orbs) is not affected by Strength or Vulnerable. A `Damage Type` column (`direct` / `indirect`) is needed to handle this correctly. This feature is in progress — design not yet finalised.
+- **Attack** — scales with Strength (+flat), Vulnerable (×1.5), Weak (×0.75)
+- **Poison** — stacks applied; value = `triggers × stacks - triggers×(triggers-1)/2`
+- **Doom** — flat damage, no scaling
+- **Lightning orb** — `(base 3 + focus) × orb_count` → damage
+- **Frost orb** — `(base 2 + focus) × orb_count` → block
 
 ### Card instances vs card types
 Currently the sim uses type-based card lookup (one row in CSV = one card type). The plan is to move to an instance-based model where each copy of a card in the deck can have its own stat overrides (cost, damage, block, play twice, etc.). This is required to support enchantments and variable-stat cards like Genetic Algorithm.
@@ -49,23 +65,17 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - **Draw frequency** — % of sims where the card appears in the drawn hand
 - **Play frequency** — % of sims where the card appears in the optimal play
 
-### Removed from scope
-- Top 3 plays — percentile distribution gives sufficient insight without enumerating specific combos
-
 ## Roadmap
 
 ### Completed
 - ✅ Draw engine (draw pile + discard pile, reshuffle on empty)
 - ✅ Card loader (reads from `cards.csv`)
-- ✅ Knapsack optimizer (max damage / max block modes)
 - ✅ Monte Carlo sim (10,000 simulations, percentile distribution)
 - ✅ CLI interface
 - ✅ Draw frequency and play frequency output
-
-### Completed (continued)
-- ✅ Damage type system — attack (Strength/Vulnerable/Weak), poison (trigger stacking), doom (flat), lightning orb (Focus), frost orb (Focus → block)
+- ✅ Damage type system — attack, poison, doom, lightning orb, frost orb
 - ✅ Player state flags — `--strength`, `--vulnerable`, `--weak`, `--focus`, `--poison-triggers`
-- ✅ Intra-turn play ordering — cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison; Bash correctly buffs subsequent cards without buffing itself
+- ✅ Intra-turn play ordering — pairwise sort ensures correct sequencing of state-modifying cards
 
 ### Up Next
 - ⬜ Min block threshold + max remaining damage mode — guarantee X block, then maximise damage with remaining energy
@@ -74,7 +84,7 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ⬜ Visualisation
 
 ### Out of Scope (for now)
-- 🚫 Intra-turn draw effects — the `Draw` column is stored in the CSV but intentionally ignored by the sim. Cards that draw mid-turn (e.g. Acrobatics) open the door to chaining draw effects and combinatorial explosion. Workaround: increase `--draws` manually to approximate the expected extra draws. A light future implementation could cap draw chains (e.g. resolve draw cards once, non-recursively) without fully modelling cascading draw.
+- 🚫 Intra-turn draw effects — the `Draw` column is stored in the CSV but intentionally ignored. Cards that draw mid-turn open the door to chaining draw effects and combinatorial explosion. Workaround: increase `--draws` manually. A light future implementation could resolve draw cards once, non-recursively, without modelling cascading draw.
 
 ## Working style
 - Build step by step and explain decisions
