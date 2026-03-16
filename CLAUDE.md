@@ -53,7 +53,7 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 ## Key design decisions
 
 ### Optimizer: subset enumeration, not knapsack
-`topPlays` enumerates all affordable subsets (up to 2^7 = 128 for a 7-card hand) rather than using the knapsack DP in `optimizer.js`. This was a deliberate choice: subset enumeration supports returning diverse top-3 plays and correctly handles intra-turn play ordering (cards are sorted within each combo before scoring). The knapsack remains in `optimizer.js` but is not used in the main sim path.
+`bestPlay` enumerates all affordable subsets (up to 2^7 = 128 for a 7-card hand). Subset enumeration is the correct approach here because card values are not independent — a card's damage depends on what precedes it (e.g. Bash raises subsequent damage). Knapsack DP assumes independence and cannot model intra-turn ordering, so it was removed.
 
 ### Intra-turn play ordering
 Cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison. This means Bash correctly buffs subsequent cards without buffing itself — passing `--vulnerable` is for enemies that are already vulnerable *before* your turn, not for Bash's on-hit effect.
@@ -101,7 +101,7 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 3. Aggregate damage/block distributions + card frequencies, print
 
 ### Non-obvious implementation details
-- `topPlays` (sim.js) uses subset enumeration, not the knapsack in optimizer.js — knapsack is exported but unused in the main path. Don't "fix" this back to knapsack; subset enumeration is intentional for ordering support and top-3 output.
+- `bestPlay` (sim.js) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
 - Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.js, not in the CSV.
 - `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
 - `Draw` column in CSV is populated but intentionally ignored by the sim.
