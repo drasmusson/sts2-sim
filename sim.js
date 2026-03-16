@@ -45,9 +45,8 @@ function parseList(str) {
   return str.split(",").map(s => s.trim()).filter(Boolean);
 }
 
-// ─── TOP 3 PLAYS ─────────────────────────────────────────────────────────────
-// Generate diverse top 3: best primary, best with some of opposite stat, best opposite
-function topPlays(hand, db, energy, mode, player) {
+// ─── BEST PLAY ───────────────────────────────────────────────────────────────
+function bestPlay(hand, db, energy, mode, player) {
   const { simulateCombo, optimalComboOrder } = require("./optimizer");
 
   const playable = hand.filter(name => {
@@ -55,7 +54,10 @@ function topPlays(hand, db, energy, mode, player) {
     return c && c.cost <= energy;
   });
 
-  const subsets = [];
+  const primary   = mode === "dmg" ? "totalDamage" : "totalBlock";
+  const secondary = mode === "dmg" ? "totalBlock"  : "totalDamage";
+  let best = null;
+
   for (let mask = 1; mask < (1 << playable.length); mask++) {
     const combo = [];
     let cost = 0;
@@ -67,30 +69,16 @@ function topPlays(hand, db, energy, mode, player) {
     }
     if (cost > energy) continue;
     const ordered = optimalComboOrder(combo, db, player, mode);
-    const { totalDamage: dmg, totalBlock: blk } = simulateCombo(ordered, db, player);
-    subsets.push({ played: ordered, totalDamage: dmg, totalBlock: blk, energySpent: cost });
+    const { totalDamage, totalBlock } = simulateCombo(ordered, db, player);
+    const candidate = { played: ordered, totalDamage, totalBlock, energySpent: cost };
+    if (!best
+      || candidate[primary]   > best[primary]
+      || (candidate[primary] === best[primary] && candidate[secondary] > best[secondary])) {
+      best = candidate;
+    }
   }
 
-  if (!subsets.length) return [];
-
-  // Sort by primary stat desc, secondary stat desc as tiebreaker
-  const primary = mode === "dmg" ? "totalDamage" : "totalBlock";
-  const secondary = mode === "dmg" ? "totalBlock" : "totalDamage";
-  subsets.sort((a, b) =>
-    b[primary] - a[primary] || b[secondary] - a[secondary]
-  );
-
-  // Pick top 3 that are meaningfully different
-  const top = [subsets[0]];
-  for (const s of subsets.slice(1)) {
-    if (top.length >= 3) break;
-    const isDiff = top.every(t =>
-      t.totalDamage !== s.totalDamage || t.totalBlock !== s.totalBlock
-    );
-    if (isDiff) top.push(s);
-  }
-
-  return top;
+  return best || { played: [], totalDamage: 0, totalBlock: 0, energySpent: 0 };
 }
 
 // ─── SINGLE SIMULATION ───────────────────────────────────────────────────────
@@ -131,14 +119,13 @@ function runOneSim({ drawPile, discardPile, energy, draws, relics, db, mode, pla
   }
 
   const handNames = hand;
-  const plays = topPlays(handNames, patchedDb, totalEnergy, mode, player);
-  const best = plays[0] || { totalDamage: 0, totalBlock: 0, played: [] };
+  const play = bestPlay(handNames, patchedDb, totalEnergy, mode, player);
 
   return {
     hand: handNames,
-    damage: best.totalDamage,
-    block: best.totalBlock,
-    plays,
+    damage: play.totalDamage,
+    block:  play.totalBlock,
+    play,
   };
 }
 
@@ -156,7 +143,7 @@ function runMC(config) {
     const r = runOneSim(config);
     damages.push(r.damage);
     blocks.push(r.block);
-    for (const c of new Set(r.plays[0]?.played || [])) {
+    for (const c of new Set(r.play.played)) {
       cardFreq[c] = (cardFreq[c] || 0) + 1;
     }
     for (const c of new Set(r.hand)) {
