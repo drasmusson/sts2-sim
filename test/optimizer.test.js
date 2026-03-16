@@ -40,9 +40,15 @@ test("attack damage: weak multiplies by 0.75", () => {
   assert.equal(damage, 6);
 });
 
+test("attack damage: card's vulnerable is not applied to itself", () => {
+  const card = makeCard({ damage: 8, vulnApplied: 2 });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 8);
+});
+
 test("attack damage: strength + vulnerable stack", () => {
   // Bash: (8+2) * 1.5 = 15
-  const card = makeCard({ damage: 8 });
+  const card = makeCard({ damage: 8, vulnApplied: 1 });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, vulnerable: true });
   assert.equal(damage, 15);
 });
