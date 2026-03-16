@@ -110,6 +110,21 @@ test("multi-hit: strength scales per hit", () => {
   assert.equal(damage, 14);
 });
 
+test("multi-hit: vulnerable multiplies total hits, rounded down", () => {
+  // Sword Boomerang: 3 dmg, 3 hits, vulnerable → floor(3 * 1.5 * 3) = floor(13.5) = 13
+  const card = makeCard({ damage: 3, hits: 3 });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerable: true });
+  assert.equal(damage, 13);
+});
+
+test("card with damage and block: both values returned", () => {
+  // Iron Wave: 5 dmg, 5 block
+  const card = makeCard({ damage: 5, block: 5 });
+  const { damage, block } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 5);
+  assert.equal(block, 5);
+});
+
 test("frost orb: no attack damage contribution", () => {
   const card = makeCard({ orbType: "frost", orbCount: 1 });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, focus: 5 });

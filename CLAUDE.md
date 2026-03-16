@@ -59,7 +59,7 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 Cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison. This means Bash correctly buffs subsequent cards without buffing itself — passing `--vulnerable` is for enemies that are already vulnerable *before* your turn, not for Bash's on-hit effect.
 
 ### Damage types
-- **Attack** — scales with Strength (+flat), Vulnerable (×1.5), Weak (×0.75)
+- **Attack** — `floor((damage + strength) × vulnMult × weakMult × hits)`; Vulnerable ×1.5, Weak ×0.75; `Math.floor` applied to the final value (STS rounds down per card, not per hit)
 - **Poison** — stacks applied; value = `triggers × stacks - triggers×(triggers-1)/2`
 - **Doom** — flat damage, no scaling
 - **Lightning orb** — `(base 3 + focus) × orb_count` → damage

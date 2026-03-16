@@ -17,7 +17,7 @@ function cardEffectiveValues(card, player) {
     const base = card.damage + strength;
     const vulnMult  = vulnerable ? 1.5 : 1;
     const weakMult  = weak       ? 0.75 : 1;
-    damage += base * vulnMult * weakMult * card.hits;
+    damage += Math.floor(base * vulnMult * weakMult * card.hits);
   }
 
   // Orb damage: only for orbs that actually deal damage (e.g. lightning)
