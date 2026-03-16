@@ -42,7 +42,7 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - Upgraded cards are separate rows, identified by `+` suffix (e.g. `Strike+`)
 
 **CSV schema:**
-`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Notes`
+`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Notes`
 
 - `Damage` — attack damage (scales with Strength, Vulnerable, Weak)
 - `Poison` — poison stacks applied per play
