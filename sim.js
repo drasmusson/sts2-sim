@@ -10,7 +10,6 @@
 const path = require("path");
 const { shuffle, drawCards } = require("./draw");
 const { loadCards } = require("./cards");
-const { optimizeHand } = require("./optimizer");
 
 const CSV_PATH = path.join(__dirname, "cards.csv");
 const N = 10000;
@@ -28,8 +27,14 @@ function parseArgs(argv) {
   const args = {};
   for (let i = 2; i < argv.length; i++) {
     if (argv[i].startsWith("--")) {
-      args[argv[i].slice(2)] = argv[i + 1];
-      i++;
+      const key = argv[i].slice(2);
+      const next = argv[i + 1];
+      if (next !== undefined && !next.startsWith("--")) {
+        args[key] = next;
+        i++;
+      } else {
+        args[key] = true; // boolean flag
+      }
     }
   }
   return args;
@@ -42,9 +47,9 @@ function parseList(str) {
 
 // ─── TOP 3 PLAYS ─────────────────────────────────────────────────────────────
 // Generate diverse top 3: best primary, best with some of opposite stat, best opposite
-function topPlays(hand, db, energy, mode) {
-  // Collect all subsets that are affordable (up to hand size, practical limit)
-  // For hands of 5-7 cards this is at most 2^7=128 subsets — fast
+function topPlays(hand, db, energy, mode, player) {
+  const { simulateCombo, optimalComboOrder } = require("./optimizer");
+
   const playable = hand.filter(name => {
     const c = db[name];
     return c && c.cost <= energy;
@@ -61,9 +66,9 @@ function topPlays(hand, db, energy, mode) {
       }
     }
     if (cost > energy) continue;
-    const dmg = combo.reduce((s, n) => s + db[n].damage, 0);
-    const blk = combo.reduce((s, n) => s + db[n].block, 0);
-    subsets.push({ played: combo, totalDamage: dmg, totalBlock: blk, energySpent: cost });
+    const ordered = optimalComboOrder(combo, db, player, mode);
+    const { totalDamage: dmg, totalBlock: blk } = simulateCombo(ordered, db, player);
+    subsets.push({ played: ordered, totalDamage: dmg, totalBlock: blk, energySpent: cost });
   }
 
   if (!subsets.length) return [];
@@ -89,7 +94,7 @@ function topPlays(hand, db, energy, mode) {
 }
 
 // ─── SINGLE SIMULATION ───────────────────────────────────────────────────────
-function runOneSim({ drawPile, discardPile, energy, draws, relics, db, mode }) {
+function runOneSim({ drawPile, discardPile, energy, draws, relics, db, mode, player }) {
   // Apply relic effects
   let extraDraw = 0, extraEnergy = 0, randomizeCosts = false;
   for (const relic of relics) {
@@ -126,7 +131,7 @@ function runOneSim({ drawPile, discardPile, energy, draws, relics, db, mode }) {
   }
 
   const handNames = hand;
-  const plays = topPlays(handNames, patchedDb, totalEnergy, mode);
+  const plays = topPlays(handNames, patchedDb, totalEnergy, mode, player);
   const best = plays[0] || { totalDamage: 0, totalBlock: 0, played: [] };
 
   return {
@@ -204,6 +209,14 @@ function printResults(results, config) {
   console.log(`  Drawing     : ${config.draws} cards  |  Energy: ${config.energy}`);
   if (config.relics.length) console.log(`  Relics      : ${config.relics.join(", ")}`);
   console.log(`  Mode        : ${config.mode === "dmg" ? "Maximize Damage" : "Maximize Block"}`);
+  const p = config.player;
+  const playerParts = [];
+  if (p.strength)                playerParts.push(`Strength ${p.strength}`);
+  if (p.vulnerable)              playerParts.push("Vulnerable");
+  if (p.weak)                    playerParts.push("Weak");
+  if (p.focus)                   playerParts.push(`Focus ${p.focus}`);
+  if (p.poisonTriggers !== 1)    playerParts.push(`Poison triggers ×${p.poisonTriggers}`);
+  if (playerParts.length)        console.log(`  Player state: ${playerParts.join(", ")}`);
   console.log(line);
 
   console.log("\n  DAMAGE OUTPUT");
@@ -232,12 +245,20 @@ function printResults(results, config) {
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 const args = parseArgs(process.argv);
 
-const drawPile   = parseList(args.draw);
+const drawPile    = parseList(args.draw);
 const discardPile = parseList(args.discard);
-const energy     = parseInt(args.energy ?? 3);
-const draws      = parseInt(args.draws ?? 5);
-const mode       = args.mode ?? "dmg";
-const relics     = parseList(args.relics);
+const energy      = parseInt(args.energy ?? 3);
+const draws       = parseInt(args.draws  ?? 5);
+const mode        = args.mode ?? "dmg";
+const relics      = parseList(args.relics);
+
+const player = {
+  strength:       parseInt(args.strength       ?? 0),
+  vulnerable:     !!args.vulnerable,
+  weak:           !!args.weak,
+  focus:          parseInt(args.focus          ?? 0),
+  poisonTriggers: parseInt(args["poison-triggers"] ?? 1),
+};
 
 if (!drawPile.length) {
   console.error("Error: --draw is required. E.g. --draw \"Strike,Strike,Bash,Defend,Defend\"");
@@ -252,6 +273,6 @@ if (unknown.length) {
   console.warn(`Warning: unknown cards (will be ignored): ${[...new Set(unknown)].join(", ")}`);
 }
 
-const config = { drawPile, discardPile, energy, draws, relics, db, mode };
+const config = { drawPile, discardPile, energy, draws, relics, db, mode, player };
 const results = runMC(config);
 printResults(results, config);

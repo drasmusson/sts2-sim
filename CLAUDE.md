@@ -16,13 +16,26 @@ node sim.js --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 - `--draws` — cards drawn per turn
 - `--mode` — `dmg` (maximise damage) or `block` (maximise block)
 
+**Player state flags**
+- `--strength N` — flat bonus added to attack damage
+- `--vulnerable` — enemy is vulnerable (attack damage ×1.5); flag only, no value
+- `--weak` — player is weak (attack damage ×0.75); flag only, no value
+- `--focus N` — flat bonus to all orb outputs (damage for lightning, block for frost)
+- `--poison-triggers N` — how many times poison ticks per turn (default 1; set to 2 if Accelerant is in play, and reduce `--energy` by 1)
+
 ## Card data
 - `cards.csv` is the canonical card database — the version in the repo may be stale
 - If a fresh `cards.csv` has been provided, use that version
 - Upgraded cards are separate rows, identified by `+` suffix (e.g. `Strike+`)
 
 **CSV schema:**
-`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Notes`
+`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Notes`
+
+- `Damage` — attack damage (scales with Strength, Vulnerable, Weak)
+- `Poison` — poison stacks applied per play
+- `Doom` — doom stacks applied per play (modeled as flat damage; no scaling)
+- `Orb Type` — `lightning`, `frost`, or empty; extensible to future orb types
+- `Orb Count` — orbs channeled per play (defaults to 1 when Orb Type is set)
 
 ## Key design decisions
 
@@ -49,15 +62,19 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ✅ CLI interface
 - ✅ Draw frequency and play frequency output
 
-### In Progress
-- 🔄 Direct vs indirect damage distinction — design being finalised
+### Completed (continued)
+- ✅ Damage type system — attack (Strength/Vulnerable/Weak), poison (trigger stacking), doom (flat), lightning orb (Focus), frost orb (Focus → block)
+- ✅ Player state flags — `--strength`, `--vulnerable`, `--weak`, `--focus`, `--poison-triggers`
+- ✅ Intra-turn play ordering — cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison; Bash correctly buffs subsequent cards without buffing itself
 
 ### Up Next
 - ⬜ Min block threshold + max remaining damage mode — guarantee X block, then maximise damage with remaining energy
-- ⬜ Player state tracker — strength, weak, vulnerable, frail stacks active at sim time
 - ⬜ Card instances + enchantments — instance-based model with per-copy stat overrides
 - ⬜ Relic support — Bag of Preparation, Snecko Eye, Pocketwatch, Lantern (partially stubbed)
 - ⬜ Visualisation
+
+### Out of Scope (for now)
+- 🚫 Intra-turn draw effects — the `Draw` column is stored in the CSV but intentionally ignored by the sim. Cards that draw mid-turn (e.g. Acrobatics) open the door to chaining draw effects and combinatorial explosion. Workaround: increase `--draws` manually to approximate the expected extra draws. A light future implementation could cap draw chains (e.g. resolve draw cards once, non-recursively) without fully modelling cascading draw.
 
 ## Working style
 - Build step by step and explain decisions

@@ -22,16 +22,22 @@ function loadCards(csvPath) {
     const name = row["Card Name"];
     if (!name) continue;
 
+    const orbType = (row["Orb Type"] || "").toLowerCase() || null;
+
     db[name] = {
       type:        row["Type"].toLowerCase(),
-      cost:        parseInt(row["Cost"])         || 0,
-      damage:      parseInt(row["Damage"])       || 0,
-      block:       parseInt(row["Block"])        || 0,
-      draw:        parseInt(row["Draw"])         || 0,
-      energyGain:  parseInt(row["Energy Gain"]) || 0,
-      strGain:     parseInt(row["Str Gain"])     || 0,
-      vulnApplied: parseInt(row["Vuln Applied"]) || 0,
-      weakApplied: parseInt(row["Weak Applied"]) || 0,
+      cost:        parseInt(row["Cost"])          || 0,
+      damage:      parseInt(row["Damage"])        || 0,
+      block:       parseInt(row["Block"])         || 0,
+      draw:        parseInt(row["Draw"])          || 0,
+      energyGain:  parseInt(row["Energy Gain"])   || 0,
+      strGain:     parseInt(row["Str Gain"])      || 0,
+      vulnApplied: parseInt(row["Vuln Applied"])  || 0,
+      weakApplied: parseInt(row["Weak Applied"])  || 0,
+      poison:      parseInt(row["Poison"])        || 0,
+      doom:        parseInt(row["Doom"])          || 0,
+      orbType,
+      orbCount:    parseInt(row["Orb Count"])     || (orbType ? 1 : 0),
       notes:       row["Notes"] || "",
     };
   }
