@@ -9,7 +9,7 @@ const basePlayer = { strength: 0, vulnerable: false, weak: false, focus: 0, pois
 function makeCard(overrides) {
   return {
     damage: 0, block: 0, poison: 0, doom: 0,
-    orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0,
+    orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0, hits: 1,
     ...overrides,
   };
 }
@@ -94,6 +94,20 @@ test("frost orb: base 2 block + focus", () => {
   const card = makeCard({ orbType: "frost", orbCount: 1 });
   const { block } = cardEffectiveValues(card, { ...basePlayer, focus: 1 });
   assert.equal(block, 3); // 2 + 1
+});
+
+test("multi-hit: damage multiplies by hit count", () => {
+  // Twin Strike: 5 damage, 2 hits → 5 * 2 = 10
+  const card = makeCard({ damage: 5, hits: 2 });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 10);
+});
+
+test("multi-hit: strength scales per hit", () => {
+  // Twin Strike with Strength 2: (5+2) * 2 = 14
+  const card = makeCard({ damage: 5, hits: 2 });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2 });
+  assert.equal(damage, 14);
 });
 
 test("frost orb: no attack damage contribution", () => {

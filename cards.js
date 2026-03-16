@@ -38,6 +38,7 @@ function loadCards(csvPath) {
       doom:        parseInt(row["Doom"])          || 0,
       orbType,
       orbCount:    parseInt(row["Orb Count"])     || (orbType ? 1 : 0),
+      hits:        parseInt(row["Hits"])           || 1,
       notes:       row["Notes"] || "",
     };
   }
