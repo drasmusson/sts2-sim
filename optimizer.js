@@ -1,4 +1,4 @@
-// ─── STEP 3: ENERGY + KNAPSACK OPTIMIZER ─────────────────────────────────────
+// ─── ENERGY + KNAPSACK OPTIMIZER ─────────────────────────────────────
 
 // Base passive damage/block for each orb type (before Focus)
 const ORB_BASE = {
