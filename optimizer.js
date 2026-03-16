@@ -20,12 +20,12 @@ function cardEffectiveValues(card, player) {
     damage += base * vulnMult * weakMult;
   }
 
-  // Orb damage/block: base per orb + Focus, times orb count
+  // Orb damage: only for orbs that actually deal damage (e.g. lightning)
+  // Focus adds flat to the orb's output type — it should not create damage for frost
   if (card.orbType && card.orbCount > 0) {
     const base = ORB_BASE[card.orbType];
-    if (base) {
+    if (base && base.damage > 0) {
       damage += (base.damage + focus) * card.orbCount;
-      // frost block is returned separately below
     }
   }
 

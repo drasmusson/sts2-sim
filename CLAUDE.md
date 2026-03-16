@@ -9,6 +9,13 @@ node sim.js --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
 node sim.js --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 ```
 
+## Tests
+Requires Node 18+. Uses the built-in test runner, no dependencies.
+```bash
+node --test test/*.js
+```
+Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimalComboOrder`, `drawCards`, `shuffle`.
+
 **Flags**
 - `--draw` — cards currently in draw pile (comma-separated)
 - `--discard` — cards currently in discard pile (comma-separated)
