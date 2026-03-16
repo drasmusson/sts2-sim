@@ -86,6 +86,27 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 ### Out of Scope (for now)
 - 🚫 Intra-turn draw effects — the `Draw` column is stored in the CSV but intentionally ignored. Cards that draw mid-turn open the door to chaining draw effects and combinatorial explosion. Workaround: increase `--draws` manually. A light future implementation could resolve draw cards once, non-recursively, without modelling cascading draw.
 
+## Continuation context (for /compact)
+
+### How the sim works end-to-end
+1. CLI parses args → fixed draw pile + player state
+2. Each of 10,000 sims: shuffle draw pile, draw N cards, enumerate all affordable subsets, sort each combo with pairwise ordering, score with `simulateCombo`, pick best
+3. Aggregate damage/block distributions + card frequencies, print
+
+### Non-obvious implementation details
+- `topPlays` (sim.js) uses subset enumeration, not the knapsack in optimizer.js — knapsack is exported but unused in the main path. Don't "fix" this back to knapsack; subset enumeration is intentional for ordering support and top-3 output.
+- Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.js, not in the CSV.
+- `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
+- `Draw` column in CSV is populated but intentionally ignored by the sim.
+
+### cards.csv is sparse
+Only starter cards are in the CSV. When working on new features, check whether relevant cards are present before testing.
+
+### Active workarounds (document when advising user)
+- Power cards played this turn (Inflame, etc.): reduce `--energy` by cost, set `--strength N`
+- Accelerant in play: `--poison-triggers 2`, reduce `--energy` by 1
+- Intra-turn draw cards (Acrobatics etc.): increase `--draws` manually
+
 ## Working style
 - Build step by step and explain decisions
 - Always run code and show actual output — don't just describe what the output would be
