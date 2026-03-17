@@ -63,6 +63,12 @@ Unrelenting,Attack,2,12,0,0,0,0,0,0,0,0,,0,1,next attack played this turn is fre
 Unrelenting+,Attack,2,18,0,0,0,0,0,0,0,0,,0,1,next attack played this turn is free
 Tremble,Skill,1,0,0,0,0,0,2,0,0,0,,0,,
 Tremble+,Skill,1,0,0,0,0,0,3,0,0,0,,0,,
+Bully,Attack,0,4,0,0,0,0,0,0,0,0,,0,1,deals 2 extra dmg per vulnerable stack on enemy
+Bully+,Attack,0,4,0,0,0,0,0,0,0,0,,0,1,deals 3 extra dmg per vulnerable stack on enemy
+Breakthrough,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,lose 1 hp
+Breakthrough+,Attack,1,13,0,0,0,0,0,0,0,0,,0,1,lose 1 hp
+Blood Wall,Skill,2,0,16,0,0,0,0,0,0,0,,0,,lose 2 hp
+Blood Wall+,Skill,2,0,20,0,0,0,0,0,0,0,,0,,lose 2 hp
 Ashen Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,deals 3 extra dmg per card in exhaust pile
 Ashen Strike+,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,deals 4 extra dmg per card in exhaust pile
 Brand,Skill,0,0,0,0,0,1,0,0,0,0,,0,,exhaust 1 card; lose 1 hp
