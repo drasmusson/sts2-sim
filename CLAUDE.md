@@ -87,17 +87,23 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ✅ CLI interface
 - ✅ Draw frequency and play frequency output
 - ✅ Damage type system — attack, poison, doom, lightning orb, frost orb
-- ✅ Player state flags — `--strength`, `--vulnerable`, `--weak`, `--focus`, `--poison-triggers`
-- ✅ Intra-turn play ordering — pairwise sort ensures correct sequencing of state-modifying cards
+- ✅ Player state flags — `--strength`, `--vulnerable`, `--weak`, `--focus`, `--poison-triggers`, `--enemy-attack`, `--enemy-hits`, `--enemy-weak`
+- ✅ Intra-turn play ordering — pairwise sort ensures correct sequencing of state-modifying cards (Vulnerable, Strength, Weak)
+- ✅ Multi-hit support — `Hits` column; Strength and multipliers scale per hit
+- ✅ Terminal histogram — damage and block distributions as horizontal bar charts
+- ✅ Most common optimal plays — top 5 combos with frequency, damage, and block
 
 ### Up Next
-- ⬜ Min block threshold + max remaining damage mode — guarantee X block, then maximise damage with remaining energy
-- ⬜ Card instances + enchantments — instance-based model with per-copy stat overrides
-- ⬜ Relic support — Bag of Preparation, Snecko Eye, Pocketwatch, Lantern (partially stubbed)
-- ⬜ Visualisation
+- ⬜ More card effects — Body Slam (damage = current block), Whirlwind (damage × energy spent)
+- ⬜ HTML/browser visualisation
+- ⬜ Case-insensitive card name matching
+- ⬜ Config file — save deck setups and run with `--config deck.json`
 
 ### Out of Scope (for now)
 - 🚫 Intra-turn draw effects — the `Draw` column is stored in the CSV but intentionally ignored. Cards that draw mid-turn open the door to chaining draw effects and combinatorial explosion. Workaround: increase `--draws` manually. A light future implementation could resolve draw cards once, non-recursively, without modelling cascading draw.
+- 🚫 Card instances + enchantments — instance-based model with per-copy stat overrides; required for Genetic Algorithm and similar. Deferred.
+- 🚫 Relic support — partially stubbed but deferred.
+- 🚫 Min block threshold mode — deferred.
 
 ## Continuation context (for /compact)
 
@@ -112,8 +118,8 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
 - `Draw` column in CSV is populated but intentionally ignored by the sim.
 
-### cards.csv is sparse
-Only starter cards are in the CSV. When working on new features, check whether relevant cards are present before testing.
+### cards.csv is in progress
+Far from all cards are in the CSV. When working on new features, check whether relevant cards are present before testing.
 
 ### Active workarounds (document when advising user)
 - Power cards played this turn (Inflame, etc.): reduce `--energy` by cost, set `--strength N`
