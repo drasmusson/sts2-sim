@@ -138,11 +138,15 @@ function runMC(config) {
   const damages = [], blocks = [];
   const cardFreq = {};
   const drawFreq = {};
+  const dmgDist  = {};
+  const blkDist  = {};
 
   for (let i = 0; i < N; i++) {
     const r = runOneSim(config);
     damages.push(r.damage);
     blocks.push(r.block);
+    dmgDist[r.damage] = (dmgDist[r.damage] || 0) + 1;
+    blkDist[r.block]  = (blkDist[r.block]  || 0) + 1;
     for (const c of new Set(r.play.played)) {
       cardFreq[c] = (cardFreq[c] || 0) + 1;
     }
@@ -179,10 +183,29 @@ function runMC(config) {
     drawFreq: Object.entries(drawFreq)
       .sort((a, b) => b[1] - a[1])
       .map(([name, n]) => ({ name, pct: (n / N * 100).toFixed(1) })),
+    dmgDist,
+    blkDist,
   };
 }
 
 // ─── OUTPUT ──────────────────────────────────────────────────────────────────
+function printHistogram(label, dist) {
+  const entries = Object.entries(dist)
+    .map(([v, n]) => ({ value: parseInt(v), count: n }))
+    .sort((a, b) => a.value - b.value);
+  if (!entries.length) return;
+
+  const maxCount = Math.max(...entries.map(e => e.count));
+  const valWidth = String(entries[entries.length - 1].value).length;
+
+  console.log(`\n  ${label}`);
+  for (const { value, count } of entries) {
+    const pct = (count / N * 100).toFixed(1);
+    const bar = "█".repeat(Math.round(count / maxCount * 38));
+    console.log(`    ${String(value).padStart(valWidth)}  ${bar} ${pct}%`);
+  }
+}
+
 function printResults(results, config) {
   const { damage: d, block: b, cardFreq } = results;
   const line = "─".repeat(52);
@@ -210,10 +233,14 @@ function printResults(results, config) {
   console.log("\n  DAMAGE OUTPUT");
   console.log(`    Avg  : ${d.avg}   Min: ${d.min}   Max: ${d.max}`);
   console.log(`    p25  : ${d.p25}   p50: ${d.p50}   p75: ${d.p75}`);
+  printHistogram("DAMAGE DISTRIBUTION", results.dmgDist);
 
-  console.log("\n  BLOCK OUTPUT");
-  console.log(`    Avg  : ${b.avg}   Min: ${b.min}   Max: ${b.max}`);
-  console.log(`    p25  : ${b.p25}   p50: ${b.p50}   p75: ${b.p75}`);
+  if (b.max > 0) {
+    console.log("\n  BLOCK OUTPUT");
+    console.log(`    Avg  : ${b.avg}   Min: ${b.min}   Max: ${b.max}`);
+    console.log(`    p25  : ${b.p25}   p50: ${b.p50}   p75: ${b.p75}`);
+    printHistogram("BLOCK DISTRIBUTION", results.blkDist);
+  }
 
   console.log("\n  DRAW FREQUENCY (% of sims where card appears in hand)");
   for (const { name, pct } of results.drawFreq.slice(0, 8)) {
