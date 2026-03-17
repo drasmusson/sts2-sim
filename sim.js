@@ -203,6 +203,7 @@ function printResults(results, config) {
   if (p.weak)                    playerParts.push("Weak");
   if (p.focus)                   playerParts.push(`Focus ${p.focus}`);
   if (p.poisonTriggers !== 1)    playerParts.push(`Poison triggers ×${p.poisonTriggers}`);
+  if (p.enemyAttack)             playerParts.push(`Enemy attack ${p.enemyAttack}×${p.enemyHits}`);
   if (playerParts.length)        console.log(`  Player state: ${playerParts.join(", ")}`);
   console.log(line);
 
@@ -240,11 +241,14 @@ const mode        = args.mode ?? "dmg";
 const relics      = parseList(args.relics);
 
 const player = {
-  strength:       parseInt(args.strength       ?? 0),
+  strength:       parseInt(args.strength          ?? 0),
   vulnerable:     !!args.vulnerable,
   weak:           !!args.weak,
-  focus:          parseInt(args.focus          ?? 0),
+  focus:          parseInt(args.focus             ?? 0),
   poisonTriggers: parseInt(args["poison-triggers"] ?? 1),
+  enemyAttack:    parseInt(args["enemy-attack"]    ?? 0),
+  enemyHits:      parseInt(args["enemy-hits"]      ?? 1),
+  enemyWeak:      !!args["enemy-weak"],
 };
 
 if (!drawPile.length) {

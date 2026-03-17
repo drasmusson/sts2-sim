@@ -131,6 +131,41 @@ test("frost orb: no attack damage contribution", () => {
   assert.equal(damage, 0);
 });
 
+// ─── weakApplied ─────────────────────────────────────────────────────────────
+
+test("weakApplied: contributes effective block based on enemy attack", () => {
+  // Enemy hits for 5, 3 times. Weak: floor(5*0.75)*3=9 taken vs 15. Saves 6.
+  const card = makeCard({ weakApplied: 1 });
+  const player = { ...basePlayer, enemyAttack: 5, enemyHits: 3 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 6);
+});
+
+test("weakApplied: no block value when enemyAttack not set", () => {
+  const card = makeCard({ weakApplied: 1 });
+  const { block } = cardEffectiveValues(card, basePlayer);
+  assert.equal(block, 0);
+});
+
+test("weakApplied: no double-count if enemy already weak", () => {
+  const card = makeCard({ weakApplied: 1 });
+  const player = { ...basePlayer, enemyAttack: 5, enemyHits: 1, enemyWeak: true };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 0);
+});
+
+test("weakApplied: second card applying weak gets no block value", () => {
+  // Neutralize then Uppercut: Uppercut's weak contribution should be 0
+  const db = {
+    Neutralize: makeCard({ weakApplied: 1, damage: 3, cost: 0 }),
+    Uppercut:   makeCard({ weakApplied: 1, damage: 13, cost: 2 }),
+  };
+  const player = { ...basePlayer, enemyAttack: 10, enemyHits: 1 };
+  const { totalBlock } = simulateCombo(["Neutralize", "Uppercut"], db, player);
+  // Weak saves 10 - floor(10*0.75) = 10 - 7 = 3. Only counted once.
+  assert.equal(totalBlock, 3);
+});
+
 // ─── strGain ─────────────────────────────────────────────────────────────────
 
 const strDb = {

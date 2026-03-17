@@ -29,6 +29,9 @@ Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimal
 - `--weak` — player is weak (attack damage ×0.75); flag only, no value
 - `--focus N` — flat bonus to all orb outputs (damage for lightning, block for frost)
 - `--poison-triggers N` — how many times poison ticks per turn (default 1; set to 2 if Accelerant is in play, and reduce `--energy` by 1)
+- `--enemy-attack N` — enemy's per-hit attack damage; enables Weak applied to enemy to score as effective block
+- `--enemy-hits N` — number of hits in the enemy's attack (default 1); used with `--enemy-attack`
+- `--enemy-weak` — enemy is already weak before your turn; flag only, no value
 
 **Player state workarounds**
 These are pre-existing effects that can't be modelled as cards in the draw pile. Apply them as flags and adjust energy manually where needed:
@@ -64,6 +67,9 @@ Cards that apply Vulnerable or grant Strength are sorted before damage cards usi
 - **Doom** — flat damage, no scaling
 - **Lightning orb** — `(base 3 + focus) × orb_count` → damage
 - **Frost orb** — `(base 2 + focus) × orb_count` → block
+
+### Weak as effective block
+Applying Weak to the enemy reduces their incoming damage by 25%, but the sim has no concept of incoming damage — only outgoing damage and block. As a pragmatic approximation, Weak's damage reduction is modelled as effective block: `(enemyAttack - floor(enemyAttack × 0.75)) × enemyHits`. This is not how the game works (Weak affects the enemy's attack roll, not the player's block total), but it lets the sim correctly rank cards like Neutralize in block mode. Requires `--enemy-attack` to be set; without it Weak contributes 0.
 
 ### Card instances vs card types
 Currently the sim uses type-based card lookup (one row in CSV = one card type). The plan is to move to an instance-based model where each copy of a card in the deck can have its own stat overrides (cost, damage, block, play twice, etc.). This is required to support enchantments and variable-stat cards like Genetic Algorithm.

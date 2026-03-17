@@ -44,6 +44,13 @@ function cardEffectiveValues(card, player) {
     block += (ORB_BASE.frost.block + focus) * card.orbCount;
   }
 
+  // Weak applied to enemy: effective block = damage the enemy won't deal this turn
+  // Formula: (enemyAttack - floor(enemyAttack * 0.75)) * enemyHits
+  const { enemyAttack = 0, enemyHits = 1, enemyWeak = false } = player;
+  if (card.weakApplied > 0 && !enemyWeak && enemyAttack > 0) {
+    block += (enemyAttack - Math.floor(enemyAttack * 0.75)) * enemyHits;
+  }
+
   return { damage, block };
 }
 
@@ -52,6 +59,7 @@ function applyCardState(state, card) {
   let next = state;
   if (card.strGain > 0)     next = { ...next, strength: next.strength + card.strGain };
   if (card.vulnApplied > 0) next = { ...next, vulnerable: true };
+  if (card.weakApplied > 0) next = { ...next, enemyWeak: true };
   return next;
 }
 
