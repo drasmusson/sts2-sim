@@ -63,3 +63,7 @@ Unrelenting,Attack,2,12,0,0,0,0,0,0,0,0,,0,1,next attack played this turn is fre
 Unrelenting+,Attack,2,18,0,0,0,0,0,0,0,0,,0,1,next attack played this turn is free
 Tremble,Skill,1,0,0,0,0,0,2,0,0,0,,0,,
 Tremble+,Skill,1,0,0,0,0,0,3,0,0,0,,0,,
+Ashen Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,deals 3 extra dmg per card in exhaust pile
+Ashen Strike+,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,deals 4 extra dmg per card in exhaust pile
+Brand,Skill,0,0,0,0,0,1,0,0,0,0,,0,,exhaust 1 card; lose 1 hp
+Brand+,Skill,0,0,0,0,0,2,0,0,0,0,,0,,exhaust 1 card; lose 1 hp
