@@ -136,10 +136,10 @@ function percentile(sorted, p) {
 
 function runMC(config) {
   const damages = [], blocks = [];
-  const cardFreq = {};
   const drawFreq = {};
   const dmgDist  = {};
   const blkDist  = {};
+  const playFreq = {};
 
   for (let i = 0; i < N; i++) {
     const r = runOneSim(config);
@@ -147,9 +147,12 @@ function runMC(config) {
     blocks.push(r.block);
     dmgDist[r.damage] = (dmgDist[r.damage] || 0) + 1;
     blkDist[r.block]  = (blkDist[r.block]  || 0) + 1;
-    for (const c of new Set(r.play.played)) {
-      cardFreq[c] = (cardFreq[c] || 0) + 1;
+    const key = r.play.played.join(" → ");
+    if (key) {
+      if (!playFreq[key]) playFreq[key] = { count: 0, damage: r.damage, block: r.block };
+      playFreq[key].count++;
     }
+
     for (const c of new Set(r.hand)) {
       drawFreq[c] = (drawFreq[c] || 0) + 1;
     }
@@ -177,14 +180,18 @@ function runMC(config) {
       min: blocks[0],
       max: blocks[blocks.length - 1],
     },
-    cardFreq: Object.entries(cardFreq)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, n]) => ({ name, pct: (n / N * 100).toFixed(1) })),
     drawFreq: Object.entries(drawFreq)
       .sort((a, b) => b[1] - a[1])
       .map(([name, n]) => ({ name, pct: (n / N * 100).toFixed(1) })),
     dmgDist,
     blkDist,
+    topPlays: Object.entries(playFreq)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 5)
+      .map(([combo, { count, damage, block }]) => ({
+        combo, count, damage, block,
+        pct: (count / N * 100).toFixed(1),
+      })),
   };
 }
 
@@ -207,7 +214,7 @@ function printHistogram(label, dist) {
 }
 
 function printResults(results, config) {
-  const { damage: d, block: b, cardFreq } = results;
+  const { damage: d, block: b } = results;
   const line = "─".repeat(52);
 
   console.log("\n" + line);
@@ -248,10 +255,10 @@ function printResults(results, config) {
     console.log(`    ${name.padEnd(16)} ${String(pct + "%").padStart(6)}  ${bar}`);
   }
 
-  console.log("\n  MOST PLAYED CARDS (% of sims where card appears in optimal play)");
-  for (const { name, pct } of cardFreq.slice(0, 8)) {
-    const bar = "█".repeat(Math.round(pct / 5));
-    console.log(`    ${name.padEnd(16)} ${String(pct + "%").padStart(6)}  ${bar}`);
+  console.log("\n  MOST COMMON OPTIMAL PLAYS");
+  for (const { combo, pct, damage, block } of results.topPlays) {
+    const stats = `${String(damage).padStart(3)} dmg  ${String(block).padStart(3)} block`;
+    console.log(`    ${String(pct + "%").padStart(6)}  ${combo.padEnd(40)}  ${stats}`);
   }
 
   console.log("\n" + line + "\n");
