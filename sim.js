@@ -229,6 +229,7 @@ function printResults(results, config) {
   const p = config.player;
   const playerParts = [];
   if (p.strength)                playerParts.push(`Strength ${p.strength}`);
+  if (p.exhaust)                 playerParts.push(`Exhaust ${p.exhaust}`)
   if (p.vulnerable)              playerParts.push("Vulnerable");
   if (p.weak)                    playerParts.push("Weak");
   if (p.focus)                   playerParts.push(`Focus ${p.focus}`);
@@ -283,6 +284,7 @@ const player = {
   enemyAttack:    parseInt(args["enemy-attack"]    ?? 0),
   enemyHits:      parseInt(args["enemy-hits"]      ?? 1),
   enemyWeak:      !!args["enemy-weak"],
+  exhaust:        parseInt(args.exhaust ?? 0),
 };
 
 if (!drawPile.length) {

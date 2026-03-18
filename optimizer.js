@@ -14,7 +14,7 @@ function cardEffectiveValues(card, player) {
   // Attack damage: scaled by Strength, Vulnerable, Weak
   let damage = 0;
   if (card.damage > 0) {
-    const base = card.damage + strength;
+    const base = card.damage + strength + card.exhaustBonus * (player.exhaust || 0);
     const vulnMult  = vulnerable ? 1.5 : 1;
     const weakMult  = weak       ? 0.75 : 1;
     damage += Math.floor(base * vulnMult * weakMult * card.hits);

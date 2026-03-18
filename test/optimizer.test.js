@@ -2,6 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 const { cardEffectiveValues, simulateCombo, optimalComboOrder } = require("../optimizer");
 
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const basePlayer = { strength: 0, vulnerable: false, weak: false, focus: 0, poisonTriggers: 1 };
@@ -9,7 +10,7 @@ const basePlayer = { strength: 0, vulnerable: false, weak: false, focus: 0, pois
 function makeCard(overrides) {
   return {
     damage: 0, block: 0, poison: 0, doom: 0,
-    orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0, hits: 1,
+    orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0, hits: 1, exhaustBonus: 0,
     ...overrides,
   };
 }
@@ -232,4 +233,18 @@ test("enemy already Vulnerable: Bash first gives 12 + 9 = 21", () => {
 test("simulateCombo accumulates block correctly", () => {
   const { totalBlock } = simulateCombo(["Defend", "Defend"], db, basePlayer);
   assert.equal(totalBlock, 10);
+});
+
+// ─── exhaustBonus ────────────────────────────────────────────────────────────
+
+test("exhaust bonus: base damage + exhaust bonus * exhaust count", () => {
+  const card = makeCard({ damage: 6, exhaustBonus: 3 });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, exhaust: 3 });
+  assert.equal(damage, 15); // 6 + 3*3 = 15
+});
+
+test("exhaust bonus: strength and exhaust bonus stack", () => {
+  const card = makeCard({ damage: 6, exhaustBonus: 3 });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, exhaust: 3 });
+  assert.equal(damage, 17); // 6 + 2 + 3*3 = 17
 });

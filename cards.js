@@ -39,6 +39,7 @@ function loadCards(csvPath) {
       orbType,
       orbCount:    parseInt(row["Orb Count"])     || (orbType ? 1 : 0),
       hits:        parseInt(row["Hits"])           || 1,
+      exhaustBonus: parseInt(row["Exhaust Bonus"]) || 0,
       notes:       row["Notes"] || "",
     };
   }

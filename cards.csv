@@ -1,75 +1,75 @@
-Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Notes
-Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,
-Strike+,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,
-Defend,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,
-Defend+,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,
-Bash,Attack,2,8,0,0,0,0,2,0,0,0,,0,1,
-Bash+,Attack,2,10,0,0,0,0,3,0,0,0,,0,1,
-Neutralize,Attack,0,3,0,0,0,0,0,1,0,0,,0,1,
-Neutralize+,Attack,0,4,0,0,0,0,0,2,0,0,,0,1,
-Survivor,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,
-Survivor+,Skill,1,0,11,0,0,0,0,0,0,0,,0,1,
-Bludgeon,Attack,3,32,0,0,0,0,0,0,0,0,,0,1,
-Bludgeon+,Attack,3,42,0,0,0,0,0,0,0,0,,0,1,
-Break,Attack,2,20,0,0,0,0,5,0,0,0,,0,1,
-Break+,Attack,2,25,0,0,0,0,7,0,0,0,,0,1,
-Feast,Attack,1,10,0,0,0,0,0,0,0,0,,0,1,
-Feast+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,
-Headbutt,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,move 1 specific card from discard to top of draw
-Headbutt+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,move 1 specific card from discard to top of draw
-Impervious,Skill,2,0,30,0,0,0,0,0,0,0,,0,1,
-Impervious+,Skill,2,0,40,0,0,0,0,0,0,0,,0,1,
-Iron Wave,Attack,1,5,5,0,0,0,0,0,0,0,,0,1,
-Iron Wave+,Attack,1,7,7,0,0,0,0,0,0,0,,0,1,
-Molten Fist,Attack,1,10,0,0,0,0,0,0,0,0,,0,1,doubles enemy vulnerable stacks Exhausts
-Molten Fist+,Attack,1,14,0,0,0,0,0,0,0,0,,0,1,doubles enemy vulnerable stacks Exhausts
-Pommel Strike,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,
-Pommel Strike+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,
-Shrug It Off,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,
-Shrug It Off+,Skill,1,0,11,0,0,0,0,0,0,0,,0,1,
-Sword Boomerang,Attack,1,3,0,0,0,0,0,0,0,0,,0,3,
-Sword Boomerang+,Attack,1,3,0,0,0,0,0,0,0,0,,0,4,
-Taunt,Skill,1,0,7,0,0,0,1,0,0,0,,0,1,
-Taunt+,Skill,1,0,8,0,0,0,2,0,0,0,,0,1,
-Thunderclap,Attack,1,4,0,0,0,0,1,0,0,0,,0,1,
-Thunderclap+,Attack,1,7,0,0,0,0,1,0,0,0,,0,1,
-True Grit,Skill,1,0,7,0,0,0,0,0,0,0,,0,1,exhaust 1 random card in hand
-True Grit+,Skill,1,0,9,0,0,0,0,0,0,0,,0,1,exhaust 1 card in hand
-Twin Strike,Attack,1,5,0,0,0,0,0,0,0,0,,0,2,
-Twin Strike+,Attack,1,7,0,0,0,0,0,0,0,0,,0,2,
-Uppercut,Attack,2,13,0,0,0,0,1,1,0,0,,0,1,
-Uppercut+,Attack,2,13,0,0,0,0,2,2,0,0,,0,1,
-Inflame,Power,1,0,0,0,0,2,0,0,0,0,,0,,
-Inflame+,Power,1,0,0,0,0,3,0,0,0,0,,0,,
-Anger,Attack,0,6,0,0,0,0,0,0,0,0,,0,1,adds copy to discard
-Anger+,Attack,0,8,0,0,0,0,0,0,0,0,,0,1,adds copy to discard
-Cinder,Attack,2,17,0,0,0,0,0,0,0,0,,0,1,exhausts top card in draw pile
-Cinder+,Attack,2,22,0,0,0,0,0,0,0,0,,0,1,exhausts top card in draw pile
-Fight Me,Attack,2,5,0,0,0,2,0,0,0,0,,0,2,gives 1 str to enemy
-Fight Me+,Attack,2,6,0,0,0,3,0,0,0,0,,0,2,gives 1 str to enemy
-Howl From Beyond,Attack,3,16,0,0,0,0,0,0,0,0,,0,1,replays from exhaust next turn
-Howl From Beyond+,Attack,3,21,0,0,0,0,0,0,0,0,,0,1,replays from exhaust next turn
-Hemokinesis,Attack,1,14,0,0,0,0,0,0,0,0,,0,1,deals 2 damage to self
-Hemokinesis+,Attack,1,19,0,0,0,0,0,0,0,0,,0,1,deals 2 damage to self
-Mangle,Attack,3,15,0,0,0,0,0,0,0,0,,0,1,enemy loses 10 str
-Mangle+,Attack,3,20,0,0,0,0,0,0,0,0,,0,1,enemy loses 15 str
-Setup Strike,Attack,1,7,0,0,0,2,0,0,0,0,,0,1,
-Setup Strike+,Attack,1,9,0,0,0,3,0,0,0,0,,0,1,
-Spite,Attack,0,6,0,0,0,0,0,0,0,0,,0,1,draws a card if player took damage this turn
-Spite+,Attack,0,9,0,0,0,0,0,0,0,0,,0,1,draws a card if player took damage this turn
-Stomp,Attack,3,12,0,0,0,0,0,0,0,0,,0,1,costs 1 less per attack played this turn
-Stomp+,Attack,3,15,0,0,0,0,0,0,0,0,,0,1,costs 1 less per attack played this turn
-Unrelenting,Attack,2,12,0,0,0,0,0,0,0,0,,0,1,next attack played this turn is free
-Unrelenting+,Attack,2,18,0,0,0,0,0,0,0,0,,0,1,next attack played this turn is free
-Tremble,Skill,1,0,0,0,0,0,2,0,0,0,,0,,
-Tremble+,Skill,1,0,0,0,0,0,3,0,0,0,,0,,
-Bully,Attack,0,4,0,0,0,0,0,0,0,0,,0,1,deals 2 extra dmg per vulnerable stack on enemy
-Bully+,Attack,0,4,0,0,0,0,0,0,0,0,,0,1,deals 3 extra dmg per vulnerable stack on enemy
-Breakthrough,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,lose 1 hp
-Breakthrough+,Attack,1,13,0,0,0,0,0,0,0,0,,0,1,lose 1 hp
-Blood Wall,Skill,2,0,16,0,0,0,0,0,0,0,,0,,lose 2 hp
-Blood Wall+,Skill,2,0,20,0,0,0,0,0,0,0,,0,,lose 2 hp
-Ashen Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,deals 3 extra dmg per card in exhaust pile
-Ashen Strike+,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,deals 4 extra dmg per card in exhaust pile
-Brand,Skill,0,0,0,0,0,1,0,0,0,0,,0,,exhaust 1 card; lose 1 hp
-Brand+,Skill,0,0,0,0,0,2,0,0,0,0,,0,,exhaust 1 card; lose 1 hp
+Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Notes
+Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,0,
+Strike+,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,
+Defend,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,
+Defend+,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,0,
+Bash,Attack,2,8,0,0,0,0,2,0,0,0,,0,1,0,
+Bash+,Attack,2,10,0,0,0,0,3,0,0,0,,0,1,0,
+Neutralize,Attack,0,3,0,0,0,0,0,1,0,0,,0,1,0,
+Neutralize+,Attack,0,4,0,0,0,0,0,2,0,0,,0,1,0,
+Survivor,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,0,
+Survivor+,Skill,1,0,11,0,0,0,0,0,0,0,,0,1,0,
+Bludgeon,Attack,3,32,0,0,0,0,0,0,0,0,,0,1,0,
+Bludgeon+,Attack,3,42,0,0,0,0,0,0,0,0,,0,1,0,
+Break,Attack,2,20,0,0,0,0,5,0,0,0,,0,1,0,
+Break+,Attack,2,25,0,0,0,0,7,0,0,0,,0,1,0,
+Feast,Attack,1,10,0,0,0,0,0,0,0,0,,0,1,0,
+Feast+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,
+Headbutt,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,move 1 specific card from discard to top of draw
+Headbutt+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,move 1 specific card from discard to top of draw
+Impervious,Skill,2,0,30,0,0,0,0,0,0,0,,0,1,0,
+Impervious+,Skill,2,0,40,0,0,0,0,0,0,0,,0,1,0,
+Iron Wave,Attack,1,5,5,0,0,0,0,0,0,0,,0,1,0,
+Iron Wave+,Attack,1,7,7,0,0,0,0,0,0,0,,0,1,0,
+Molten Fist,Attack,1,10,0,0,0,0,0,0,0,0,,0,1,0,doubles enemy vulnerable stacks; exhausts
+Molten Fist+,Attack,1,14,0,0,0,0,0,0,0,0,,0,1,0,doubles enemy vulnerable stacks; exhausts
+Pommel Strike,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,
+Pommel Strike+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,
+Shrug It Off,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,0,
+Shrug It Off+,Skill,1,0,11,0,0,0,0,0,0,0,,0,1,0,
+Sword Boomerang,Attack,1,3,0,0,0,0,0,0,0,0,,0,3,0,
+Sword Boomerang+,Attack,1,3,0,0,0,0,0,0,0,0,,0,4,0,
+Taunt,Skill,1,0,7,0,0,0,1,0,0,0,,0,1,0,
+Taunt+,Skill,1,0,8,0,0,0,2,0,0,0,,0,1,0,
+Thunderclap,Attack,1,4,0,0,0,0,1,0,0,0,,0,1,0,
+Thunderclap+,Attack,1,7,0,0,0,0,1,0,0,0,,0,1,0,
+True Grit,Skill,1,0,7,0,0,0,0,0,0,0,,0,1,0,exhaust 1 random card in hand
+True Grit+,Skill,1,0,9,0,0,0,0,0,0,0,,0,1,0,exhaust 1 card in hand
+Twin Strike,Attack,1,5,0,0,0,0,0,0,0,0,,0,2,0,
+Twin Strike+,Attack,1,7,0,0,0,0,0,0,0,0,,0,2,0,
+Uppercut,Attack,2,13,0,0,0,0,1,1,0,0,,0,1,0,
+Uppercut+,Attack,2,13,0,0,0,0,2,2,0,0,,0,1,0,
+Inflame,Power,1,0,0,0,0,2,0,0,0,0,,0,1,0,
+Inflame+,Power,1,0,0,0,0,3,0,0,0,0,,0,1,0,
+Anger,Attack,0,6,0,0,0,0,0,0,0,0,,0,1,0,adds copy to discard
+Anger+,Attack,0,8,0,0,0,0,0,0,0,0,,0,1,0,adds copy to discard
+Cinder,Attack,2,17,0,0,0,0,0,0,0,0,,0,1,0,exhausts top card in draw pile
+Cinder+,Attack,2,22,0,0,0,0,0,0,0,0,,0,1,0,exhausts top card in draw pile
+Fight Me,Attack,2,5,0,0,0,2,0,0,0,0,,0,2,0,gives 1 str to enemy
+Fight Me+,Attack,2,6,0,0,0,3,0,0,0,0,,0,2,0,gives 1 str to enemy
+Howl From Beyond,Attack,3,16,0,0,0,0,0,0,0,0,,0,1,0,replays from exhaust next turn
+Howl From Beyond+,Attack,3,21,0,0,0,0,0,0,0,0,,0,1,0,replays from exhaust next turn
+Hemokinesis,Attack,1,14,0,0,0,0,0,0,0,0,,0,1,0,deals 2 damage to self
+Hemokinesis+,Attack,1,19,0,0,0,0,0,0,0,0,,0,1,0,deals 2 damage to self
+Mangle,Attack,3,15,0,0,0,0,0,0,0,0,,0,1,0,enemy loses 10 str
+Mangle+,Attack,3,20,0,0,0,0,0,0,0,0,,0,1,0,enemy loses 15 str
+Setup Strike,Attack,1,7,0,0,0,2,0,0,0,0,,0,1,0,
+Setup Strike+,Attack,1,9,0,0,0,3,0,0,0,0,,0,1,0,
+Spite,Attack,0,6,0,0,0,0,0,0,0,0,,0,1,0,draws a card if player took damage this turn
+Spite+,Attack,0,9,0,0,0,0,0,0,0,0,,0,1,0,draws a card if player took damage this turn
+Stomp,Attack,3,12,0,0,0,0,0,0,0,0,,0,1,0,costs 1 less per attack played this turn
+Stomp+,Attack,3,15,0,0,0,0,0,0,0,0,,0,1,0,costs 1 less per attack played this turn
+Unrelenting,Attack,2,12,0,0,0,0,0,0,0,0,,0,1,0,next attack played this turn is free
+Unrelenting+,Attack,2,18,0,0,0,0,0,0,0,0,,0,1,0,next attack played this turn is free
+Tremble,Skill,1,0,0,0,0,0,2,0,0,0,,0,1,0,
+Tremble+,Skill,1,0,0,0,0,0,3,0,0,0,,0,1,0,
+Bully,Attack,0,4,0,0,0,0,0,0,0,0,,0,1,0,deals 2 extra dmg per vulnerable stack on enemy
+Bully+,Attack,0,4,0,0,0,0,0,0,0,0,,0,1,0,deals 3 extra dmg per vulnerable stack on enemy
+Breakthrough,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,lose 1 hp
+Breakthrough+,Attack,1,13,0,0,0,0,0,0,0,0,,0,1,0,lose 1 hp
+Blood Wall,Skill,2,0,16,0,0,0,0,0,0,0,,0,1,0,lose 2 hp
+Blood Wall+,Skill,2,0,20,0,0,0,0,0,0,0,,0,1,0,lose 2 hp
+Ashen Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,3,
+Ashen Strike+,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,4,
+Brand,Skill,0,0,0,0,0,1,0,0,0,0,,0,1,0,exhaust 1 card; lose 1 hp
+Brand+,Skill,0,0,0,0,0,2,0,0,0,0,,0,1,0,exhaust 1 card; lose 1 hp
