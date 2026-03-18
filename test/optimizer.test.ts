@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardEffectiveValues, simulateCombo, optimalComboOrder, PlayerState } from "../optimizer.js";
+import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, PlayerState } from "../optimizer.js";
 import { Card } from "../cards.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -368,4 +368,45 @@ test("Whirlwind sorts after Inflame", () => {
   const ordered = optimalComboOrder(["Whirlwind", "Inflame"], whirlDb, player, "dmg");
   assert.equal(ordered[0], "Inflame");
   assert.equal(ordered[1], "Whirlwind");
+});
+
+// ─── energyGain ───────────────────────────────────────────────────────────────
+
+const energyDb = {
+  Turbo:       makeCard({ energyGain: 2, cost: 0 }),
+  Cinder:      makeCard({ damage: 12, cost: 2 }),
+  Strike:      makeCard({ damage: 6,  cost: 1 }),
+};
+
+test("energyGain: applyCardState increases energyRemaining", () => {
+  const card = makeCard({ energyGain: 2, cost: 0 });
+  const next = applyCardState({ ...basePlayer, energyRemaining: 1 }, card);
+  assert.equal(next.energyRemaining, 3);
+});
+
+test("energyGain: card is unaffordable without the energy it generates", () => {
+  // energyRemaining=1, Cinder costs 2 → should contribute 0 damage
+  const card = makeCard({ damage: 12, cost: 2 });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 1 });
+  assert.equal(damage, 0);
+});
+
+test("energyGain: card is affordable after energy is generated", () => {
+  // energyRemaining=3 (after Turbo gave +2), Cinder costs 2 → full damage
+  const card = makeCard({ damage: 12, cost: 2 });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 3 });
+  assert.equal(damage, 12);
+});
+
+test("energyGain: Turbo sorts before Cinder when Cinder needs the energy", () => {
+  const player = { ...basePlayer, energyRemaining: 1 };
+  const ordered = optimalComboOrder(["Cinder", "Turbo"], energyDb, player, "dmg");
+  assert.equal(ordered[0], "Turbo");
+  assert.equal(ordered[1], "Cinder");
+});
+
+test("energyGain: simulateCombo gives correct damage with Turbo before Cinder", () => {
+  const player = { ...basePlayer, energyRemaining: 1 };
+  const { totalDamage } = simulateCombo(["Turbo", "Cinder"], energyDb, player);
+  assert.equal(totalDamage, 12);
 });

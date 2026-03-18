@@ -94,18 +94,26 @@ function bestPlay(hand: string[], db: CardDb, energy: number, mode: Mode, player
   for (let mask = 1; mask < (1 << playable.length); mask++) {
     const combo: string[] = [];
     let cost = 0;
+    let energyGainSum = 0;
     for (let i = 0; i < playable.length; i++) {
       if (mask & (1 << i)) {
         combo.push(playable[i]);
-        cost += db[playable[i]]!.cost;
+        const c = db[playable[i]]!;
+        if (!c.xCost) cost += c.cost;
+        energyGainSum += c.energyGain;
       }
     }
-    if (cost > energy) continue;
-    // X-cost cards (e.g. Whirlwind) spend all remaining energy
+    // Energy-generating cards reduce the effective cost of the combo
+    if (cost - energyGainSum > energy) continue;
+    // Set energyRemaining so ordering and affordability checks work correctly:
+    //   xCost cards (Whirlwind) get all energy left after other cards are paid for;
+    //   energy-gain combos track from full energy so Turbo can unlock expensive cards.
     let comboPlayer = player;
     if (combo.some(n => db[n]?.xCost)) {
       comboPlayer = { ...player, energyRemaining: energy - cost };
       cost = energy;
+    } else {
+      comboPlayer = { ...player, energyRemaining: energy };
     }
     const ordered = optimalComboOrder(combo, db, comboPlayer, mode);
     const { totalDamage, totalBlock } = simulateCombo(ordered, db, comboPlayer);

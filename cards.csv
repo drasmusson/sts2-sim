@@ -77,3 +77,11 @@ Body Slam,Attack,1,0,0,0,0,0,0,0,0,0,,0,1,0,1,0,
 Body Slam+,Attack,0,0,0,0,0,0,0,0,0,0,,0,1,0,1,0,
 Whirlwind,Attack,0,5,0,0,0,0,0,0,0,0,,0,1,0,0,1,
 Whirlwind+,Attack,0,8,0,0,0,0,0,0,0,0,,0,1,0,0,1,
+Bloodletting,Skill,0,0,0,0,2,0,0,0,0,0,,0,1,0,0,0,lose 3 hp
+Bloodletting+,Skill,0,0,0,0,3,0,0,0,0,0,,0,1,0,0,0,lose 3 hp
+Expect a Fight,Skill,2,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,gain 1 energy per attack in hand; energyGain not modeled — use --energy workaround
+Expect a Fight+,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,gain 1 energy per attack in hand; energyGain not modeled — use --energy workaround
+Forgotten Ritual,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,if exhausted a card this turn gain 3 energy; conditional — use --energy workaround
+Forgotten Ritual+,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,if exhausted a card this turn gain 4 energy; conditional — use --energy workaround
+Offering,Skill,0,0,0,3,2,0,0,0,0,0,,0,1,0,0,0,lose 6 hp; draw 3 not modeled
+Offering+,Skill,0,0,0,5,2,0,0,0,0,0,,0,1,0,0,0,lose 6 hp; draw 5 not modeled

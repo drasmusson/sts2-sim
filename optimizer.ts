@@ -36,6 +36,11 @@ const ORB_BASE: Record<string, { damage: number; block: number }> = {
 
 // Compute the effective damage and block a card contributes given player state.
 export function cardEffectiveValues(card: Card, player: PlayerState): CardValues {
+  // Energy constraint: when tracking energy (energyRemaining > 0), an unaffordable
+  // card contributes nothing. energyRemaining = 0 means not tracking (legacy / default).
+  if (player.energyRemaining > 0 && card.cost > player.energyRemaining) {
+    return { damage: 0, block: 0 };
+  }
   const { strength, vulnerable, weak, focus, poisonTriggers } = player;
 
   // Attack damage: scaled by Strength, Vulnerable, Weak, Exhaust
@@ -87,6 +92,8 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
   if (card.strGain > 0)     next = { ...next, strength: next.strength + card.strGain };
   if (card.vulnApplied > 0) next = { ...next, vulnerable: true };
   if (card.weakApplied > 0) next = { ...next, enemyWeak: true };
+  if (card.energyGain > 0 && next.energyRemaining > 0)
+                            next = { ...next, energyRemaining: next.energyRemaining + card.energyGain };
   const { block } = cardEffectiveValues(card, state);
   if (block > 0)            next = { ...next, currentBlock: next.currentBlock + block };
   return next;
