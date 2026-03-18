@@ -21,6 +21,7 @@ export interface Card {
   hits:         number;
   exhaustBonus:  number;
   blockAsDamage: boolean;
+  xCost:         boolean;
   notes:         string;
 }
 
@@ -64,6 +65,7 @@ export function loadCards(csvPath: string): CardDb {
       hits:        parseInt(row["Hits"])           || 1,
       exhaustBonus:  parseInt(row["Exhaust Bonus"])   || 0,
       blockAsDamage: row["Block As Damage"] === "1",
+      xCost:         row["X Cost"] === "1",
       notes:         row["Notes"] || "",
     };
   }

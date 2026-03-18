@@ -8,9 +8,10 @@ export interface PlayerState {
   weak:           boolean;
   focus:          number;
   poisonTriggers: number;
-  exhaust:        number;
-  currentBlock:   number;
-  enemyAttack:    number;
+  exhaust:         number;
+  currentBlock:    number;
+  energyRemaining: number;
+  enemyAttack:     number;
   enemyHits:      number;
   enemyWeak:      boolean;
 }
@@ -44,7 +45,8 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
                + strength + card.exhaustBonus * player.exhaust;
     const vulnMult = vulnerable ? 1.5 : 1;
     const weakMult = weak       ? 0.75 : 1;
-    damage += Math.floor(base * vulnMult * weakMult * card.hits);
+    const hits     = card.xCost ? player.energyRemaining : card.hits;
+    damage += Math.floor(base * vulnMult * weakMult * hits);
   }
 
   // Orb damage: only for orbs that actually deal damage (e.g. lightning)

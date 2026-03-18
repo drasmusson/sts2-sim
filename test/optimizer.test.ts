@@ -7,7 +7,7 @@ import { Card } from "../cards.js";
 
 const basePlayer: PlayerState = {
   strength: 0, vulnerable: false, weak: false, focus: 0, poisonTriggers: 1,
-  exhaust: 0, currentBlock: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false,
+  exhaust: 0, currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false,
 };
 
 function makeCard(overrides: Partial<Card>): Card {
@@ -15,7 +15,7 @@ function makeCard(overrides: Partial<Card>): Card {
     type: "attack", cost: 1,
     damage: 0, block: 0, poison: 0, doom: 0,
     orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0, weakApplied: 0,
-    hits: 1, exhaustBonus: 0, blockAsDamage: false, draw: 0, energyGain: 0, notes: "",
+    hits: 1, exhaustBonus: 0, blockAsDamage: false, xCost: false, draw: 0, energyGain: 0, notes: "",
     ...overrides,
   };
 }
@@ -318,4 +318,54 @@ test("Body Slam sorts after block cards", () => {
   const ordered = optimalComboOrder(["Body Slam", "Defend"], bodyDb, basePlayer, "dmg");
   assert.equal(ordered[0], "Defend");
   assert.equal(ordered[1], "Body Slam");
+});
+
+// ─── xCost (Whirlwind) ────────────────────────────────────────────────────────
+
+test("Whirlwind: 0 damage with 0 energy", () => {
+  const card = makeCard({ damage: 5, xCost: true });
+  const { damage } = cardEffectiveValues(card, basePlayer); // energyRemaining: 0
+  assert.equal(damage, 0);
+});
+
+test("Whirlwind: 5 damage per energy (3 energy → 15)", () => {
+  const card = makeCard({ damage: 5, xCost: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 3 });
+  assert.equal(damage, 15);
+});
+
+test("Whirlwind: strength adds per energy spent", () => {
+  // (5 + 2 str) × 3 energy = 21
+  const card = makeCard({ damage: 5, xCost: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 3, strength: 2 });
+  assert.equal(damage, 21);
+});
+
+test("Whirlwind: scales with vulnerable", () => {
+  // floor(5 × 1.5 × 2 energy) = floor(15) = 15  (same rounding as all multi-hit cards)
+  const card = makeCard({ damage: 5, xCost: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 2, vulnerable: true });
+  assert.equal(damage, 15);
+});
+
+test("Whirlwind: Inflame before Whirlwind boosts damage", () => {
+  const whirlDb = {
+    Inflame:    makeCard({ strGain: 2, cost: 1 }),
+    Whirlwind:  makeCard({ damage: 5, xCost: true, cost: 0 }),
+  };
+  // 3 energy total: Inflame costs 1, Whirlwind gets 2 → (5+2)×2 = 14
+  const player = { ...basePlayer, energyRemaining: 2 };
+  const { totalDamage } = simulateCombo(["Inflame", "Whirlwind"], whirlDb, player);
+  assert.equal(totalDamage, 14);
+});
+
+test("Whirlwind sorts after Inflame", () => {
+  const whirlDb = {
+    Inflame:   makeCard({ strGain: 2, cost: 1 }),
+    Whirlwind: makeCard({ damage: 5, xCost: true, cost: 0 }),
+  };
+  const player = { ...basePlayer, energyRemaining: 2 };
+  const ordered = optimalComboOrder(["Whirlwind", "Inflame"], whirlDb, player, "dmg");
+  assert.equal(ordered[0], "Inflame");
+  assert.equal(ordered[1], "Whirlwind");
 });

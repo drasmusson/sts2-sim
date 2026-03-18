@@ -101,8 +101,14 @@ function bestPlay(hand: string[], db: CardDb, energy: number, mode: Mode, player
       }
     }
     if (cost > energy) continue;
-    const ordered = optimalComboOrder(combo, db, player, mode);
-    const { totalDamage, totalBlock } = simulateCombo(ordered, db, player);
+    // X-cost cards (e.g. Whirlwind) spend all remaining energy
+    let comboPlayer = player;
+    if (combo.some(n => db[n]?.xCost)) {
+      comboPlayer = { ...player, energyRemaining: energy - cost };
+      cost = energy;
+    }
+    const ordered = optimalComboOrder(combo, db, comboPlayer, mode);
+    const { totalDamage, totalBlock } = simulateCombo(ordered, db, comboPlayer);
     const candidate: PlayResult = { played: ordered, totalDamage, totalBlock, energySpent: cost };
     if (!best
       || candidate[primary]   > best[primary]
@@ -298,8 +304,9 @@ const player: PlayerState = {
   enemyAttack:    parseIntArg(args["enemy-attack"], 0),
   enemyHits:      parseIntArg(args["enemy-hits"], 1),
   enemyWeak:      !!args["enemy-weak"],
-  exhaust:        parseIntArg(args.exhaust, 0),
-  currentBlock:   0,
+  exhaust:         parseIntArg(args.exhaust, 0),
+  currentBlock:    0,
+  energyRemaining: 0,
 };
 
 if (!drawPile.length) {
