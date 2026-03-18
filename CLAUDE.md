@@ -22,6 +22,7 @@ Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimal
 - `--energy` — energy available this turn
 - `--draws` — cards drawn per turn
 - `--mode` — `dmg` (maximise damage) or `block` (maximise block)
+- `--sims N` — number of simulations (default 10000)
 
 **Player state flags**
 - `--strength N` — flat bonus added to attack damage

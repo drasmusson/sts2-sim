@@ -122,6 +122,8 @@ export function optimalComboOrder(combo: string[], db: CardDb, player: PlayerSta
     const ba = cardEffectiveValues(cardB, player)[primary]
              + cardEffectiveValues(cardA, stateAfterB)[primary];
 
-    return ba - ab;
+    // Tiebreak on card name for stable ordering when values are equal
+    if (ba !== ab) return ba - ab;
+    return a < b ? -1 : a > b ? 1 : 0;
   });
 }

@@ -187,6 +187,13 @@ test("strGain card sorts before damage card", () => {
   assert.equal(ordered[0], "Inflame");
 });
 
+test("strGain card sorts before damage card regardless of input order", () => {
+  const a = optimalComboOrder(["Strike", "Inflame"], strDb, basePlayer, "dmg");
+  const b = optimalComboOrder(["Inflame", "Strike"], strDb, basePlayer, "dmg");
+  assert.equal(a.join(" → "), b.join(" → "));
+  assert.equal(a[0], "Inflame");
+});
+
 // ─── optimalComboOrder ────────────────────────────────────────────────────────
 
 const db = {
@@ -204,6 +211,34 @@ test("Bash sorts before Strike in dmg mode", () => {
 test("ordering is stable when no state interaction", () => {
   const ordered = optimalComboOrder(["Strike", "Strike"], db, basePlayer, "dmg");
   assert.equal(ordered.length, 2);
+});
+
+test("equal-value cards are ordered alphabetically as tiebreak", () => {
+  // Strike and Twin Strike have no state interaction — equal pairwise value
+  // Alphabetical tiebreak: Strike < Twin Strike
+  const equalDb = {
+    Strike:      makeCard({ damage: 6, cost: 1 }),
+    "Twin Strike": makeCard({ damage: 6, cost: 1 }),
+  };
+  const ordered = optimalComboOrder(["Twin Strike", "Strike"], equalDb, basePlayer, "dmg");
+  assert.equal(ordered[0], "Strike");
+  assert.equal(ordered[1], "Twin Strike");
+});
+
+test("optimalComboOrder produces same result regardless of input order", () => {
+  // Strike + Twin Strike + Twin Strike: no state interaction, should always sort the same
+  const multiDb = {
+    Strike:        makeCard({ damage: 6, cost: 1 }),
+    "Twin Strike": makeCard({ damage: 10, cost: 1 }),
+  };
+  const permutations = [
+    ["Strike", "Twin Strike", "Twin Strike"],
+    ["Twin Strike", "Strike", "Twin Strike"],
+    ["Twin Strike", "Twin Strike", "Strike"],
+  ];
+  const results = permutations.map(p => optimalComboOrder(p, multiDb, basePlayer, "dmg").join(" → "));
+  assert.equal(results[1], results[0]);
+  assert.equal(results[2], results[0]);
 });
 
 // ─── simulateCombo ────────────────────────────────────────────────────────────

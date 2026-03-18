@@ -14,7 +14,7 @@ import { simulateCombo, optimalComboOrder, PlayerState } from "./optimizer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CSV_PATH = path.join(__dirname, "cards.csv");
-const N = 10_000;
+let N = 10_000;
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Relic { extraDraw?: number; extraEnergy?: number; randomizeCosts?: boolean; }
@@ -154,7 +154,7 @@ function runMC(config: Config): MCResult {
   const drawFreq: Record<string, number> = {};
   const dmgDist:  Record<number, number> = {};
   const blkDist:  Record<number, number> = {};
-  const playFreq: Record<string, { count: number; damage: number; block: number }> = {};
+  const playFreq: Record<string, { count: number; totalDamage: number; totalBlock: number }> = {};
 
   for (let i = 0; i < N; i++) {
     const r = runOneSim(config);
@@ -164,8 +164,10 @@ function runMC(config: Config): MCResult {
     blkDist[r.block]  = (blkDist[r.block]  ?? 0) + 1;
     const key = r.play.played.join(" → ");
     if (key) {
-      if (!playFreq[key]) playFreq[key] = { count: 0, damage: r.damage, block: r.block };
+      if (!playFreq[key]) playFreq[key] = { count: 0, totalDamage: 0, totalBlock: 0 };
       playFreq[key]!.count++;
+      playFreq[key]!.totalDamage += r.damage;
+      playFreq[key]!.totalBlock  += r.block;
     }
     for (const c of new Set(r.hand)) {
       drawFreq[c] = (drawFreq[c] ?? 0) + 1;
@@ -195,8 +197,11 @@ function runMC(config: Config): MCResult {
     topPlays: Object.entries(playFreq)
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
-      .map(([combo, { count, damage, block }]) => ({
-        combo, damage, block, pct: (count / N * 100).toFixed(1),
+      .map(([combo, { count, totalDamage, totalBlock }]) => ({
+        combo,
+        damage: Math.round(totalDamage / count),
+        block:  Math.round(totalBlock  / count),
+        pct: (count / N * 100).toFixed(1),
       })),
   };
 }
@@ -275,6 +280,8 @@ function printResults(results: MCResult, config: Config): void {
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 const args = parseArgs(process.argv);
 
+N = parseIntArg(args.sims, N);
+
 const drawPile    = parseList(args.draw);
 const discardPile = parseList(args.discard);
 const energy      = parseIntArg(args.energy, 3);
@@ -304,6 +311,10 @@ const db = loadCards(CSV_PATH);
 const unknown = [...drawPile, ...discardPile].filter(c => !db[c]);
 if (unknown.length) {
   console.warn(`Warning: unknown cards (will be ignored): ${[...new Set(unknown)].join(", ")}`);
+  const effectiveDraw    = drawPile.filter(c => db[c]);
+  const effectiveDiscard = discardPile.filter(c => db[c]);
+  console.warn(`Effective draw pile    : ${effectiveDraw.join(", ") || "(empty)"}`);
+  console.warn(`Effective discard pile : ${effectiveDiscard.join(", ") || "(empty)"}`);
 }
 
 const config: Config = { drawPile, discardPile, energy, draws, relics, db, mode, player };
