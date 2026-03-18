@@ -1,6 +1,6 @@
-const { test } = require("node:test");
-const assert = require("node:assert/strict");
-const { shuffle, drawCards } = require("../draw");
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { shuffle, drawCards } from "../src/draw.js";
 
 // ─── shuffle ──────────────────────────────────────────────────────────────────
 
@@ -34,7 +34,7 @@ test("drawn cards are removed from draw pile", () => {
 });
 
 test("reshuffles discard when draw pile runs out", () => {
-  const { hand, drawPile, discardPile } = drawCards(["a"], ["b", "c"], 3);
+  const { hand, discardPile } = drawCards(["a"], ["b", "c"], 3);
   assert.equal(hand.length, 3);
   assert.equal(discardPile.length, 0);
 });

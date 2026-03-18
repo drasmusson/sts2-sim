@@ -1,6 +1,6 @@
 // ─── DRAW ENGINE ─────────────────────────────────────────────────────────────
 
-function shuffle(arr) {
+export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -9,10 +9,16 @@ function shuffle(arr) {
   return a;
 }
 
-function drawCards(drawPile, discardPile, n) {
+export interface DrawResult {
+  hand:        string[];
+  drawPile:    string[];
+  discardPile: string[];
+}
+
+export function drawCards(drawPile: string[], discardPile: string[], n: number): DrawResult {
   let draw = [...drawPile];
   let discard = [...discardPile];
-  const hand = [];
+  const hand: string[] = [];
 
   for (let i = 0; i < n; i++) {
     if (draw.length === 0) {
@@ -20,10 +26,8 @@ function drawCards(drawPile, discardPile, n) {
       draw = shuffle(discard);
       discard = [];
     }
-    hand.push(draw.pop());
+    hand.push(draw.pop()!);
   }
 
   return { hand, drawPile: draw, discardPile: discard };
 }
-
-module.exports = { shuffle, drawCards };

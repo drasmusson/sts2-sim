@@ -5,14 +5,14 @@ A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a
 
 ## How to run
 ```bash
-node sim.js --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
-node sim.js --draw "..." --discard "..." --energy 3 --draws 5 --mode block
+node --import tsx/esm src/sim.ts --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
+node --import tsx/esm src/sim.ts --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 ```
+Requires Node 18+ and `tsx` (`npm install`).
 
 ## Tests
-Requires Node 18+. Uses the built-in test runner, no dependencies.
 ```bash
-node --test test/*.js
+node --import tsx/esm --test test/*.ts
 ```
 Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimalComboOrder`, `drawCards`, `shuffle`.
 
@@ -22,6 +22,7 @@ Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimal
 - `--energy` — energy available this turn
 - `--draws` — cards drawn per turn
 - `--mode` — `dmg` (maximise damage) or `block` (maximise block)
+- `--sims N` — number of simulations (default 10000)
 
 **Player state flags**
 - `--strength N` — flat bonus added to attack damage
@@ -45,13 +46,15 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - Upgraded cards are separate rows, identified by `+` suffix (e.g. `Strike+`)
 
 **CSV schema:**
-`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Notes`
+`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Exhaust Bonus | Notes`
 
 - `Damage` — attack damage (scales with Strength, Vulnerable, Weak)
 - `Poison` — poison stacks applied per play
 - `Doom` — doom stacks applied per play (modeled as flat damage; no scaling)
 - `Orb Type` — `lightning`, `frost`, or empty; extensible to future orb types
 - `Orb Count` — orbs channeled per play (defaults to 1 when Orb Type is set)
+- `Exhaust Bonus` — bonus damage per card in the exhaust pile (e.g. Ashen Strike)
+- `Energy Gain` — parsed and stored but **not yet used by the sim**; energy-generating cards won't make that energy available for subsequent cards in the same turn
 
 ## Key design decisions
 
@@ -113,8 +116,9 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 3. Aggregate damage/block distributions + card frequencies, print
 
 ### Non-obvious implementation details
-- `bestPlay` (sim.js) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
-- Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.js, not in the CSV.
+- `bestPlay` (sim.ts) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
+- Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.ts, not in the CSV.
+- The project is TypeScript. JS source files were removed; original JS is preserved on the `main` branch.
 - `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
 - `Draw` column in CSV is populated but intentionally ignored by the sim.
 

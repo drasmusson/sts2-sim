@@ -1,0 +1,29 @@
+{
+  "name": "sts2-sim",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "cards.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "node --import tsx/esm --test test/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drasmusson/sts2-sim.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/drasmusson/sts2-sim/issues"
+  },
+  "homepage": "https://github.com/drasmusson/sts2-sim#readme",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
