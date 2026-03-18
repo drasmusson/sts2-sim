@@ -246,8 +246,14 @@ function printResults(results: MCResult, config: Config): void {
   console.log("  SLAY THE SPIRE 2 — DRAW SIMULATOR");
   console.log(line);
   console.log(`  Simulations : ${N.toLocaleString()}`);
-  console.log(`  Draw pile   : ${config.drawPile.length} cards`);
-  console.log(`  Discard     : ${config.discardPile.length} cards`);
+  const summarizePile = (pile: string[]) => {
+    if (!pile.length) return "(empty)";
+    const counts: Record<string, number> = {};
+    for (const c of pile) counts[c] = (counts[c] ?? 0) + 1;
+    return Object.entries(counts).map(([c, n]) => n > 1 ? `${c} ×${n}` : c).join(", ");
+  };
+  console.log(`  Draw pile   : ${config.drawPile.length} cards — ${summarizePile(config.drawPile)}`);
+  console.log(`  Discard     : ${config.discardPile.length} cards — ${summarizePile(config.discardPile)}`);
   console.log(`  Drawing     : ${config.draws} cards  |  Energy: ${config.energy}`);
   if (config.relics.length) console.log(`  Relics      : ${config.relics.join(", ")}`);
   console.log(`  Mode        : ${config.mode === "dmg" ? "Maximize Damage" : "Maximize Block"}`);
