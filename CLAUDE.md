@@ -5,14 +5,14 @@ A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a
 
 ## How to run
 ```bash
-node sim.js --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
-node sim.js --draw "..." --discard "..." --energy 3 --draws 5 --mode block
+node --import tsx/esm sim.ts --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
+node --import tsx/esm sim.ts --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 ```
+Requires Node 18+ and `tsx` (`npm install`).
 
 ## Tests
-Requires Node 18+. Uses the built-in test runner, no dependencies.
 ```bash
-node --test test/*.js
+node --import tsx/esm --test test/*.ts
 ```
 Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimalComboOrder`, `drawCards`, `shuffle`.
 
@@ -113,8 +113,9 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 3. Aggregate damage/block distributions + card frequencies, print
 
 ### Non-obvious implementation details
-- `bestPlay` (sim.js) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
-- Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.js, not in the CSV.
+- `bestPlay` (sim.ts) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
+- Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.ts, not in the CSV.
+- The project is TypeScript (on the `typescript` branch). JS files remain on `main` as fallback.
 - `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
 - `Draw` column in CSV is populated but intentionally ignored by the sim.
 
