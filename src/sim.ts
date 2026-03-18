@@ -10,7 +10,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { shuffle, drawCards } from "./draw.js";
 import { loadCards, CardDb } from "./cards.js";
-import { simulateCombo, optimalComboOrder, PlayerState } from "./optimizer.js";
+import { bestPlay, PlayerState, Mode, PlayResult } from "./optimizer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CSV_PATH = path.join(__dirname, "../cards.csv");
@@ -18,10 +18,7 @@ let N = 10_000;
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Relic { extraDraw?: number; extraEnergy?: number; randomizeCosts?: boolean; }
-interface PlayResult { played: string[]; totalDamage: number; totalBlock: number; energySpent: number; }
 interface SimResult  { hand: string[]; damage: number; block: number; play: PlayResult; }
-
-type Mode = "dmg" | "block";
 
 interface Config {
   drawPile:    string[];
@@ -80,54 +77,6 @@ function parseIntArg(val: string | true | undefined, fallback: number): number {
   return parseInt(val) || fallback;
 }
 
-// ─── BEST PLAY ───────────────────────────────────────────────────────────────
-function bestPlay(hand: string[], db: CardDb, energy: number, mode: Mode, player: PlayerState): PlayResult {
-  const playable = hand.filter(name => {
-    const c = db[name];
-    return c && c.cost <= energy;
-  });
-
-  const primary   = mode === "dmg" ? "totalDamage" : "totalBlock";
-  const secondary = mode === "dmg" ? "totalBlock"  : "totalDamage";
-  let best: PlayResult | null = null;
-
-  for (let mask = 1; mask < (1 << playable.length); mask++) {
-    const combo: string[] = [];
-    let cost = 0;
-    let energyGainSum = 0;
-    for (let i = 0; i < playable.length; i++) {
-      if (mask & (1 << i)) {
-        combo.push(playable[i]);
-        const c = db[playable[i]]!;
-        if (!c.xCost) cost += c.cost;
-        energyGainSum += c.energyGain;
-      }
-    }
-    // Energy-generating cards reduce the effective cost of the combo
-    if (cost - energyGainSum > energy) continue;
-    // Set energyRemaining so ordering and affordability checks work correctly:
-    //   xCost cards (Whirlwind) get all energy left after other cards are paid for;
-    //   energy-gain combos track from full energy so Turbo can unlock expensive cards.
-    let comboPlayer = player;
-    if (combo.some(n => db[n]?.xCost)) {
-      comboPlayer = { ...player, energyRemaining: energy - cost };
-      cost = energy;
-    } else {
-      comboPlayer = { ...player, energyRemaining: energy };
-    }
-    const ordered = optimalComboOrder(combo, db, comboPlayer, mode);
-    const { totalDamage, totalBlock } = simulateCombo(ordered, db, comboPlayer);
-    const candidate: PlayResult = { played: ordered, totalDamage, totalBlock, energySpent: cost };
-    if (!best
-      || candidate[primary]   > best[primary]
-      || (candidate[primary] === best[primary] && candidate[secondary] > best[secondary])) {
-      best = candidate;
-    }
-  }
-
-  return best ?? { played: [], totalDamage: 0, totalBlock: 0, energySpent: 0 };
-}
-
 // ─── SINGLE SIMULATION ───────────────────────────────────────────────────────
 function runOneSim(config: Config): SimResult {
   const { drawPile, discardPile, energy, draws, relics, db, mode, player } = config;
@@ -144,7 +93,12 @@ function runOneSim(config: Config): SimResult {
   const totalDraws  = draws + extraDraw;
   const totalEnergy = energy + extraEnergy;
 
-  const { hand } = drawCards(shuffle(drawPile), discardPile, totalDraws);
+  const { hand, drawPile: remainingDraw, discardPile: remainingDiscard } =
+    drawCards(shuffle(drawPile), discardPile, totalDraws);
+
+  // Pre-sample bonus pool: what draw cards in hand would draw mid-turn
+  const maxDraw = hand.reduce((sum, name) => sum + (db[name]?.draw ?? 0), 0);
+  const { hand: bonusPool } = drawCards(remainingDraw, remainingDiscard, maxDraw);
 
   let patchedDb = db;
   if (randomizeCosts) {
@@ -154,7 +108,7 @@ function runOneSim(config: Config): SimResult {
     }
   }
 
-  const play = bestPlay(hand, patchedDb, totalEnergy, mode, player);
+  const play = bestPlay(hand, bonusPool, patchedDb, player, totalEnergy, mode);
   return { hand, damage: play.totalDamage, block: play.totalBlock, play };
 }
 

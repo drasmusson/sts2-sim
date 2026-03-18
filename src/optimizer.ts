@@ -26,7 +26,14 @@ export interface CardValues {
   block:  number;
 }
 
-type Mode = "dmg" | "block";
+export type Mode = "dmg" | "block";
+
+export interface PlayResult {
+  played:      string[];
+  totalDamage: number;
+  totalBlock:  number;
+  energySpent: number;
+}
 
 // Base passive damage/block for each orb type (before Focus)
 const ORB_BASE: Record<string, { damage: number; block: number }> = {
@@ -118,11 +125,21 @@ export function simulateCombo(orderedCombo: string[], db: CardDb, player: Player
 }
 
 // Sort a combo into the order that maximises the primary stat (mode).
-export function optimalComboOrder(combo: string[], db: CardDb, player: PlayerState, mode: Mode): string[] {
+// bonusCards: cards drawn mid-turn — must sort after the draw card that unlocked them.
+export function optimalComboOrder(
+  combo: string[], db: CardDb, player: PlayerState, mode: Mode,
+  bonusCards?: Set<string>
+): string[] {
   return [...combo].sort((a, b) => {
     const cardA = db[a];
     const cardB = db[b];
     if (!cardA || !cardB) return 0;
+
+    // Hard constraint: draw card must come before any bonus card it unlocked
+    const aIsBonus = bonusCards?.has(a) ?? false;
+    const bIsBonus = bonusCards?.has(b) ?? false;
+    if (!aIsBonus && cardA.draw > 0 && bIsBonus) return -1;
+    if (!bIsBonus && cardB.draw > 0 && aIsBonus) return 1;
 
     const stateAfterA = applyCardState(player, cardA);
     const stateAfterB = applyCardState(player, cardB);
@@ -139,4 +156,77 @@ export function optimalComboOrder(combo: string[], db: CardDb, player: PlayerSta
     if (ba !== ab) return ba - ab;
     return a < b ? -1 : a > b ? 1 : 0;
   });
+}
+
+// Find the best subset of cards to play given a hand and a pre-sampled bonus pool.
+// bonusPool: cards that would be drawn mid-turn (sampled from the remaining pile in the sim);
+//            only available when a draw card is included in the combo.
+export function bestPlay(
+  hand: string[], bonusPool: string[], db: CardDb,
+  player: PlayerState, energy: number, mode: Mode
+): PlayResult {
+  const primary   = mode === "dmg" ? "totalDamage" : "totalBlock";
+  const secondary = mode === "dmg" ? "totalBlock"  : "totalDamage";
+  let best: PlayResult | null = null;
+
+  const playable = hand.filter(name => db[name] && db[name]!.cost <= energy);
+
+  for (let mask = 1; mask < (1 << playable.length); mask++) {
+    const combo: string[] = [];
+    let cost = 0;
+    let energyGainSum = 0;
+    for (let i = 0; i < playable.length; i++) {
+      if (mask & (1 << i)) {
+        combo.push(playable[i]);
+        const c = db[playable[i]]!;
+        if (!c.xCost) cost += c.cost;
+        energyGainSum += c.energyGain;
+      }
+    }
+    if (cost - energyGainSum > energy) continue;
+
+    // Bonus cards available = cards from bonusPool up to total draw count in this combo
+    const drawCount = combo.reduce((sum, n) => sum + (db[n]?.draw ?? 0), 0);
+    const available = bonusPool.slice(0, drawCount);
+
+    // Enumerate subsets of bonus cards (including the empty subset = no bonus cards played)
+    for (let bonusMask = 0; bonusMask < (1 << available.length); bonusMask++) {
+      const bonusCombo: string[] = [];
+      let bonusCost = 0;
+      let bonusEnergyGain = 0;
+      for (let i = 0; i < available.length; i++) {
+        if (bonusMask & (1 << i)) {
+          bonusCombo.push(available[i]);
+          const c = db[available[i]];
+          if (c) { if (!c.xCost) bonusCost += c.cost; bonusEnergyGain += c.energyGain; }
+        }
+      }
+      const netCost = cost + bonusCost - energyGainSum - bonusEnergyGain;
+      if (netCost > energy) continue;
+
+      const fullCombo = [...combo, ...bonusCombo];
+      const bonusSet  = bonusCombo.length > 0 ? new Set(bonusCombo) : undefined;
+
+      let comboPlayer = player;
+      let energySpent = cost + bonusCost;
+      if (fullCombo.some(n => db[n]?.xCost)) {
+        comboPlayer = { ...player, energyRemaining: energy - (cost + bonusCost) };
+        energySpent = energy;
+      } else {
+        comboPlayer = { ...player, energyRemaining: energy };
+      }
+
+      const ordered = optimalComboOrder(fullCombo, db, comboPlayer, mode, bonusSet);
+      const { totalDamage, totalBlock } = simulateCombo(ordered, db, comboPlayer);
+      const candidate: PlayResult = { played: ordered, totalDamage, totalBlock, energySpent };
+
+      if (!best
+        || candidate[primary]   > best[primary]
+        || (candidate[primary] === best[primary] && candidate[secondary] > best[secondary])) {
+        best = candidate;
+      }
+    }
+  }
+
+  return best ?? { played: [], totalDamage: 0, totalBlock: 0, energySpent: 0 };
 }
