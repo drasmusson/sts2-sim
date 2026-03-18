@@ -97,14 +97,12 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ✅ Most common optimal plays — top 5 combos with frequency, damage, and block
 
 ### Up Next
-- ⬜ More card effects — Body Slam (damage = current block), Whirlwind (damage × energy spent)
 - ⬜ HTML/browser visualisation
-- ⬜ Case-insensitive card name matching
 - ⬜ Config file — save deck setups and run with `--config deck.json`
+- ⬜ Custom cards — define cards inline via CLI or config with arbitrary stat overrides; workaround for specific card instances (enchanted cards, Genetic Algorithm, etc.) without needing a full instance model
 
 ### Out of Scope (for now)
-- 🚫 Intra-turn draw effects — the `Draw` column is stored in the CSV but intentionally ignored. Cards that draw mid-turn open the door to chaining draw effects and combinatorial explosion. Workaround: increase `--draws` manually. A light future implementation could resolve draw cards once, non-recursively, without modelling cascading draw.
-- 🚫 Card instances + enchantments — instance-based model with per-copy stat overrides; required for Genetic Algorithm and similar. Deferred.
+- 🚫 Card instances + enchantments — full instance-based model with per-copy stat overrides. Custom cards (above) cover most practical cases as a workaround.
 - 🚫 Relic support — partially stubbed but deferred.
 - 🚫 Min block threshold mode — deferred.
 
