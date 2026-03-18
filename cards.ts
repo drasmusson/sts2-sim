@@ -1,7 +1,6 @@
 // ─── CARD LOADER ─────────────────────────────────────────────────────
 
 import fs from "fs";
-import path from "path";
 
 export type CardType = "attack" | "skill" | "power";
 
@@ -20,8 +19,9 @@ export interface Card {
   orbType:      string | null;
   orbCount:     number;
   hits:         number;
-  exhaustBonus: number;
-  notes:        string;
+  exhaustBonus:  number;
+  blockAsDamage: boolean;
+  notes:         string;
 }
 
 export type CardDb = Record<string, Card>;
@@ -62,8 +62,9 @@ export function loadCards(csvPath: string): CardDb {
       orbType,
       orbCount:    parseInt(row["Orb Count"])      || (orbType ? 1 : 0),
       hits:        parseInt(row["Hits"])           || 1,
-      exhaustBonus: parseInt(row["Exhaust Bonus"]) || 0,
-      notes:       row["Notes"] || "",
+      exhaustBonus:  parseInt(row["Exhaust Bonus"])   || 0,
+      blockAsDamage: row["Block As Damage"] === "1",
+      notes:         row["Notes"] || "",
     };
   }
 

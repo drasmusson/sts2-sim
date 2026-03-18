@@ -9,6 +9,7 @@ export interface PlayerState {
   focus:          number;
   poisonTriggers: number;
   exhaust:        number;
+  currentBlock:   number;
   enemyAttack:    number;
   enemyHits:      number;
   enemyWeak:      boolean;
@@ -38,8 +39,9 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
 
   // Attack damage: scaled by Strength, Vulnerable, Weak, Exhaust
   let damage = 0;
-  if (card.damage > 0) {
-    const base = card.damage + strength + card.exhaustBonus * player.exhaust;
+  if (card.damage > 0 || card.blockAsDamage) {
+    const base = (card.blockAsDamage ? player.currentBlock : card.damage)
+               + strength + card.exhaustBonus * player.exhaust;
     const vulnMult = vulnerable ? 1.5 : 1;
     const weakMult = weak       ? 0.75 : 1;
     damage += Math.floor(base * vulnMult * weakMult * card.hits);
@@ -83,6 +85,8 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
   if (card.strGain > 0)     next = { ...next, strength: next.strength + card.strGain };
   if (card.vulnApplied > 0) next = { ...next, vulnerable: true };
   if (card.weakApplied > 0) next = { ...next, enemyWeak: true };
+  const { block } = cardEffectiveValues(card, state);
+  if (block > 0)            next = { ...next, currentBlock: next.currentBlock + block };
   return next;
 }
 

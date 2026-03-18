@@ -299,6 +299,7 @@ const player: PlayerState = {
   enemyHits:      parseIntArg(args["enemy-hits"], 1),
   enemyWeak:      !!args["enemy-weak"],
   exhaust:        parseIntArg(args.exhaust, 0),
+  currentBlock:   0,
 };
 
 if (!drawPile.length) {

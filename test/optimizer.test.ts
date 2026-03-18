@@ -7,7 +7,7 @@ import { Card } from "../cards.js";
 
 const basePlayer: PlayerState = {
   strength: 0, vulnerable: false, weak: false, focus: 0, poisonTriggers: 1,
-  exhaust: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false,
+  exhaust: 0, currentBlock: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false,
 };
 
 function makeCard(overrides: Partial<Card>): Card {
@@ -15,7 +15,7 @@ function makeCard(overrides: Partial<Card>): Card {
     type: "attack", cost: 1,
     damage: 0, block: 0, poison: 0, doom: 0,
     orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0, weakApplied: 0,
-    hits: 1, exhaustBonus: 0, draw: 0, energyGain: 0, notes: "",
+    hits: 1, exhaustBonus: 0, blockAsDamage: false, draw: 0, energyGain: 0, notes: "",
     ...overrides,
   };
 }
@@ -275,4 +275,47 @@ test("exhaust bonus: strength and exhaust bonus stack", () => {
   const card = makeCard({ damage: 6, exhaustBonus: 3 });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, exhaust: 3 });
   assert.equal(damage, 17);
+});
+
+// ─── blockAsDamage (Body Slam) ────────────────────────────────────────────────
+
+const bodyDb = {
+  Defend:    makeCard({ block: 5, cost: 1 }),
+  "Body Slam": makeCard({ blockAsDamage: true, cost: 1 }),
+};
+
+test("Body Slam: 0 damage with no block accumulated", () => {
+  const card = makeCard({ blockAsDamage: true });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 0);
+});
+
+test("Body Slam: damage equals currentBlock", () => {
+  const card = makeCard({ blockAsDamage: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 7 });
+  assert.equal(damage, 7);
+});
+
+test("Body Slam: strength adds to currentBlock base", () => {
+  const card = makeCard({ blockAsDamage: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 7, strength: 2 });
+  assert.equal(damage, 9);
+});
+
+test("Body Slam: scales with vulnerable", () => {
+  const card = makeCard({ blockAsDamage: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 10, vulnerable: true });
+  assert.equal(damage, 15);
+});
+
+test("Body Slam: Defend before Body Slam accumulates correctly", () => {
+  const { totalDamage, totalBlock } = simulateCombo(["Defend", "Body Slam"], bodyDb, basePlayer);
+  assert.equal(totalBlock, 5);
+  assert.equal(totalDamage, 5);
+});
+
+test("Body Slam sorts after block cards", () => {
+  const ordered = optimalComboOrder(["Body Slam", "Defend"], bodyDb, basePlayer, "dmg");
+  assert.equal(ordered[0], "Defend");
+  assert.equal(ordered[1], "Body Slam");
 });
