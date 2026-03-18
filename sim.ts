@@ -121,7 +121,7 @@ function runOneSim(config: Config): SimResult {
   let extraDraw = 0, extraEnergy = 0, randomizeCosts = false;
   for (const relic of relics) {
     const r = RELICS[relic];
-    if (!r) continue;
+    if (!r) { console.warn(`Warning: unknown relic "${relic}" (will be ignored)`); continue; }
     extraDraw      += r.extraDraw    ?? 0;
     extraEnergy    += r.extraEnergy  ?? 0;
     randomizeCosts  = randomizeCosts || !!r.randomizeCosts;
