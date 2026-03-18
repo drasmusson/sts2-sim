@@ -48,7 +48,7 @@ export function loadCards(csvPath: string): CardDb {
 
     const orbType = (row["Orb Type"] || "").toLowerCase() || null;
 
-    db[name] = {
+    db[name.toLowerCase()] = {
       type:        row["Type"].toLowerCase() as CardType,
       cost:        parseInt(row["Cost"])           || 0,
       damage:      parseInt(row["Damage"])         || 0,

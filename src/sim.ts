@@ -72,7 +72,7 @@ function parseArgs(argv: string[]): Record<string, string | true> {
 
 function parseList(str: string | true | undefined): string[] {
   if (!str || str === true) return [];
-  return str.split(",").map(s => s.trim()).filter(Boolean);
+  return str.split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
 }
 
 function parseIntArg(val: string | true | undefined, fallback: number): number {
