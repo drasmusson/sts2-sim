@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, PlayerState } from "../optimizer.js";
-import { Card } from "../cards.js";
+import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, PlayerState } from "../src/optimizer.js";
+import { Card } from "../src/cards.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

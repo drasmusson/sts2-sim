@@ -5,8 +5,8 @@ A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a
 
 ## How to run
 ```bash
-node --import tsx/esm sim.ts --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
-node --import tsx/esm sim.ts --draw "..." --discard "..." --energy 3 --draws 5 --mode block
+node --import tsx/esm src/sim.ts --draw "Strike,Strike,Defend,Bash" --energy 3 --draws 5 --mode dmg
+node --import tsx/esm src/sim.ts --draw "..." --discard "..." --energy 3 --draws 5 --mode block
 ```
 Requires Node 18+ and `tsx` (`npm install`).
 

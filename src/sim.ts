@@ -13,7 +13,7 @@ import { loadCards, CardDb } from "./cards.js";
 import { simulateCombo, optimalComboOrder, PlayerState } from "./optimizer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CSV_PATH = path.join(__dirname, "cards.csv");
+const CSV_PATH = path.join(__dirname, "../cards.csv");
 let N = 10_000;
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
