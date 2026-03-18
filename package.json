@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "type": "module",
-  "main": "cards.js",
+  "main": "cards.ts",
   "directories": {
     "test": "test"
   },

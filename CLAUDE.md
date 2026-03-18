@@ -115,7 +115,7 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 ### Non-obvious implementation details
 - `bestPlay` (sim.ts) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
 - Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.ts, not in the CSV.
-- The project is TypeScript (on the `typescript` branch). JS files remain on `main` as fallback.
+- The project is TypeScript. JS source files were removed; original JS is preserved on the `main` branch.
 - `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
 - `Draw` column in CSV is populated but intentionally ignored by the sim.
 
