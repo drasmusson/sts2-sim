@@ -106,6 +106,50 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - 🚫 Relic support — partially stubbed but deferred.
 - 🚫 Min block threshold mode — deferred.
 
+## Future architecture: step-by-step turn simulator
+
+### Problem with current model
+The current optimizer pre-samples a bonus pool upfront and enumerates subsets. This breaks down for:
+- **Deep draw chains**: a drawn card with draw>0 draws another card, which draws another — the pool depth depends on runtime play decisions
+- **Draw × energy feedback loops**: energy gain enables playing a draw card, which draws an energy generator, which enables another draw card, etc.
+- **Infinite combos**: e.g. Pommel Strike+ + Bloodletting cycle — played cards go to discard, empty draw pile reshuffles discard, loop becomes available again indefinitely
+
+### Required shift: subset enumeration → step-by-step search
+The optimizer needs to simulate the turn as a sequence of decisions over a live state:
+
+```
+TurnState {
+  energy:      number
+  hand:        string[]
+  drawPile:    string[]   // tracked throughout the turn, not consumed upfront
+  discardPile: string[]   // played cards accumulate here
+  ...player buffs (strength, vulnerable, etc.)
+}
+```
+
+At each step: choose a card to play → apply effects (spend energy, draw cards, move card to discard) → recurse with updated state → return sequence that maximizes the primary stat.
+
+### Infinite combo detection
+An infinite combo exists when the turn state after a sequence of plays is equivalent to a previously seen state — the loop can repeat forever.
+
+Detection: hash `(sorted hand, draw pile contents, discard pile contents, energy)` at each decision point. On hash recurrence, record the loop and terminate that branch. Output:
+
+```
+  INFINITE COMBO DETECTED
+    pommel strike+ → bloodletting → pommel strike+ → bloodletting → ...
+    +N dmg per cycle (open-ended)
+```
+
+### Transition plan
+1. Implement step-by-step simulator as a parallel path
+2. Validate equivalence against current subset enumeration on static hands
+3. Replace subset enumeration once confident
+
+### Non-obvious implementation details
+- Hash must include draw pile *order* (not just contents) since reshuffle randomizes it — or treat order as irrelevant and hash only contents, accepting that two states with same cards in different orders are treated as equivalent
+- Branching factor is low in practice (2–5 playable cards at any step); turns terminate quickly when energy runs out; loop detection keeps infinite combos from running forever
+- The existing `applyCardState` / `cardEffectiveValues` / `simulateCombo` logic is reusable — only the outer search loop changes
+
 ## Continuation context (for /compact)
 
 ### How the sim works end-to-end
@@ -118,7 +162,7 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.ts, not in the CSV.
 - The project is TypeScript. JS source files were removed; original JS is preserved on the `main` branch.
 - `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
-- `Draw` column in CSV is populated but intentionally ignored by the sim.
+- `Draw` column in CSV drives mid-turn draw effects — the bonus pool in `runOneSim` is pre-sampled based on draw counts from cards in hand, then passed to `bestPlay` for subset enumeration.
 
 ### cards.csv is in progress
 Far from all cards are in the CSV. When working on new features, check whether relevant cards are present before testing.
