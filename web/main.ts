@@ -10,7 +10,7 @@ let worker: Worker | null = null;
 
 // ─── LOAD CSV ─────────────────────────────────────────────────────────────────
 async function loadCsv(): Promise<void> {
-  const res = await fetch("/cards.csv");
+  const res = await fetch(`${import.meta.env.BASE_URL}cards.csv`);
   if (!res.ok) throw new Error(`Failed to load cards.csv: ${res.status}`);
   csvText = await res.text();
   const db = parseCsvText(csvText);
