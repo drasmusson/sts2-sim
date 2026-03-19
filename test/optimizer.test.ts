@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, PlayerState } from "../src/optimizer.js";
+import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, bestPlay, PlayerState } from "../src/optimizer.js";
 import { Card } from "../src/cards.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -376,6 +376,7 @@ const energyDb = {
   Turbo:       makeCard({ energyGain: 2, cost: 0 }),
   Cinder:      makeCard({ damage: 12, cost: 2 }),
   Strike:      makeCard({ damage: 6,  cost: 1 }),
+  Quill:       makeCard({ draw: 1, cost: 1 }),
 };
 
 test("energyGain: applyCardState increases energyRemaining", () => {
@@ -409,4 +410,23 @@ test("energyGain: simulateCombo gives correct damage with Turbo before Cinder", 
   const player = { ...basePlayer, energyRemaining: 1 };
   const { totalDamage } = simulateCombo(["Turbo", "Cinder"], energyDb, player);
   assert.equal(totalDamage, 12);
+});
+
+test("energyGain: bestPlay includes card only affordable via energy gain", () => {
+  // energy=1, Cinder costs 2 — unaffordable alone, but Turbo (+2 energy) enables it
+  const result = bestPlay(["Turbo", "Cinder"], [], energyDb, basePlayer, 1, "dmg");
+  assert.ok(result.played.includes("Turbo"));
+  assert.ok(result.played.includes("Cinder"));
+  assert.equal(result.totalDamage, 12);
+});
+
+test("energyGain: bestPlay includes hand card enabled by energy gain drawn mid-turn", () => {
+  // energy=1, hand=[Quill(draw 1, cost 1), Cinder(12 dmg, cost 2)], bonus pool=[Turbo(+2 energy)]
+  // Quill draws Turbo; Turbo's +2 energy makes Cinder affordable despite energy=1
+  // net cost: Quill(1) + Cinder(2) - Turbo(+2) = 1 ✓
+  const result = bestPlay(["Quill", "Cinder"], ["Turbo"], energyDb, basePlayer, 1, "dmg");
+  assert.ok(result.played.includes("Quill"));
+  assert.ok(result.played.includes("Turbo"));
+  assert.ok(result.played.includes("Cinder"));
+  assert.equal(result.totalDamage, 12);
 });

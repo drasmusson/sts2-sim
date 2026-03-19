@@ -169,7 +169,9 @@ export function bestPlay(
   const secondary = mode === "dmg" ? "totalBlock"  : "totalDamage";
   let best: PlayResult | null = null;
 
-  const playable = hand.filter(name => db[name] && db[name]!.cost <= energy);
+  const maxEnergyGain = hand.reduce((sum, n) => sum + (db[n]?.energyGain ?? 0), 0)
+                      + bonusPool.reduce((sum, n) => sum + (db[n]?.energyGain ?? 0), 0);
+  const playable = hand.filter(name => db[name] && db[name]!.cost <= energy + maxEnergyGain);
 
   for (let mask = 1; mask < (1 << playable.length); mask++) {
     const combo: string[] = [];
@@ -183,11 +185,11 @@ export function bestPlay(
         energyGainSum += c.energyGain;
       }
     }
-    if (cost - energyGainSum > energy) continue;
-
     // Bonus cards available = cards from bonusPool up to total draw count in this combo
     const drawCount = combo.reduce((sum, n) => sum + (db[n]?.draw ?? 0), 0);
     const available = bonusPool.slice(0, drawCount);
+    const maxBonusEnergyGain = available.reduce((sum, n) => sum + (db[n]?.energyGain ?? 0), 0);
+    if (cost - energyGainSum - maxBonusEnergyGain > energy) continue;
 
     // Enumerate subsets of bonus cards (including the empty subset = no bonus cards played)
     for (let bonusMask = 0; bonusMask < (1 << available.length); bonusMask++) {

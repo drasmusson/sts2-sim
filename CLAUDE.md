@@ -54,7 +54,7 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - `Orb Type` — `lightning`, `frost`, or empty; extensible to future orb types
 - `Orb Count` — orbs channeled per play (defaults to 1 when Orb Type is set)
 - `Exhaust Bonus` — bonus damage per card in the exhaust pile (e.g. Ashen Strike)
-- `Energy Gain` — parsed and stored but **not yet used by the sim**; energy-generating cards won't make that energy available for subsequent cards in the same turn
+- `Energy Gain` — energy generated mid-turn unlocks cards that would otherwise be unaffordable; e.g. Bloodletting (0 cost, +2 energy) enables a 2-cost card when starting energy is 1
 
 ## Key design decisions
 
