@@ -10,7 +10,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { shuffle, drawCards } from "./draw.js";
 import { loadCards, CardDb } from "./cards.js";
-import { bestPlay, PlayerState, Mode, PlayResult } from "./optimizer.js";
+import { PlayerState, Mode } from "./optimizer.js";
+import { simulateTurn, TurnResult } from "./turn-simulator.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CSV_PATH = path.join(__dirname, "../cards.csv");
@@ -18,7 +19,7 @@ let N = 10_000;
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 interface Relic { extraDraw?: number; extraEnergy?: number; randomizeCosts?: boolean; }
-interface SimResult  { hand: string[]; damage: number; block: number; play: PlayResult; }
+interface SimResult  { hand: string[]; damage: number; block: number; play: TurnResult; }
 
 interface Config {
   drawPile:    string[];
@@ -38,7 +39,7 @@ interface MCResult {
   drawFreq: { name: string; pct: string }[];
   dmgDist:  Record<number, number>;
   blkDist:  Record<number, number>;
-  peakPlay: { combo: string; damage: number; block: number };
+  peakPlay: { combo: string; damage: number; block: number; infinite: boolean };
   topPlays: { combo: string; pct: string; damage: number; block: number }[];
 }
 
@@ -97,10 +98,6 @@ function runOneSim(config: Config): SimResult {
   const { hand, drawPile: remainingDraw, discardPile: remainingDiscard } =
     drawCards(shuffle(drawPile), discardPile, totalDraws);
 
-  // Pre-sample bonus pool: what draw cards in hand would draw mid-turn
-  const maxDraw = hand.reduce((sum, name) => sum + (db[name]?.draw ?? 0), 0);
-  const { hand: bonusPool } = drawCards(remainingDraw, remainingDiscard, maxDraw);
-
   let patchedDb = db;
   if (randomizeCosts) {
     patchedDb = { ...db };
@@ -109,7 +106,7 @@ function runOneSim(config: Config): SimResult {
     }
   }
 
-  const play = bestPlay(hand, bonusPool, patchedDb, player, totalEnergy, mode);
+  const play = simulateTurn(hand, remainingDraw, remainingDiscard, patchedDb, player, totalEnergy, mode);
   return { hand, damage: play.totalDamage, block: play.totalBlock, play };
 }
 
@@ -125,12 +122,12 @@ function runMC(config: Config): MCResult {
   const blkDist:  Record<number, number> = {};
   const playFreq: Record<string, { count: number; totalDamage: number; totalBlock: number }> = {};
   const primary = config.mode === "dmg" ? "damage" : "block";
-  let peakPlay: { combo: string; damage: number; block: number } = { combo: "", damage: 0, block: 0 };
+  let peakPlay: { combo: string; damage: number; block: number; infinite: boolean } = { combo: "", damage: 0, block: 0, infinite: false };
 
   for (let i = 0; i < N; i++) {
     const r = runOneSim(config);
     if (r[primary] > peakPlay[primary])
-      peakPlay = { combo: r.play.played.join(" → "), damage: r.damage, block: r.block };
+      peakPlay = { combo: r.play.played.join(" → "), damage: r.damage, block: r.block, infinite: r.play.infinite };
     damages.push(r.damage);
     blocks.push(r.block);
     dmgDist[r.damage] = (dmgDist[r.damage] ?? 0) + 1;
@@ -249,9 +246,10 @@ function printResults(results: MCResult, config: Config): void {
   }
 
   if (results.peakPlay.combo) {
-    const { combo, damage, block } = results.peakPlay;
+    const { combo, damage, block, infinite } = results.peakPlay;
     const stats = `${String(damage).padStart(3)} dmg  ${String(block).padStart(3)} block`;
-    console.log("\n  BEST POSSIBLE PLAY");
+    const label = infinite ? "  BEST POSSIBLE PLAY  [INFINITE COMBO]" : "  BEST POSSIBLE PLAY";
+    console.log("\n" + label);
     console.log(`    ${combo.padEnd(40)}  ${stats}`);
   }
 
