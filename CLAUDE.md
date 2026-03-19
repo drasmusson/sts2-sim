@@ -106,9 +106,13 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ✅ Most common optimal plays — top 5 combos with frequency, damage, and block
 - ✅ Step-by-step turn simulator — DFS over live TurnState replaces subset enumeration + bonus pool pre-sampling; correctly handles deep draw chains, energy feedback loops, and infinite combos
 - ✅ Infinite combo detection — play-count threshold with early exit; `[INFINITE COMBO]` shown in best play and top plays output
+- ✅ Interactive web app — Vite + Web Worker, hosted on GitHub Pages; card autocomplete, SVG charts, full player state controls
 
 ### Up Next
-- ⬜ HTML/browser visualisation
+- ⬜ Starting decks — presets for each character's starting deck, selectable in the web UI
+- ⬜ Multi-copy input — easier way to add multiple of the same card (e.g. `Strike ×3`) in the web UI
+- ⬜ UI improvements — general polish, layout, usability
+- ⬜ More cards — expand `cards.csv` coverage across all characters
 - ⬜ Config file — save deck setups and run with `--config deck.json`
 - ⬜ Custom cards — define cards inline via CLI or config with arbitrary stat overrides; workaround for specific card instances (enchanted cards, Genetic Algorithm, etc.) without needing a full instance model
 
