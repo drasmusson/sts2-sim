@@ -1,7 +1,7 @@
 # sts2-sim — Claude Code Context
 
 ## What this project is
-A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a given deck configuration and finds the optimal play using subset enumeration.
+A Monte Carlo draw simulator for Slay the Spire 2. Simulates 10,000 hands from a given deck configuration and finds the optimal play using a DFS-based turn simulator.
 
 ## How to run
 ```bash
@@ -14,7 +14,7 @@ Requires Node 18+ and `tsx` (`npm install`).
 ```bash
 node --import tsx/esm --test test/*.ts
 ```
-Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimalComboOrder`, `drawCards`, `shuffle`.
+Tests cover: `cardEffectiveValues` (all damage types), `simulateCombo`, `optimalComboOrder`, `drawCards`, `shuffle`, `simulateTurn` (draw chains, energy feedback, infinite detection).
 
 **Flags**
 - `--draw` — cards currently in draw pile (comma-separated)
@@ -54,15 +54,24 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - `Orb Type` — `lightning`, `frost`, or empty; extensible to future orb types
 - `Orb Count` — orbs channeled per play (defaults to 1 when Orb Type is set)
 - `Exhaust Bonus` — bonus damage per card in the exhaust pile (e.g. Ashen Strike)
-- `Energy Gain` — energy generated mid-turn unlocks cards that would otherwise be unaffordable; e.g. Bloodletting (0 cost, +2 energy) enables a 2-cost card when starting energy is 1
+- `Energy Gain` — energy generated mid-turn (e.g. Bloodletting +2) unlocks cards that would otherwise be unaffordable; resolved dynamically by the turn simulator
+- `Draw` — cards drawn when this card is played; drawn cards are immediately available in the same turn
 
 ## Key design decisions
 
-### Optimizer: subset enumeration, not knapsack
-`bestPlay` enumerates all affordable subsets (up to 2^7 = 128 for a 7-card hand). Subset enumeration is the correct approach here because card values are not independent — a card's damage depends on what precedes it (e.g. Bash raises subsequent damage). Knapsack DP assumes independence and cannot model intra-turn ordering, so it was removed.
+### Turn simulator: DFS over play sequences
+`simulateTurn` in `src/turn-simulator.ts` is the core optimizer. It runs a DFS over all possible play orderings, tracking a live `TurnState` (energy, hand, draw pile, discard pile, player buffs) at each step. This correctly models:
+- **Mid-turn draw chains**: drawn cards are immediately available and can themselves draw more cards
+- **Energy feedback loops**: energy gain (e.g. Bloodletting) enables cards that would otherwise be unaffordable, mid-turn
+- **Infinite combos**: detected via a play-count threshold (`max(deckSize × 3, 20)`); once any branch exceeds it the result is flagged `infinite: true` and all other branches abort immediately (all infinites are equivalent)
 
-### Intra-turn play ordering
-Cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison. This means Bash correctly buffs subsequent cards without buffing itself — passing `--vulnerable` is for enemies that are already vulnerable *before* your turn, not for Bash's on-hit effect.
+`bestPlay` in `src/optimizer.ts` is the older subset-enumeration approach. It is no longer used by the sim but is kept as a reference implementation — the regression tests in `test/turn-simulator.test.ts` verify that `simulateTurn` matches it on static hands (no draw effects).
+
+### Discard timing
+A played card's effects (including draw) resolve fully before the card enters the discard pile. This matches STS mechanics: a card cannot draw itself back via a reshuffle triggered by its own draw effect.
+
+### Intra-turn play ordering (legacy, within bestPlay)
+Cards that apply Vulnerable or grant Strength are sorted before damage cards using pairwise comparison. This means Bash correctly buffs subsequent cards without buffing itself — passing `--vulnerable` is for enemies that are already vulnerable *before* your turn, not for Bash's on-hit effect. The DFS-based turn simulator handles ordering naturally by exploring all sequences.
 
 ### Damage types
 - **Attack** — `floor((damage + strength) × vulnMult × weakMult × hits)`; Vulnerable ×1.5, Weak ×0.75; `Math.floor` applied to the final value (STS rounds down per card, not per hit)
@@ -95,6 +104,8 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ✅ Multi-hit support — `Hits` column; Strength and multipliers scale per hit
 - ✅ Terminal histogram — damage and block distributions as horizontal bar charts
 - ✅ Most common optimal plays — top 5 combos with frequency, damage, and block
+- ✅ Step-by-step turn simulator — DFS over live TurnState replaces subset enumeration + bonus pool pre-sampling; correctly handles deep draw chains, energy feedback loops, and infinite combos
+- ✅ Infinite combo detection — play-count threshold with early exit; `[INFINITE COMBO]` shown in best play and top plays output
 
 ### Up Next
 - ⬜ HTML/browser visualisation
@@ -106,63 +117,21 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - 🚫 Relic support — partially stubbed but deferred.
 - 🚫 Min block threshold mode — deferred.
 
-## Future architecture: step-by-step turn simulator
-
-### Problem with current model
-The current optimizer pre-samples a bonus pool upfront and enumerates subsets. This breaks down for:
-- **Deep draw chains**: a drawn card with draw>0 draws another card, which draws another — the pool depth depends on runtime play decisions
-- **Draw × energy feedback loops**: energy gain enables playing a draw card, which draws an energy generator, which enables another draw card, etc.
-- **Infinite combos**: e.g. Pommel Strike+ + Bloodletting cycle — played cards go to discard, empty draw pile reshuffles discard, loop becomes available again indefinitely
-
-### Required shift: subset enumeration → step-by-step search
-The optimizer needs to simulate the turn as a sequence of decisions over a live state:
-
-```
-TurnState {
-  energy:      number
-  hand:        string[]
-  drawPile:    string[]   // tracked throughout the turn, not consumed upfront
-  discardPile: string[]   // played cards accumulate here
-  ...player buffs (strength, vulnerable, etc.)
-}
-```
-
-At each step: choose a card to play → apply effects (spend energy, draw cards, move card to discard) → recurse with updated state → return sequence that maximizes the primary stat.
-
-### Infinite combo detection
-An infinite combo exists when the turn state after a sequence of plays is equivalent to a previously seen state — the loop can repeat forever.
-
-Detection: hash `(sorted hand, draw pile contents, discard pile contents, energy)` at each decision point. On hash recurrence, record the loop and terminate that branch. Output:
-
-```
-  INFINITE COMBO DETECTED
-    pommel strike+ → bloodletting → pommel strike+ → bloodletting → ...
-    +N dmg per cycle (open-ended)
-```
-
-### Transition plan
-1. Implement step-by-step simulator as a parallel path
-2. Validate equivalence against current subset enumeration on static hands
-3. Replace subset enumeration once confident
-
-### Non-obvious implementation details
-- Hash must include draw pile *order* (not just contents) since reshuffle randomizes it — or treat order as irrelevant and hash only contents, accepting that two states with same cards in different orders are treated as equivalent
-- Branching factor is low in practice (2–5 playable cards at any step); turns terminate quickly when energy runs out; loop detection keeps infinite combos from running forever
-- The existing `applyCardState` / `cardEffectiveValues` / `simulateCombo` logic is reusable — only the outer search loop changes
-
 ## Continuation context (for /compact)
 
 ### How the sim works end-to-end
 1. CLI parses args → fixed draw pile + player state
-2. Each of 10,000 sims: shuffle draw pile, draw N cards, enumerate all affordable subsets, sort each combo with pairwise ordering, score with `simulateCombo`, pick best
+2. Each of 10,000 sims: shuffle draw pile, draw N cards, run DFS over all play sequences with live TurnState, pick best
 3. Aggregate damage/block distributions + card frequencies, print
 
 ### Non-obvious implementation details
-- `bestPlay` (sim.ts) uses subset enumeration. Knapsack DP was removed — it can't model intra-turn ordering (card values are not independent).
+- `simulateTurn` uses DFS with a play-count threshold for infinite detection. Once any branch is flagged infinite, `foundInfinite=true` aborts all remaining branches immediately.
+- A played card's draw effect resolves before the card enters the discard pile (STS timing). This prevents a card from drawing itself back via a reshuffle triggered by its own effect.
+- Duplicate card deduplication in DFS: `tried = new Set<string>()` prevents trying Strike[0]→Strike[1] and Strike[1]→Strike[0] as separate branches (same result, exponential blowup without this).
+- `bestPlay` in `optimizer.ts` is the older subset-enumeration approach, kept as a reference. Regression tests in `test/turn-simulator.test.ts` verify `simulateTurn` matches it on static hands.
 - Orb base values (lightning: 3 dmg, frost: 2 block) are hardcoded constants in `ORB_BASE` in optimizer.ts, not in the CSV.
 - The project is TypeScript. JS source files were removed; original JS is preserved on the `main` branch.
-- `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by intra-turn ordering — don't also pass `--vulnerable` for Bash.
-- `Draw` column in CSV drives mid-turn draw effects — the bonus pool in `runOneSim` is pre-sampled based on draw counts from cards in hand, then passed to `bestPlay` for subset enumeration.
+- `--vulnerable` means the enemy was already vulnerable *before* your turn. Bash's on-hit Vulnerable is handled automatically by the DFS exploring all play orderings — don't also pass `--vulnerable` for Bash.
 
 ### cards.csv is in progress
 Far from all cards are in the CSV. When working on new features, check whether relevant cards are present before testing.
@@ -170,7 +139,6 @@ Far from all cards are in the CSV. When working on new features, check whether r
 ### Active workarounds (document when advising user)
 - Power cards played this turn (Inflame, etc.): reduce `--energy` by cost, set `--strength N`
 - Accelerant in play: `--poison-triggers 2`, reduce `--energy` by 1
-- Intra-turn draw cards (Acrobatics etc.): increase `--draws` manually
 
 ## Working style
 - Build step by step and explain decisions

@@ -168,7 +168,10 @@ export function optimalComboOrder(
 }
 
 // Find the best subset of cards to play given a hand and a pre-sampled bonus pool.
-// bonusPool: cards that would be drawn mid-turn (sampled from the remaining pile in the sim);
+// NOTE: this function is no longer used by the sim — simulateTurn (turn-simulator.ts)
+// replaced it. Kept as a reference implementation; regression tests in
+// test/turn-simulator.test.ts verify equivalence with simulateTurn on static hands.
+// bonusPool: cards that would be drawn mid-turn (sampled from the remaining pile upfront);
 //            only available when a draw card is included in the combo.
 export function bestPlay(
   hand: string[], bonusPool: string[], db: CardDb,
