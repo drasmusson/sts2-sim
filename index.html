@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STS2 Draw Simulator</title>
+  <link rel="stylesheet" href="/web/style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Slay the Spire 2 — Draw Simulator</h1>
+    </header>
+
+    <main>
+      <section id="config-panel">
+        <form id="sim-form" autocomplete="off">
+
+          <fieldset>
+            <legend>Deck</legend>
+
+            <div class="field">
+              <label for="draw-input">Draw pile</label>
+              <div class="autocomplete-wrap">
+                <input id="draw-input" type="text" name="draw"
+                  placeholder="Strike, Strike, Bash, Defend" spellcheck="false" />
+                <ul class="ac-list" id="draw-ac" hidden></ul>
+              </div>
+              <span class="hint">Comma-separated card names</span>
+            </div>
+
+            <div class="field">
+              <label for="discard-input">Discard pile</label>
+              <div class="autocomplete-wrap">
+                <input id="discard-input" type="text" name="discard"
+                  placeholder="(empty)" spellcheck="false" />
+                <ul class="ac-list" id="discard-ac" hidden></ul>
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="energy-input">Energy</label>
+                <input id="energy-input" type="number" name="energy" value="3" min="0" max="99" />
+              </div>
+              <div class="field">
+                <label for="draws-input">Cards / turn</label>
+                <input id="draws-input" type="number" name="draws" value="5" min="1" max="30" />
+              </div>
+              <div class="field">
+                <label for="sims-input">Simulations</label>
+                <input id="sims-input" type="number" name="sims" value="5000" min="100" max="50000" step="100" />
+              </div>
+              <div class="field">
+                <label for="mode-select">Mode</label>
+                <select id="mode-select" name="mode">
+                  <option value="dmg" selected>Damage</option>
+                  <option value="block">Block</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset id="player-state-fieldset">
+            <legend>Player state <span class="toggle-hint">(click to expand)</span></legend>
+            <div class="player-state-body" id="player-state-body">
+              <div class="field-row">
+                <div class="field">
+                  <label for="strength-input">Strength</label>
+                  <input id="strength-input" type="number" name="strength" value="0" min="-99" max="99" />
+                </div>
+                <div class="field">
+                  <label for="focus-input">Focus</label>
+                  <input id="focus-input" type="number" name="focus" value="0" min="-99" max="99" />
+                </div>
+                <div class="field">
+                  <label for="poison-triggers-input">Poison triggers</label>
+                  <input id="poison-triggers-input" type="number" name="poison-triggers" value="1" min="1" max="10" />
+                </div>
+                <div class="field">
+                  <label for="exhaust-input">Exhaust count</label>
+                  <input id="exhaust-input" type="number" name="exhaust" value="0" min="0" max="99" />
+                </div>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="enemy-attack-input">Enemy attack</label>
+                  <input id="enemy-attack-input" type="number" name="enemy-attack" value="0" min="0" max="999" />
+                </div>
+                <div class="field">
+                  <label for="enemy-hits-input">Enemy hits</label>
+                  <input id="enemy-hits-input" type="number" name="enemy-hits" value="1" min="1" max="20" />
+                </div>
+              </div>
+              <div class="field-row checkboxes">
+                <label class="checkbox-label">
+                  <input type="checkbox" name="vulnerable" id="vulnerable-input" />
+                  Enemy vulnerable
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="weak" id="weak-input" />
+                  Player weak
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" name="enemy-weak" id="enemy-weak-input" />
+                  Enemy weak
+                </label>
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit" id="run-btn">Run Simulation</button>
+            <span id="spinner" hidden>Running…</span>
+          </div>
+
+          <div id="error-box" hidden></div>
+
+        </form>
+      </section>
+
+      <section id="results-panel" hidden>
+        <div id="results-inner"></div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="/web/main.ts"></script>
+</body>
+</html>
