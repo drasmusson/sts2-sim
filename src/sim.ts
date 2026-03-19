@@ -40,7 +40,7 @@ interface MCResult {
   dmgDist:  Record<number, number>;
   blkDist:  Record<number, number>;
   peakPlay: { combo: string; damage: number; block: number; infinite: boolean };
-  topPlays: { combo: string; pct: string; damage: number; block: number }[];
+  topPlays: { combo: string; pct: string; damage: number; block: number; infinite: boolean }[];
 }
 
 // ─── RELIC DEFINITIONS ───────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ function runMC(config: Config): MCResult {
   const drawFreq: Record<string, number> = {};
   const dmgDist:  Record<number, number> = {};
   const blkDist:  Record<number, number> = {};
-  const playFreq: Record<string, { count: number; totalDamage: number; totalBlock: number }> = {};
+  const playFreq: Record<string, { count: number; totalDamage: number; totalBlock: number; infinite: boolean }> = {};
   const primary = config.mode === "dmg" ? "damage" : "block";
   let peakPlay: { combo: string; damage: number; block: number; infinite: boolean } = { combo: "", damage: 0, block: 0, infinite: false };
 
@@ -134,7 +134,7 @@ function runMC(config: Config): MCResult {
     blkDist[r.block]  = (blkDist[r.block]  ?? 0) + 1;
     const key = r.play.played.join(" → ");
     if (key) {
-      if (!playFreq[key]) playFreq[key] = { count: 0, totalDamage: 0, totalBlock: 0 };
+      if (!playFreq[key]) playFreq[key] = { count: 0, totalDamage: 0, totalBlock: 0, infinite: r.play.infinite };
       playFreq[key]!.count++;
       playFreq[key]!.totalDamage += r.damage;
       playFreq[key]!.totalBlock  += r.block;
@@ -168,11 +168,12 @@ function runMC(config: Config): MCResult {
     topPlays: Object.entries(playFreq)
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
-      .map(([combo, { count, totalDamage, totalBlock }]) => ({
+      .map(([combo, { count, totalDamage, totalBlock, infinite }]) => ({
         combo,
         damage: Math.round(totalDamage / count),
         block:  Math.round(totalBlock  / count),
         pct: (count / N * 100).toFixed(1),
+        infinite,
       })),
   };
 }
@@ -254,9 +255,10 @@ function printResults(results: MCResult, config: Config): void {
   }
 
   console.log("\n  MOST COMMON OPTIMAL PLAYS");
-  for (const { combo, pct, damage, block } of results.topPlays) {
+  for (const { combo, pct, damage, block, infinite } of results.topPlays) {
     const stats = `${String(damage).padStart(3)} dmg  ${String(block).padStart(3)} block`;
-    console.log(`    ${String(pct + "%").padStart(6)}  ${combo.padEnd(40)}  ${stats}`);
+    const inf   = infinite ? "  [INFINITE COMBO]" : "";
+    console.log(`    ${String(pct + "%").padStart(6)}  ${combo.padEnd(40)}  ${stats}${inf}`);
   }
 
   console.log("\n" + line + "\n");

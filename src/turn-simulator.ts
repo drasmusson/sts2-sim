@@ -43,17 +43,18 @@ function dfs(
   damage:       number,
   block:        number,
   initialEnergy: number,
-  best:         { result: TurnResult },
+  best:         { result: TurnResult; foundInfinite: boolean },
   threshold:    number,
 ): void {
+  // Once any branch confirms infinite, all infinites are equivalent — stop searching.
+  if (best.foundInfinite) return;
+
   const energySpent = initialEnergy - state.energy;
 
   // Infinite combo guard — truncate and record the branch
   if (state.playsCount > threshold) {
-    const candidate: TurnResult = {
-      played, totalDamage: damage, totalBlock: block, energySpent, infinite: true,
-    };
-    if (isBetter(candidate, best.result, mode)) best.result = candidate;
+    best.result = { played, totalDamage: damage, totalBlock: block, energySpent, infinite: true };
+    best.foundInfinite = true;
     return;
   }
 
@@ -89,15 +90,20 @@ function dfs(
     const idx = state.hand.indexOf(name);
     let nextHand        = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
     let nextDrawPile    = state.drawPile;
-    let nextDiscardPile = [...state.discardPile, name];
+    let nextDiscardPile = state.discardPile;
 
-    // Draw cards mid-turn if applicable (reshuffle handled inside drawCards)
+    // Draw cards mid-turn: card effects resolve (including draw) before the played card
+    // enters the discard pile — matching STS mechanics where a card's draw effect cannot
+    // draw itself back.
     if (card.draw > 0) {
       const drawn = drawCards(nextDrawPile, nextDiscardPile, card.draw);
       nextHand        = [...nextHand, ...drawn.hand];
       nextDrawPile    = drawn.drawPile;
       nextDiscardPile = drawn.discardPile;
     }
+
+    // Now the played card enters the discard (after its effects have resolved)
+    nextDiscardPile = [...nextDiscardPile, name];
 
     dfs(
       { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
@@ -126,7 +132,7 @@ export function simulateTurn(
   const deckSize  = hand.length + drawPile.length + discardPile.length;
   const threshold = Math.max(deckSize * 3, 20);
 
-  const best = { result: { played: [], totalDamage: 0, totalBlock: 0, energySpent: 0, infinite: false } };
+  const best = { result: { played: [], totalDamage: 0, totalBlock: 0, energySpent: 0, infinite: false }, foundInfinite: false };
 
   dfs(
     { energy, hand: [...hand], drawPile: [...drawPile], discardPile: [...discardPile],
