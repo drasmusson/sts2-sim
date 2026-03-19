@@ -38,6 +38,7 @@ interface MCResult {
   drawFreq: { name: string; pct: string }[];
   dmgDist:  Record<number, number>;
   blkDist:  Record<number, number>;
+  peakPlay: { combo: string; damage: number; block: number };
   topPlays: { combo: string; pct: string; damage: number; block: number }[];
 }
 
@@ -123,9 +124,13 @@ function runMC(config: Config): MCResult {
   const dmgDist:  Record<number, number> = {};
   const blkDist:  Record<number, number> = {};
   const playFreq: Record<string, { count: number; totalDamage: number; totalBlock: number }> = {};
+  const primary = config.mode === "dmg" ? "damage" : "block";
+  let peakPlay: { combo: string; damage: number; block: number } = { combo: "", damage: 0, block: 0 };
 
   for (let i = 0; i < N; i++) {
     const r = runOneSim(config);
+    if (r[primary] > peakPlay[primary])
+      peakPlay = { combo: r.play.played.join(" → "), damage: r.damage, block: r.block };
     damages.push(r.damage);
     blocks.push(r.block);
     dmgDist[r.damage] = (dmgDist[r.damage] ?? 0) + 1;
@@ -162,6 +167,7 @@ function runMC(config: Config): MCResult {
       .map(([name, n]) => ({ name, pct: (n / N * 100).toFixed(1) })),
     dmgDist,
     blkDist,
+    peakPlay,
     topPlays: Object.entries(playFreq)
       .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 5)
@@ -240,6 +246,13 @@ function printResults(results: MCResult, config: Config): void {
   for (const { name, pct } of results.drawFreq.slice(0, 8)) {
     const bar = "█".repeat(Math.round(parseFloat(pct) / 5));
     console.log(`    ${name.padEnd(16)} ${String(pct + "%").padStart(6)}  ${bar}`);
+  }
+
+  if (results.peakPlay.combo) {
+    const { combo, damage, block } = results.peakPlay;
+    const stats = `${String(damage).padStart(3)} dmg  ${String(block).padStart(3)} block`;
+    console.log("\n  BEST POSSIBLE PLAY");
+    console.log(`    ${combo.padEnd(40)}  ${stats}`);
   }
 
   console.log("\n  MOST COMMON OPTIMAL PLAYS");
