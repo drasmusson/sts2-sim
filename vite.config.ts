@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  base: "/sts2-sim/",
   root: ".",
   publicDir: "public",
   build: {
