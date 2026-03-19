@@ -23,8 +23,8 @@ Iron Wave,Attack,1,5,5,0,0,0,0,0,0,0,,0,1,0,0,0,
 Iron Wave+,Attack,1,7,7,0,0,0,0,0,0,0,,0,1,0,0,0,
 Molten Fist,Attack,1,10,0,0,0,0,0,0,0,0,,0,1,0,0,0,doubles enemy vulnerable stacks; exhausts
 Molten Fist+,Attack,1,14,0,0,0,0,0,0,0,0,,0,1,0,0,0,doubles enemy vulnerable stacks; exhausts
-Pommel Strike,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,0,0,
-Pommel Strike+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,0,0,
+Pommel Strike,Attack,1,9,0,1,0,0,0,0,0,0,,0,1,0,0,0,
+Pommel Strike+,Attack,1,12,0,1,0,0,0,0,0,0,,0,1,0,0,0,
 Shrug It Off,Skill,1,0,8,0,0,0,0,0,0,0,,0,1,0,0,0,
 Shrug It Off+,Skill,1,0,11,0,0,0,0,0,0,0,,0,1,0,0,0,
 Sword Boomerang,Attack,1,3,0,0,0,0,0,0,0,0,,0,3,0,0,0,

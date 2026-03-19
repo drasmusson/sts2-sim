@@ -141,6 +141,15 @@ export function optimalComboOrder(
     if (!aIsBonus && cardA.draw > 0 && bIsBonus) return -1;
     if (!bIsBonus && cardB.draw > 0 && aIsBonus) return 1;
 
+    // Affordable cards sort before unaffordable ones — prevents cyclic comparisons
+    // when an energy generator (bonus card) is needed to unlock an expensive card.
+    if (player.energyRemaining > 0) {
+      const aAffordable = cardA.cost <= player.energyRemaining;
+      const bAffordable = cardB.cost <= player.energyRemaining;
+      if (aAffordable && !bAffordable) return -1;
+      if (!aAffordable && bAffordable) return 1;
+    }
+
     const stateAfterA = applyCardState(player, cardA);
     const stateAfterB = applyCardState(player, cardB);
 
