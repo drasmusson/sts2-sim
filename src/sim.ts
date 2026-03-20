@@ -160,9 +160,11 @@ const player: PlayerState = {
   enemyAttack:    parseIntArg(args["enemy-attack"], 0),
   enemyHits:      parseIntArg(args["enemy-hits"], 1),
   enemyWeak:      !!args["enemy-weak"],
-  exhaust:         parseIntArg(args.exhaust, 0),
-  currentBlock:    0,
-  energyRemaining: 0,
+  exhaust:              parseIntArg(args.exhaust, 0),
+  blockPerExhaustEvent: 0,
+  exhaustedThisTurn:    false,
+  currentBlock:         0,
+  energyRemaining:      0,
 };
 
 if (!drawPile.length) {

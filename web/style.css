@@ -202,3 +202,14 @@ button[type="submit"]:disabled { opacity: 0.45; cursor: not-allowed; }
   margin-left: 6px;
   vertical-align: middle;
 }
+
+/* approximation note */
+.approx-note {
+  margin-top: 16px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface2));
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}

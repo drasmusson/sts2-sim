@@ -54,13 +54,23 @@ Some effects can't be modelled as cards in the draw pile. Apply them as flags an
 
 > Note: `--vulnerable` is for enemies that are *already* vulnerable. Bash's on-hit Vulnerable is handled automatically by the DFS exploring all play orderings.
 
+## Modeling notes
+
+Some cards are approximated rather than simulated exactly:
+
+| Card | In-game behaviour | How it's modeled | Effect on results |
+|---|---|---|---|
+| True Grit | Exhausts a **random** card from hand | Exhausts the **optimal** card (DFS branches on all choices) | Results are slightly optimistic — the sim shows the best-case exhaust target, not the average random outcome |
+
+The web app and CLI will warn you when a random-exhaust card is in your deck.
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-85 tests covering card value calculations, the DFS turn simulator, draw chains, energy feedback, and infinite combo detection.
+117 tests covering card value calculations, the DFS turn simulator, draw chains, energy feedback, infinite combo detection, and exhaust mechanics.
 
 ## How it works
 

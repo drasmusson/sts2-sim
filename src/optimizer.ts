@@ -8,8 +8,10 @@ export interface PlayerState {
   weak:           boolean;
   focus:          number;
   poisonTriggers: number;
-  exhaust:         number;
-  currentBlock:    number;
+  exhaust:              number;
+  blockPerExhaustEvent: number;   // Feel No Pain passive: block gained per exhaust event
+  exhaustedThisTurn:    boolean;  // true if any card was exhausted this turn (for Evil Eye)
+  currentBlock:         number;
   energyRemaining: number;
   enemyAttack:     number;
   enemyHits:      number;
@@ -90,6 +92,11 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
     block += (enemyAttack - Math.floor(enemyAttack * 0.75)) * enemyHits;
   }
 
+  // Conditional block: only if a card was already exhausted this turn (Evil Eye)
+  if (card.blockIfExhaustedTurn > 0 && player.exhaustedThisTurn) {
+    block += card.blockIfExhaustedTurn;
+  }
+
   return { damage, block };
 }
 
@@ -101,6 +108,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
   if (card.weakApplied > 0) next = { ...next, enemyWeak: true };
   if (card.energyGain > 0 && next.energyRemaining > 0)
                             next = { ...next, energyRemaining: next.energyRemaining + card.energyGain };
+  // Feel No Pain passive: each subsequent exhaust event this turn grants block
+  if (card.blockPerExhaustEvent > 0)
+                            next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + card.blockPerExhaustEvent };
   const { block } = cardEffectiveValues(card, state);
   if (block > 0)            next = { ...next, currentBlock: next.currentBlock + block };
   return next;

@@ -74,9 +74,11 @@ function readConfig(): WebConfig {
     enemyAttack:    parseInt(d.get("enemy-attack") as string)    || 0,
     enemyHits:      parseInt(d.get("enemy-hits") as string)      || 1,
     enemyWeak:      (d.get("enemy-weak") as string) === "on",
-    exhaust:        parseInt(d.get("exhaust") as string)         || 0,
-    currentBlock:    0,
-    energyRemaining: 0,
+    exhaust:              parseInt(d.get("exhaust") as string)         || 0,
+    blockPerExhaustEvent: 0,
+    exhaustedThisTurn:    false,
+    currentBlock:         0,
+    energyRemaining:      0,
   };
 
   return {
@@ -98,7 +100,7 @@ function runSim(config: WebConfig, n: number): void {
     setRunning(false);
     if (data.type === "complete") {
       clearError();
-      renderResults(data.result, config);
+      renderResults(data.result, config, data.approximations);
     } else {
       renderError(data.message);
     }

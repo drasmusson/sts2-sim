@@ -38,7 +38,7 @@ function infiniteBadge(infinite: boolean): string {
   return infinite ? ' <span class="badge-infinite">[INFINITE COMBO]</span>' : "";
 }
 
-export function renderResults(results: MCResult, config: WebConfig): void {
+export function renderResults(results: MCResult, config: WebConfig, approximations: string[] = []): void {
   const panel = el("results-panel");
   const inner = el("results-inner");
 
@@ -131,6 +131,12 @@ export function renderResults(results: MCResult, config: WebConfig): void {
     ${drawFreqHtml}
     ${bestPlayHtml}
     ${topPlaysHtml}
+    ${approximations.length ? `
+    <div class="approx-note">
+      ⚠ <strong>${approximations.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(", ")}</strong>
+      exhaust${approximations.length === 1 ? "s" : ""} a random card — modeled here as optimal choice,
+      so results may be slightly optimistic.
+    </div>` : ""}
   `;
 
   renderCharts(results);
