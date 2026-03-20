@@ -112,9 +112,15 @@ Currently the sim uses type-based card lookup (one row in CSV = one card type). 
 - ✅ Starting decks — presets for Ironclad, Silent, Defect; `--character` CLI flag + web UI dropdown
 - ⬜ Multi-copy input — easier way to add multiple of the same card (e.g. `Strike ×3`) in the web UI
 - ⬜ UI improvements — general polish, layout, usability
-- ⬜ More cards — expand `cards.csv` coverage across all characters
 - ⬜ Config file — save deck setups and run with `--config deck.json`
 - ⬜ Custom cards — define cards inline via CLI or config with arbitrary stat overrides; workaround for specific card instances (enchanted cards, Genetic Algorithm, etc.) without needing a full instance model
+
+### Per-character support
+- ⬜ **Ironclad** — full card coverage in `cards.csv`; exhaust support and synergy; vulnerable stacking synergy;
+- ⬜ **Silent** — full card coverage; poison, shivs, discard synergies
+- ⬜ **Defect** — full card coverage; orb slot tracking + evoke mechanic (required for Dualcast and orb-heavy builds); 0-cost and status card synergies
+- ⬜ **Regent** — Forge keyword (Sovereign Blade creation, damage accumulation); Stars persistent-energy resource; full card coverage
+- ⬜ **Necrobinder** — Otsy minion (separate HP pool, Summon keyword, damage intercept order); Doom timing (currently approximated as flat damage, needs post-enemy-turn check); Soul generating cards and the Soul card itself; full card coverage
 
 ### Out of Scope (for now)
 - 🚫 Card instances + enchantments — full instance-based model with per-copy stat overrides. Custom cards (above) cover most practical cases as a workaround.
