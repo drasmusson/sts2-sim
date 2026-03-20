@@ -20,7 +20,7 @@ function makeCard(overrides: Partial<Card>): Card {
     hits: 1, exhaustBonus: 0, blockAsDamage: false, xCost: false, draw: 0, energyGain: 0,
     selfExhaust: false, exhaustHandCount: 0, exhaustHandType: "", exhaustHandChoice: false,
     exhaustDrawCount: 0, blockPerExhaustEvent: 0, blockIfExhaustedTurn: 0,
-    damagePerExhaustedHand: 0, blockPerExhaustedHand: 0, notes: "",
+    damagePerExhaustedHand: 0, blockPerExhaustedHand: 0, upgradeHandCount: 0, notes: "",
     ...overrides,
   };
 }
@@ -329,4 +329,80 @@ test("exhaust branching: deduplication prevents redundant branches for identical
   // Exactly one strike should be exhausted (not two, since we only exhaust 1)
   const strikeExhausts = result.exhaustPile.filter(n => n === "strike").length;
   assert.equal(strikeExhausts, 1);
+});
+
+// ─── Upgrade hand ─────────────────────────────────────────────────────────────
+
+test("Armaments+: upgrades all cards in hand with a + version", () => {
+  const db = {
+    "armaments+": makeCard({ type: "skill", cost: 1, block: 5, upgradeHandCount: -1 }),
+    "strike":     makeCard({ damage: 6,  cost: 1 }),
+    "strike+":    makeCard({ damage: 9,  cost: 1 }),
+    "defend":     makeCard({ block: 5,   cost: 1 }),
+    "defend+":    makeCard({ block: 8,   cost: 1 }),
+  };
+  // Energy 3: armaments+(1) + strike+(1) + strike+(1) = 9+9 = 18 dmg, 5 block
+  const result = sim(["armaments+", "strike", "strike", "defend"], [], db, 3);
+  assert.equal(result.totalDamage, 18);
+  assert.equal(result.totalBlock, 5);
+  assert.ok(result.played.includes("armaments+"));
+  assert.ok(result.played.includes("strike+"));
+});
+
+test("Armaments+: cards with no + version are left unchanged", () => {
+  const db = {
+    "armaments+": makeCard({ type: "skill", cost: 1, block: 5, upgradeHandCount: -1 }),
+    "bash":       makeCard({ damage: 8, cost: 2 }),
+    // bash+ intentionally omitted from this test db to exercise the "no + version" code path
+    "strike":     makeCard({ damage: 6, cost: 1 }),
+    "strike+":    makeCard({ damage: 9, cost: 1 }),
+  };
+  // armaments+(1) upgrades strike→strike+, bash has no + so stays bash
+  // armaments+(1) + bash(2) = 8 dmg + 5 block  vs  bash(2) + strike(1) = 14 dmg
+  // In block mode, armaments+ is worth playing for 5 extra block at same damage potential
+  const result = sim(["armaments+", "bash", "strike"], [], db, 3, "block");
+  assert.ok(result.played.includes("armaments+"));
+  assert.ok(!result.played.includes("bash+"));   // bash has no + version, never appears as bash+
+  assert.ok(result.totalBlock >= 5);              // at minimum armaments+ block is gained
+});
+
+test("Armaments: upgrades one card — picks the best upgrade (highest damage gain)", () => {
+  const db = {
+    "armaments": makeCard({ type: "skill", cost: 1, block: 5, upgradeHandCount: 1 }),
+    "strike":    makeCard({ damage: 6, cost: 1 }),
+    "strike+":   makeCard({ damage: 9, cost: 1 }),
+    "defend":    makeCard({ block: 5,  cost: 1 }),
+    "defend+":   makeCard({ block: 8,  cost: 1 }),
+  };
+  // Energy 3: armaments(1) + strike+(1) + strike(1) = 9+6 = 15 dmg + 5 block
+  // vs strike(1) + strike(1) + defend(1) = 12 dmg + 5 block
+  const result = sim(["armaments", "strike", "strike", "defend"], [], db, 3);
+  assert.equal(result.totalDamage, 15);
+  assert.ok(result.played.includes("armaments"));
+  assert.ok(result.played.includes("strike+"));
+});
+
+test("Armaments: deduplication — two copies of same card only tried once as upgrade target", () => {
+  const db = {
+    "armaments": makeCard({ type: "skill", cost: 1, block: 5, upgradeHandCount: 1 }),
+    "strike":    makeCard({ damage: 6, cost: 1 }),
+    "strike+":   makeCard({ damage: 9, cost: 1 }),
+  };
+  // Two strikes in hand — upgrading either one gives the same result
+  const result = sim(["armaments", "strike", "strike"], [], db, 3);
+  assert.equal(result.totalDamage, 15); // armaments(1) + strike+(1) + strike(1)
+  assert.ok(result.played.includes("strike+"));
+});
+
+test("Armaments: no upgradeable cards in hand — plays normally without crashing", () => {
+  const db = {
+    "armaments": makeCard({ type: "skill", cost: 1, block: 5, upgradeHandCount: 1 }),
+    "strike":    makeCard({ damage: 6, cost: 1 }),
+    // no strike+ in db
+  };
+  const result = sim(["armaments", "strike"], [], db, 2);
+  assert.equal(result.totalDamage, 6);
+  assert.equal(result.totalBlock, 5);
+  assert.ok(result.played.includes("armaments"));
+  assert.ok(result.played.includes("strike"));
 });

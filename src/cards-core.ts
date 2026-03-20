@@ -29,6 +29,7 @@ export interface Card {
   blockIfExhaustedTurn:   number;   // gain this block if any card was exhausted this turn
   damagePerExhaustedHand: number;   // deal this damage per card exhausted from hand by this card
   blockPerExhaustedHand:  number;   // gain this block per card exhausted from hand by this card
+  upgradeHandCount:       number;   // upgrade N cards in hand; -1 = all, 1 = one (DFS branches on choice)
   notes:                  string;
 }
 
@@ -81,6 +82,7 @@ export function parseCsvText(raw: string): CardDb {
       blockIfExhaustedTurn:   parseInt(row["Block If Exhausted Turn"])  || 0,
       damagePerExhaustedHand: parseInt(row["Damage Per Exhausted Hand"]) || 0,
       blockPerExhaustedHand:  parseInt(row["Block Per Exhausted Hand"]) || 0,
+      upgradeHandCount:       parseInt(row["Upgrade Hand Count"])       || 0,
       notes:                  row["Notes"] || "",
     };
   }
