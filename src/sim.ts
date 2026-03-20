@@ -107,7 +107,7 @@ function printResults(results: MCResult, config: Config): void {
     printHistogram("BLOCK DISTRIBUTION", results.blkDist);
   }
 
-  console.log("\n  DRAW FREQUENCY (% of sims where card appears in hand)");
+  console.log("\n  DRAW FREQUENCY (% of sims where card appears in initial hand; excludes mid-turn draws)");
   for (const { name, pct } of results.drawFreq.slice(0, 8)) {
     const bar = "█".repeat(Math.round(parseFloat(pct) / 5));
     console.log(`    ${name.padEnd(16)} ${String(pct + "%").padStart(6)}  ${bar}`);

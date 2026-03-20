@@ -69,6 +69,7 @@ export function renderResults(results: MCResult, config: WebConfig, approximatio
   const drawFreqHtml = `
     <div class="section">
       <h2>Draw Frequency</h2>
+      <p class="section-subtitle">% of sims where card appears in the initial hand (excludes mid-turn draws)</p>
       <table class="freq-table">
         <tbody>
           ${results.drawFreq.map(({ name, pct }) => `
