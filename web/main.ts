@@ -2,6 +2,7 @@ import { parseCsvText } from "../src/cards-core";
 import { renderResults, renderError, clearError } from "./ui";
 import type { WebConfig, WorkerMessage } from "./worker";
 import type { Mode } from "../src/optimizer";
+import { STARTING_DECKS, CHARACTER_NAMES } from "../src/characters";
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let csvText = "";
@@ -135,6 +136,19 @@ async function init(): Promise<void> {
 
   setupAutocomplete(drawInput, drawAc);
   setupAutocomplete(discardInput, discardAc);
+
+  const characterSelect = document.getElementById("character-select") as HTMLSelectElement;
+
+  characterSelect.addEventListener("change", () => {
+    const val = characterSelect.value;
+    if (CHARACTER_NAMES.includes(val as typeof CHARACTER_NAMES[number])) {
+      drawInput.value = STARTING_DECKS[val as typeof CHARACTER_NAMES[number]].join(", ");
+    }
+  });
+
+  drawInput.addEventListener("input", () => {
+    characterSelect.value = "";
+  });
 
   // collapsible player state
   const legend = document.querySelector("#player-state-fieldset legend") as HTMLElement;

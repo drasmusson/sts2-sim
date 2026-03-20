@@ -11,6 +11,7 @@ import { fileURLToPath } from "url";
 import { loadCards } from "./cards.js";
 import { PlayerState, Mode } from "./optimizer.js";
 import { runMC, Config, MCResult } from "./mc.js";
+import { STARTING_DECKS, CHARACTER_NAMES } from "./characters.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CSV_PATH = path.join(__dirname, "../cards.csv");
@@ -135,7 +136,15 @@ const args = parseArgs(process.argv);
 
 N = parseIntArg(args.sims, N);
 
-const drawPile    = parseList(args.draw);
+const character = typeof args.character === "string" ? args.character.toLowerCase() : undefined;
+if (character !== undefined && !CHARACTER_NAMES.includes(character as typeof CHARACTER_NAMES[number])) {
+  console.error(`Error: unknown character "${character}". Valid options: ${CHARACTER_NAMES.join(", ")}`);
+  process.exit(1);
+}
+
+const drawPile    = parseList(args.draw).length
+  ? parseList(args.draw)
+  : character ? [...STARTING_DECKS[character as typeof CHARACTER_NAMES[number]]] : [];
 const discardPile = parseList(args.discard);
 const energy      = parseIntArg(args.energy, 3);
 const draws       = parseIntArg(args.draws, 5);
@@ -157,7 +166,7 @@ const player: PlayerState = {
 };
 
 if (!drawPile.length) {
-  console.error('Error: --draw is required. E.g. --draw "Strike,Strike,Bash,Defend,Defend"');
+  console.error('Error: --draw or --character is required. E.g. --draw "Strike,Strike,Bash,Defend,Defend" or --character ironclad');
   process.exit(1);
 }
 

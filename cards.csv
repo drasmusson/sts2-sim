@@ -85,3 +85,7 @@ Forgotten Ritual,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,if exhausted a card this t
 Forgotten Ritual+,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,if exhausted a card this turn gain 4 energy; conditional — use --energy workaround
 Offering,Skill,0,0,0,3,2,0,0,0,0,0,,0,1,0,0,0,lose 6 hp; draw 3 not modeled
 Offering+,Skill,0,0,0,5,2,0,0,0,0,0,,0,1,0,0,0,lose 6 hp; draw 5 not modeled
+Zap,Skill,1,0,0,0,0,0,0,0,0,0,lightning,1,1,0,0,0,
+Zap+,Skill,0,0,0,0,0,0,0,0,0,0,lightning,1,1,0,0,0,
+Dualcast,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,Evoke rightmost orb twice — evoke mechanic not modeled
+Dualcast+,Skill,0,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,Evoke rightmost orb twice — evoke mechanic not modeled
