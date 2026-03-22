@@ -11,7 +11,7 @@ test("fetch puts card on top of draw pile where it can be drawn this turn", () =
   // pommel (draw 1) draws strike from draw pile → strike is playable
   // headbutt(9) + pommel(9) + strike(6) = 24, costs 3
   const db: CardDb = {
-    headbutt: makeCard({ effects: [fx.damage(9), fx.fetchDiscard(1)], cost: 1 }),
+    headbutt: makeCard({ effects: [fx.damage(9), fx.discardToDraw(1)], cost: 1 }),
     pommel:   makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
     strike:   makeCard({ effects: [fx.damage(6)], cost: 1 }),
   };
@@ -26,7 +26,7 @@ test("fetch puts card on top of draw pile where it can be drawn this turn", () =
 
 test("fetch with empty discard is a no-op and doesn't crash", () => {
   const db: CardDb = {
-    headbutt: makeCard({ effects: [fx.damage(9), fx.fetchDiscard(1)], cost: 1 }),
+    headbutt: makeCard({ effects: [fx.damage(9), fx.discardToDraw(1)], cost: 1 }),
   };
 
   const result = simulateTurn(["headbutt"], [], [], db, basePlayer, 3, "dmg");
@@ -38,7 +38,7 @@ test("fetch with empty discard is a no-op and doesn't crash", () => {
 test("fetch without a subsequent draw effect doesn't add card to hand", () => {
   // headbutt fetches strike to top of draw — but no draw effect follows, so strike stays there
   const db: CardDb = {
-    headbutt: makeCard({ effects: [fx.damage(9), fx.fetchDiscard(1)], cost: 1 }),
+    headbutt: makeCard({ effects: [fx.damage(9), fx.discardToDraw(1)], cost: 1 }),
     strike:   makeCard({ effects: [fx.damage(6)], cost: 1 }),
   };
 
@@ -56,7 +56,7 @@ test("sim fetches the higher-value card when discard has multiple choices", () =
   // pommel draws whatever was fetched — fetching bludgeon is clearly better
   // headbutt(9) + pommel(9, draw bludgeon) + bludgeon(32) = 50 vs 24 with strike
   const db: CardDb = {
-    headbutt: makeCard({ effects: [fx.damage(9), fx.fetchDiscard(1)], cost: 1 }),
+    headbutt: makeCard({ effects: [fx.damage(9), fx.discardToDraw(1)], cost: 1 }),
     pommel:   makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
     strike:   makeCard({ effects: [fx.damage(6)], cost: 1 }),
     bludgeon: makeCard({ effects: [fx.damage(32)], cost: 2 }),
@@ -74,7 +74,7 @@ test("fetch is skipped when fetched card is unaffordable (sim uses it next turn)
   // fetching bludgeon puts it on draw — but no draw card in hand, and can't afford it anyway
   // sim just plays headbutt for 9
   const db: CardDb = {
-    headbutt: makeCard({ effects: [fx.damage(9), fx.fetchDiscard(1)], cost: 1 }),
+    headbutt: makeCard({ effects: [fx.damage(9), fx.discardToDraw(1)], cost: 1 }),
     bludgeon: makeCard({ effects: [fx.damage(32)], cost: 3 }),
   };
 

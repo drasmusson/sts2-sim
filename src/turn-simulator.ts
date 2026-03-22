@@ -111,6 +111,56 @@ function resolvePostExhaust(
   return { hand, drawPile, discardPile, exhaustPile, player, block };
 }
 
+// Applies discard_to_draw effect (if any): branches on each unique card in discard,
+// moving it to the top of the draw pile, then calls resolvePostExhaust + dfsWithUpgrade.
+// Slots between exhaust-from-hand and resolvePostExhaust in the resolution pipeline.
+function resolveDiscardToDraw(
+  name:          string,
+  card:          Card,
+  s:             PostExhaustState,
+  nextEnergy:    number,
+  playsCount:    number,
+  db:            CardDb,
+  mode:          Mode,
+  played:        string[],
+  damage:        number,
+  initialEnergy: number,
+  best:          { result: TurnResult; foundInfinite: boolean },
+  threshold:     number,
+): void {
+  const eff = card.effects.find(e => e.type === "discard_to_draw") as
+    Extract<CardEffect, { type: "discard_to_draw" }> | undefined;
+
+  if (!eff || s.discardPile.length === 0) {
+    const post = resolvePostExhaust(name, card, s);
+    dfsWithUpgrade(
+      { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
+        discardPile: post.discardPile, exhaustPile: post.exhaustPile,
+        player: post.player, playsCount },
+      card, db, mode, played, damage, post.block, initialEnergy, best, threshold,
+    );
+    return;
+  }
+
+  const tried = new Set<string>();
+  for (const target of s.discardPile) {
+    if (tried.has(target)) continue;
+    tried.add(target);
+    const fi = s.discardPile.indexOf(target);
+    const post = resolvePostExhaust(name, card, {
+      ...s,
+      discardPile: [...s.discardPile.slice(0, fi), ...s.discardPile.slice(fi + 1)],
+      drawPile:    [...s.drawPile, target],  // end of array = top of draw pile
+    });
+    dfsWithUpgrade(
+      { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
+        discardPile: post.discardPile, exhaustPile: post.exhaustPile,
+        player: post.player, playsCount },
+      card, db, mode, played, damage, post.block, initialEnergy, best, threshold,
+    );
+  }
+}
+
 // Applies upgrade_hand effect (if any) then recurses into dfs.
 // Called from all three exhaust branches so upgrade interaction bugs can't arise.
 function dfsWithUpgrade(
@@ -216,135 +266,76 @@ function dfs(
     let runningBlock    = block + vals.block;
     let runningDamage   = damage + vals.damage;
 
-    // ── Fetch from discard ────────────────────────────────────────────────────
-    // Headbutt-style: player picks N cards from discard and places them on top of the
-    // draw pile (before the played card enters discard — STS timing).
-    // DFS branches on each unique fetchable card; empty discard = no-op.
-    const fetchEff = card.effects.find(e => e.type === "fetch_discard") as
-      Extract<CardEffect, { type: "fetch_discard" }> | undefined;
-
-    type FetchBranch = { disc: string[]; draw: string[] };
-    const fetchBranches: FetchBranch[] = [];
-    if (fetchEff && fetchEff.count > 0 && nextDiscardPile.length > 0) {
-      const triedFetch = new Set<string>();
-      for (const fc of nextDiscardPile) {
-        if (triedFetch.has(fc)) continue;
-        triedFetch.add(fc);
-        const fi = nextDiscardPile.indexOf(fc);
-        fetchBranches.push({
-          disc: [...nextDiscardPile.slice(0, fi), ...nextDiscardPile.slice(fi + 1)],
-          draw: [...nextDrawPile, fc],  // end of array = top of draw pile
-        });
-      }
-    } else {
-      fetchBranches.push({ disc: nextDiscardPile, draw: nextDrawPile });
-    }
-
-    // ── Exhaust from hand (runs once per fetch branch) ────────────────────────
+    // ── Exhaust from hand ─────────────────────────────────────────────────────
     const exHandEff = card.effects.find(e => e.type === "exhaust_hand") as
       Extract<CardEffect, { type: "exhaust_hand" }> | undefined;
 
-    for (const { disc: fbDisc, draw: fbDraw } of fetchBranches) {
-      // Reset per-branch mutable state (each fetch branch starts from same base)
-      let bHand        = nextHand;
-      let bExhaustPile = nextExhaustPile;
-      let bPlayer      = nextPlayer;
-      let bBlock       = runningBlock;
-      let bDamage      = runningDamage;
+    const playsCount = state.playsCount + 1;
 
-      if (exHandEff && exHandEff.count === -1) {
-        // Case B: exhaust ALL matching cards from hand (Fiend Fire, Second Wind) — deterministic
-        const candidates = bHand.filter(n =>
-          exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
-        );
-        let exhaustCount = 0;
-        for (const c of candidates) {
-          const ci = bHand.indexOf(c);
-          bHand = [...bHand.slice(0, ci), ...bHand.slice(ci + 1)];
-          const er = applyExhaustEvent(c, bExhaustPile, bPlayer);
-          bExhaustPile = er.exhaustPile;
-          bPlayer      = er.player;
-          bBlock      += er.blockGained;
-          exhaustCount++;
-        }
-        bDamage += exHandEff.damagePerCard * exhaustCount;
-        bBlock  += exHandEff.blockPerCard  * exhaustCount;
-
-        const post = resolvePostExhaust(name, card, {
-          hand: bHand, drawPile: fbDraw, discardPile: fbDisc,
-          exhaustPile: bExhaustPile, player: bPlayer, block: bBlock,
-        });
-
-        dfsWithUpgrade(
-          { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
-            discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-            player: post.player, playsCount: state.playsCount + 1 },
-          card, db, mode, [...played, name], bDamage, post.block, initialEnergy, best, threshold,
-        );
-
-      } else if (exHandEff && exHandEff.count > 0) {
-        // Case C: exhaust N cards from hand — DFS branches on which card to exhaust
-        // NOTE: True Grit is random in-game; modeled here as optimal choice (overestimates true average value)
-        const candidates = bHand.filter(n =>
-          exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
-        );
-
-        if (candidates.length === 0) {
-          // No valid exhaust targets — treat as if no exhaust happened
-          const post = resolvePostExhaust(name, card, {
-            hand: bHand, drawPile: fbDraw, discardPile: fbDisc,
-            exhaustPile: bExhaustPile, player: bPlayer, block: bBlock,
-          });
-          dfsWithUpgrade(
-            { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
-              discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-              player: post.player, playsCount: state.playsCount + 1 },
-            card, db, mode, [...played, name], bDamage, post.block, initialEnergy, best, threshold,
-          );
-        } else {
-          // Branch on each unique exhaust choice
-          const triedExhaust = new Set<string>();
-          for (const candidate of candidates) {
-            if (triedExhaust.has(candidate)) continue;
-            triedExhaust.add(candidate);
-
-            const ci = bHand.indexOf(candidate);
-            let cHand = [...bHand.slice(0, ci), ...bHand.slice(ci + 1)];
-            const er = applyExhaustEvent(candidate, bExhaustPile, bPlayer);
-            let cExhaustPile = er.exhaustPile;
-            let cPlayer      = er.player;
-            let cBlock       = bBlock + er.blockGained;
-
-            const post = resolvePostExhaust(name, card, {
-              hand: cHand, drawPile: fbDraw, discardPile: fbDisc,
-              exhaustPile: cExhaustPile, player: cPlayer, block: cBlock,
-            });
-
-            dfsWithUpgrade(
-              { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
-                discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-                player: { ...post.player, energyRemaining: nextEnergy },
-                playsCount: state.playsCount + 1 },
-              card, db, mode, [...played, name], bDamage, post.block, initialEnergy, best, threshold,
-            );
-          }
-        }
-
-      } else {
-        // No exhaust-from-hand effect — proceed with draw and exhaust-from-draw normally
-        const post = resolvePostExhaust(name, card, {
-          hand: bHand, drawPile: fbDraw, discardPile: fbDisc,
-          exhaustPile: bExhaustPile, player: bPlayer, block: bBlock,
-        });
-
-        dfsWithUpgrade(
-          { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
-            discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-            player: post.player, playsCount: state.playsCount + 1 },
-          card, db, mode, [...played, name], bDamage, post.block, initialEnergy, best, threshold,
-        );
+    if (exHandEff && exHandEff.count === -1) {
+      // Case B: exhaust ALL matching cards from hand (Fiend Fire, Second Wind) — deterministic
+      const candidates = nextHand.filter(n =>
+        exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
+      );
+      let exhaustCount = 0;
+      for (const c of candidates) {
+        const ci = nextHand.indexOf(c);
+        nextHand = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
+        const er = applyExhaustEvent(c, nextExhaustPile, nextPlayer);
+        nextExhaustPile = er.exhaustPile;
+        nextPlayer      = er.player;
+        runningBlock   += er.blockGained;
+        exhaustCount++;
       }
-    } // end fetch branches
+      runningDamage += exHandEff.damagePerCard * exhaustCount;
+      runningBlock  += exHandEff.blockPerCard  * exhaustCount;
+
+      resolveDiscardToDraw(name, card, {
+        hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+        exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+      }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+
+    } else if (exHandEff && exHandEff.count > 0) {
+      // Case C: exhaust N cards from hand — DFS branches on which card to exhaust
+      // NOTE: True Grit is random in-game; modeled here as optimal choice (overestimates true average value)
+      const candidates = nextHand.filter(n =>
+        exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
+      );
+
+      if (candidates.length === 0) {
+        // No valid exhaust targets — treat as if no exhaust happened
+        resolveDiscardToDraw(name, card, {
+          hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+        }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+      } else {
+        // Branch on each unique exhaust choice
+        const triedExhaust = new Set<string>();
+        for (const candidate of candidates) {
+          if (triedExhaust.has(candidate)) continue;
+          triedExhaust.add(candidate);
+
+          const ci = nextHand.indexOf(candidate);
+          let cHand = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
+          const er = applyExhaustEvent(candidate, nextExhaustPile, nextPlayer);
+          let cExhaustPile = er.exhaustPile;
+          let cPlayer      = er.player;
+          let cBlock       = runningBlock + er.blockGained;
+
+          resolveDiscardToDraw(name, card, {
+            hand: cHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+            exhaustPile: cExhaustPile, player: cPlayer, block: cBlock,
+          }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+        }
+      }
+
+    } else {
+      // No exhaust-from-hand effect
+      resolveDiscardToDraw(name, card, {
+        hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+        exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+      }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+    }
   }
 }
 
