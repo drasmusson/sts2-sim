@@ -1,4 +1,4 @@
-Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Block As Damage,X Cost,Self Exhaust,Exhaust Hand Count,Exhaust Hand Type,Exhaust Hand Choice,Exhaust Draw Count,Block Per Exhaust Event,Block If Exhausted Turn,Damage Per Exhausted Hand,Block Per Exhausted Hand,Upgrade Hand Count,Fetch Discard Count,Copy To Discard,Self Damage,Damage Per Self Damage,Notes
+Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Block As Damage,X Cost,Self Exhaust,Exhaust Hand Count,Exhaust Hand Type,Exhaust Hand Choice,Exhaust Draw Count,Block Per Exhaust Event,Block If Exhausted Turn,Damage Per Exhausted Hand,Block Per Exhausted Hand,Upgrade Hand Count,Fetch Discard Count,Copy To Discard,Self Damage,Damage Per Self Damage,Damage If Self Damaged,Notes
 Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Strike+,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Defend,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
@@ -41,8 +41,8 @@ Uppercut,Attack,2,13,0,0,0,0,1,1,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Uppercut+,Attack,2,13,0,0,0,0,2,2,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Inflame,Power,1,0,0,0,0,2,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Inflame+,Power,1,0,0,0,0,3,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
-Anger,Attack,0,6,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,1,0,0,adds copy to discard
-Anger+,Attack,0,8,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,1,0,0,adds copy to discard
+Anger,Attack,0,6,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,1,0,0,0,adds copy to discard
+Anger+,Attack,0,8,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,1,0,0,0,adds copy to discard
 Cinder,Attack,2,17,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,1,0,0,0,0,0,exhausts top card in draw pile
 Cinder+,Attack,2,22,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,1,0,0,0,0,0,exhausts top card in draw pile
 Fight Me,Attack,2,5,0,0,0,2,0,0,0,0,,0,2,0,0,0,0,0,,0,0,0,0,0,0,0,gives 1 str to enemy

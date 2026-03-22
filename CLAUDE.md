@@ -46,7 +46,7 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - Upgraded cards are separate rows, identified by `+` suffix (e.g. `Strike+`)
 
 **CSV schema (full column order):**
-`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Exhaust Bonus | Block As Damage | X Cost | Self Exhaust | Exhaust Hand Count | Exhaust Hand Type | Exhaust Hand Choice | Exhaust Draw Count | Block Per Exhaust Event | Block If Exhausted Turn | Damage Per Exhausted Hand | Block Per Exhausted Hand | Upgrade Hand Count | Fetch Discard Count | Copy To Discard | Self Damage | Damage Per Self Damage | Notes`
+`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Exhaust Bonus | Block As Damage | X Cost | Self Exhaust | Exhaust Hand Count | Exhaust Hand Type | Exhaust Hand Choice | Exhaust Draw Count | Block Per Exhaust Event | Block If Exhausted Turn | Damage Per Exhausted Hand | Block Per Exhausted Hand | Upgrade Hand Count | Fetch Discard Count | Copy To Discard | Self Damage | Damage Per Self Damage | Damage If Self Damaged | Notes`
 
 The CSV parser converts these flat columns into a typed `CardEffect[]` array on the `Card` struct (see `src/cards-core.ts`). `X Cost` and `Self Exhaust` remain as flat fields on `Card` since they affect routing, not play effects.
 
@@ -63,8 +63,9 @@ The CSV parser converts these flat columns into a typed `CardEffect[]` array on 
 - `Upgrade Hand Count` — `0` = none, `1` = upgrade 1 card in hand (sim branches on each choice), `-1` = upgrade all (deterministic, e.g. Armaments+)
 - `Fetch Discard Count` — number of cards to move from discard to top of draw pile (player chooses; sim branches on each unique choice, e.g. Headbutt)
 - `Copy To Discard` — `1` if playing this card adds a copy of itself to the discard pile (e.g. Anger); the copy is immediately available for fetch effects like Headbutt
-- `Self Damage` — HP lost when this card is played (bypasses block; increments `selfDamageThisTurn` counter for scaling effects)
-- `Damage Per Self Damage` — bonus damage per HP of self-damage taken this turn (e.g. Spite); DFS naturally finds the optimal play order to maximise this
+- `Self Damage` — HP lost when this card is played (bypasses block; increments `selfDamageThisTurn` instance counter)
+- `Damage If Self Damaged` — deal X flat damage if any self-damage was taken this turn, regardless of amount (e.g. Spite); the DFS naturally orders self-damage cards before conditional cards
+- `Damage Per Self Damage` — deal X damage per self-damage instance this turn (scales with count of events, not total HP lost)
 
 ## Key design decisions
 

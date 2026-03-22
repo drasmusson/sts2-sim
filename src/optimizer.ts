@@ -114,6 +114,9 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "damage_per_self_damage":
         damage += eff.amount * player.selfDamageThisTurn;
         break;
+      case "damage_if_self_damaged":
+        if (player.selfDamageThisTurn > 0) damage += eff.amount;
+        break;
       // exhaust_bonus: pre-computed above and folded into damage effects
       // Other effect types (draw, energy_gain, exhaust_*, upgrade_hand, self_damage, etc.)
       // don't contribute to immediate damage/block scoring
@@ -146,7 +149,7 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + eff.amount };
         break;
       case "self_damage":
-        next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + eff.amount };
+        next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + 1 };
         break;
     }
   }

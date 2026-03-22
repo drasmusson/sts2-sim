@@ -23,7 +23,8 @@ export type CardEffect =
   | { type: "discard_to_draw";          count: number }    // put N cards from discard on top of draw (player chooses)
   | { type: "copy_to_discard" }                            // add a copy of this card to the discard pile (e.g. Anger)
   | { type: "self_damage";              amount: number }   // deal X damage to yourself when played (bypasses block)
-  | { type: "damage_per_self_damage";   amount: number }   // +X damage per HP of self-damage taken this turn
+  | { type: "damage_per_self_damage";   amount: number }   // +X damage per self-damage instance this turn
+  | { type: "damage_if_self_damaged";   amount: number }   // deal X damage if any self-damage was taken this turn (e.g. Spite)
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
   | { type: "block_if_exhausted_turn";  amount: number };  // Evil Eye conditional
 
@@ -86,6 +87,7 @@ export function parseCsvText(raw: string): CardDb {
     const copyToDiscard     = b("Copy To Discard");
     const selfDamage        = n("Self Damage");
     const dmgPerSelfDamage  = n("Damage Per Self Damage");
+    const dmgIfSelfDamaged  = n("Damage If Self Damaged");
 
     const effects: CardEffect[] = [];
 
@@ -148,6 +150,9 @@ export function parseCsvText(raw: string): CardDb {
     }
     if (dmgPerSelfDamage > 0) {
       effects.push({ type: "damage_per_self_damage", amount: dmgPerSelfDamage });
+    }
+    if (dmgIfSelfDamaged > 0) {
+      effects.push({ type: "damage_if_self_damaged", amount: dmgIfSelfDamaged });
     }
 
     db[name.toLowerCase()] = {
