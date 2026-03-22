@@ -98,7 +98,12 @@ function resolvePostExhaust(
     block      += er.blockGained;
   }
 
-  // 3. Route played card to exhaust or discard
+  // 3. Add copy to discard (e.g. Anger) — before routing the played card itself
+  if (card.effects.some(e => e.type === "copy_to_discard")) {
+    discardPile = [...discardPile, cardName];
+  }
+
+  // 4. Route played card to exhaust or discard
   if (card.selfExhaust) {
     const er = applyExhaustEvent(cardName, exhaustPile, player);
     exhaustPile = er.exhaustPile;

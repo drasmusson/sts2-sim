@@ -58,4 +58,6 @@ export const fx = {
     ({ type: "block_if_exhausted_turn", amount }),
   discardToDraw: (count: number): CardEffect =>
     ({ type: "discard_to_draw", count }),
+  copyToDiscard: (): CardEffect =>
+    ({ type: "copy_to_discard" }),
 };
