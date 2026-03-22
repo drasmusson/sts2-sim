@@ -5,7 +5,7 @@
 
 import { drawCards } from "./draw.js";
 import { cardEffectiveValues, applyCardState, PlayerState, Mode } from "./optimizer.js";
-import { CardDb } from "./cards.js";
+import { Card, CardDb } from "./cards.js";
 
 export interface TurnResult {
   played:      string[];
@@ -54,6 +54,57 @@ function applyExhaustEvent(
     },
     blockGained: player.blockPerExhaustEvent,
   };
+}
+
+// Bundles the mutable pile/player/block state that resolvePostExhaust operates on.
+interface PostExhaustState {
+  hand:        string[];
+  drawPile:    string[];
+  discardPile: string[];
+  exhaustPile: string[];
+  player:      PlayerState;
+  block:       number;
+}
+
+// The sequence draw → exhaust-from-draw → route-played-card is identical across
+// all three exhaust branches. Centralise it here to avoid duplication.
+// "cardName" is the card just played (for routing to discard or exhaustPile).
+function resolvePostExhaust(
+  cardName: string,
+  card:     Pick<Card, "draw" | "exhaustDrawCount" | "selfExhaust">,
+  s:        PostExhaustState,
+): PostExhaustState {
+  let { hand, drawPile, discardPile, exhaustPile, player, block } = s;
+
+  // 1. Draw cards mid-turn (effects resolve before the played card enters discard — STS timing)
+  if (card.draw > 0) {
+    const drawn = drawCards(drawPile, discardPile, card.draw);
+    hand        = [...hand, ...drawn.hand];
+    drawPile    = drawn.drawPile;
+    discardPile = drawn.discardPile;
+  }
+
+  // 2. Exhaust from draw pile (Cinder)
+  for (let i = 0; i < card.exhaustDrawCount && drawPile.length > 0; i++) {
+    const top = drawPile[drawPile.length - 1]!;
+    drawPile = drawPile.slice(0, -1);
+    const er = applyExhaustEvent(top, exhaustPile, player);
+    exhaustPile = er.exhaustPile;
+    player      = er.player;
+    block      += er.blockGained;
+  }
+
+  // 3. Route played card to exhaust or discard
+  if (card.selfExhaust) {
+    const er = applyExhaustEvent(cardName, exhaustPile, player);
+    exhaustPile = er.exhaustPile;
+    player      = er.player;
+    block      += er.blockGained;
+  } else {
+    discardPile = [...discardPile, cardName];
+  }
+
+  return { hand, drawPile, discardPile, exhaustPile, player, block };
 }
 
 // Applies upgradeHandCount effect (if any) then recurses into dfs.
@@ -175,33 +226,12 @@ function dfs(
       runningDamage += card.damagePerExhaustedHand * exhaustCount;
       runningBlock  += card.blockPerExhaustedHand  * exhaustCount;
 
-      // Draw cards mid-turn (after exhaust, before discard)
-      if (card.draw > 0) {
-        const drawn = drawCards(nextDrawPile, nextDiscardPile, card.draw);
-        nextHand        = [...nextHand, ...drawn.hand];
-        nextDrawPile    = drawn.drawPile;
-        nextDiscardPile = drawn.discardPile;
-      }
-
-      // Exhaust from draw pile (Cinder)
-      for (let i = 0; i < card.exhaustDrawCount && nextDrawPile.length > 0; i++) {
-        const top = nextDrawPile[nextDrawPile.length - 1]!;
-        nextDrawPile = nextDrawPile.slice(0, -1);
-        const er = applyExhaustEvent(top, nextExhaustPile, nextPlayer);
-        nextExhaustPile = er.exhaustPile;
-        nextPlayer      = er.player;
-        runningBlock   += er.blockGained;
-      }
-
-      // Route played card to exhaust or discard
-      if (card.selfExhaust) {
-        const er = applyExhaustEvent(name, nextExhaustPile, nextPlayer);
-        nextExhaustPile = er.exhaustPile;
-        nextPlayer      = er.player;
-        runningBlock   += er.blockGained;
-      } else {
-        nextDiscardPile = [...nextDiscardPile, name];
-      }
+      ({ hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+         exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock } =
+        resolvePostExhaust(name, card, {
+          hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+        }));
 
       dfsWithUpgrade(
         { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
@@ -219,26 +249,12 @@ function dfs(
 
       if (candidates.length === 0) {
         // No valid exhaust targets — treat as if no exhaust happened
-        if (card.draw > 0) {
-          const drawn = drawCards(nextDrawPile, nextDiscardPile, card.draw);
-          nextHand        = [...nextHand, ...drawn.hand];
-          nextDrawPile    = drawn.drawPile;
-          nextDiscardPile = drawn.discardPile;
-        }
-        for (let i = 0; i < card.exhaustDrawCount && nextDrawPile.length > 0; i++) {
-          const top = nextDrawPile[nextDrawPile.length - 1]!;
-          nextDrawPile = nextDrawPile.slice(0, -1);
-          const er = applyExhaustEvent(top, nextExhaustPile, nextPlayer);
-          nextExhaustPile = er.exhaustPile;
-          nextPlayer      = er.player;
-          runningBlock   += er.blockGained;
-        }
-        if (card.selfExhaust) {
-          const er = applyExhaustEvent(name, nextExhaustPile, nextPlayer);
-          nextExhaustPile = er.exhaustPile; nextPlayer = er.player; runningBlock += er.blockGained;
-        } else {
-          nextDiscardPile = [...nextDiscardPile, name];
-        }
+        ({ hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+           exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock } =
+          resolvePostExhaust(name, card, {
+            hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+            exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+          }));
         dfsWithUpgrade(
           { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
             discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
@@ -259,31 +275,14 @@ function dfs(
           let bPlayer      = er.player;
           let bBlock       = runningBlock + er.blockGained;
 
-          // Draw in this branch
           let bDrawPile    = nextDrawPile;
           let bDiscardPile = nextDiscardPile;
-          if (card.draw > 0) {
-            const drawn = drawCards(bDrawPile, bDiscardPile, card.draw);
-            bHand        = [...bHand, ...drawn.hand];
-            bDrawPile    = drawn.drawPile;
-            bDiscardPile = drawn.discardPile;
-          }
-
-          // Exhaust from draw pile in this branch
-          for (let i = 0; i < card.exhaustDrawCount && bDrawPile.length > 0; i++) {
-            const top = bDrawPile[bDrawPile.length - 1]!;
-            bDrawPile = bDrawPile.slice(0, -1);
-            const er2 = applyExhaustEvent(top, bExhaustPile, bPlayer);
-            bExhaustPile = er2.exhaustPile; bPlayer = er2.player; bBlock += er2.blockGained;
-          }
-
-          // Route played card in this branch
-          if (card.selfExhaust) {
-            const er2 = applyExhaustEvent(name, bExhaustPile, bPlayer);
-            bExhaustPile = er2.exhaustPile; bPlayer = er2.player; bBlock += er2.blockGained;
-          } else {
-            bDiscardPile = [...bDiscardPile, name];
-          }
+          ({ hand: bHand, drawPile: bDrawPile, discardPile: bDiscardPile,
+             exhaustPile: bExhaustPile, player: bPlayer, block: bBlock } =
+            resolvePostExhaust(name, card, {
+              hand: bHand, drawPile: bDrawPile, discardPile: bDiscardPile,
+              exhaustPile: bExhaustPile, player: bPlayer, block: bBlock,
+            }));
 
           dfsWithUpgrade(
             { energy: nextEnergy, hand: bHand, drawPile: bDrawPile,
@@ -299,36 +298,12 @@ function dfs(
 
     } else {
       // No exhaust-from-hand effect — proceed with draw and exhaust-from-draw normally
-
-      // Draw cards mid-turn: card effects resolve (including draw) before the played card
-      // enters the discard pile — matching STS mechanics where a card's draw effect cannot
-      // draw itself back.
-      if (card.draw > 0) {
-        const drawn = drawCards(nextDrawPile, nextDiscardPile, card.draw);
-        nextHand        = [...nextHand, ...drawn.hand];
-        nextDrawPile    = drawn.drawPile;
-        nextDiscardPile = drawn.discardPile;
-      }
-
-      // Exhaust from draw pile (Cinder)
-      for (let i = 0; i < card.exhaustDrawCount && nextDrawPile.length > 0; i++) {
-        const top = nextDrawPile[nextDrawPile.length - 1]!;
-        nextDrawPile = nextDrawPile.slice(0, -1);
-        const er = applyExhaustEvent(top, nextExhaustPile, nextPlayer);
-        nextExhaustPile = er.exhaustPile;
-        nextPlayer      = er.player;
-        runningBlock   += er.blockGained;
-      }
-
-      // Route played card to exhaust or discard
-      if (card.selfExhaust) {
-        const er = applyExhaustEvent(name, nextExhaustPile, nextPlayer);
-        nextExhaustPile = er.exhaustPile;
-        nextPlayer      = er.player;
-        runningBlock   += er.blockGained;
-      } else {
-        nextDiscardPile = [...nextDiscardPile, name];
-      }
+      ({ hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+         exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock } =
+        resolvePostExhaust(name, card, {
+          hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+        }));
 
       dfsWithUpgrade(
         { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
