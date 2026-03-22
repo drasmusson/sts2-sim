@@ -56,6 +56,44 @@ function applyExhaustEvent(
   };
 }
 
+// Applies upgradeHandCount effect (if any) then recurses into dfs.
+// Called from all three exhaust branches so upgrade interaction bugs can't arise.
+function dfsWithUpgrade(
+  state:        TurnState,
+  card:         { upgradeHandCount: number },
+  db:           CardDb,
+  mode:         Mode,
+  played:       string[],
+  damage:       number,
+  block:        number,
+  initialEnergy: number,
+  best:         { result: TurnResult; foundInfinite: boolean },
+  threshold:    number,
+): void {
+  if (card.upgradeHandCount === -1) {
+    // Upgrade ALL cards in hand that have a + version (Armaments+)
+    const upgradedHand = state.hand.map(c => (db[c + "+"] ? c + "+" : c));
+    dfs({ ...state, hand: upgradedHand }, db, mode, played, damage, block, initialEnergy, best, threshold);
+  } else if (card.upgradeHandCount === 1) {
+    // Upgrade ONE card — DFS branches on each unique upgradeable choice (Armaments)
+    const triedUpgrade = new Set<string>();
+    let anyUpgradeable = false;
+    for (const c of state.hand) {
+      if (!db[c + "+"] || triedUpgrade.has(c)) continue;
+      triedUpgrade.add(c);
+      anyUpgradeable = true;
+      const ci = state.hand.indexOf(c);
+      const upgradedHand = [...state.hand.slice(0, ci), c + "+", ...state.hand.slice(ci + 1)];
+      dfs({ ...state, hand: upgradedHand }, db, mode, played, damage, block, initialEnergy, best, threshold);
+    }
+    if (!anyUpgradeable) {
+      dfs(state, db, mode, played, damage, block, initialEnergy, best, threshold);
+    }
+  } else {
+    dfs(state, db, mode, played, damage, block, initialEnergy, best, threshold);
+  }
+}
+
 function dfs(
   state:        TurnState,
   db:           CardDb,
@@ -165,11 +203,11 @@ function dfs(
         nextDiscardPile = [...nextDiscardPile, name];
       }
 
-      dfs(
+      dfsWithUpgrade(
         { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
           discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
           player: nextPlayer, playsCount: state.playsCount + 1 },
-        db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
+        card, db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
       );
 
     } else if (card.exhaustHandCount > 0) {
@@ -201,11 +239,11 @@ function dfs(
         } else {
           nextDiscardPile = [...nextDiscardPile, name];
         }
-        dfs(
+        dfsWithUpgrade(
           { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
             discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
             player: nextPlayer, playsCount: state.playsCount + 1 },
-          db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
+          card, db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
         );
       } else {
         // Branch on each unique exhaust choice
@@ -247,12 +285,12 @@ function dfs(
             bDiscardPile = [...bDiscardPile, name];
           }
 
-          dfs(
+          dfsWithUpgrade(
             { energy: nextEnergy, hand: bHand, drawPile: bDrawPile,
               discardPile: bDiscardPile, exhaustPile: bExhaustPile,
               player: { ...bPlayer, energyRemaining: nextEnergy },
               playsCount: state.playsCount + 1 },
-            db, mode, [...played, name], runningDamage, bBlock, initialEnergy, best, threshold,
+            card, db, mode, [...played, name], runningDamage, bBlock, initialEnergy, best, threshold,
           );
         }
       }
@@ -292,56 +330,12 @@ function dfs(
         nextDiscardPile = [...nextDiscardPile, name];
       }
 
-      // ── Upgrade cards in hand ─────────────────────────────────────────────
-      if (card.upgradeHandCount === -1) {
-        // Upgrade ALL cards in hand that have a + version (Armaments+)
-        const upgradedHand = nextHand.map(c => (db[c + "+"] ? c + "+" : c));
-        dfs(
-          { energy: nextEnergy, hand: upgradedHand, drawPile: nextDrawPile,
-            discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
-            player: nextPlayer, playsCount: state.playsCount + 1 },
-          db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
-        );
-      } else if (card.upgradeHandCount === 1) {
-        // Upgrade ONE card — DFS branches on each unique upgradeable choice (Armaments)
-        const triedUpgrade = new Set<string>();
-        let anyUpgradeable = false;
-        for (const c of nextHand) {
-          if (!db[c + "+"] || triedUpgrade.has(c)) continue;
-          triedUpgrade.add(c);
-          anyUpgradeable = true;
-          const ci = nextHand.indexOf(c);
-          const upgradedHand = [...nextHand.slice(0, ci), c + "+", ...nextHand.slice(ci + 1)];
-          dfs(
-            { energy: nextEnergy, hand: upgradedHand, drawPile: nextDrawPile,
-              discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
-              player: nextPlayer, playsCount: state.playsCount + 1 },
-            db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
-          );
-        }
-        if (!anyUpgradeable) {
-          // No upgradeable cards in hand — recurse normally
-          dfs(
-            { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
-              discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
-              player: nextPlayer, playsCount: state.playsCount + 1 },
-            db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
-          );
-        }
-      } else {
-        dfs(
-          { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
-            discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
-            player: nextPlayer, playsCount: state.playsCount + 1 },
-          db, mode,
-          [...played, name],
-          runningDamage,
-          runningBlock,
-          initialEnergy,
-          best,
-          threshold,
-        );
-      }
+      dfsWithUpgrade(
+        { energy: nextEnergy, hand: nextHand, drawPile: nextDrawPile,
+          discardPile: nextDiscardPile, exhaustPile: nextExhaustPile,
+          player: nextPlayer, playsCount: state.playsCount + 1 },
+        card, db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
+      );
     }
   }
 }

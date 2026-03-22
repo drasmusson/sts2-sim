@@ -394,6 +394,23 @@ test("Armaments: deduplication — two copies of same card only tried once as up
   assert.ok(result.played.includes("strike+"));
 });
 
+test("upgrade + exhaust interaction: upgradeHandCount applies even when exhaustHandCount > 0", () => {
+  // Hypothetical card that exhausts one card from hand AND upgrades one card.
+  // Previously the upgrade was silently skipped because exhaustHandCount > 0 took a different code path.
+  const db = {
+    "hybrid": makeCard({ type: "skill", cost: 1, exhaustHandCount: 1, exhaustHandChoice: true, upgradeHandCount: 1 }),
+    "strike":  makeCard({ damage: 6, cost: 1 }),
+    "strike+": makeCard({ damage: 9, cost: 1 }),
+    "defend":  makeCard({ block: 5, cost: 1 }),
+  };
+  // hybrid(1): exhaust defend, upgrade strike → strike+ remains in hand
+  // then strike+(1) for 9 dmg. Total: 9 dmg.
+  // Without upgrade fix: strike stays at 6 dmg. Total: 6 dmg.
+  const result = sim(["hybrid", "strike", "defend"], [], db, 2);
+  assert.equal(result.totalDamage, 9);
+  assert.ok(result.played.includes("strike+"));
+});
+
 test("Armaments: no upgradeable cards in hand — plays normally without crashing", () => {
   const db = {
     "armaments": makeCard({ type: "skill", cost: 1, block: 5, upgradeHandCount: 1 }),
