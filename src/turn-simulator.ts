@@ -5,7 +5,7 @@
 
 import { drawCards } from "./draw.js";
 import { cardEffectiveValues, applyCardState, PlayerState, Mode } from "./optimizer.js";
-import { Card, CardDb } from "./cards.js";
+import { Card, CardDb, CardEffect } from "./cards.js";
 
 export interface TurnResult {
   played:      string[];
@@ -71,21 +71,25 @@ interface PostExhaustState {
 // "cardName" is the card just played (for routing to discard or exhaustPile).
 function resolvePostExhaust(
   cardName: string,
-  card:     Pick<Card, "draw" | "exhaustDrawCount" | "selfExhaust">,
+  card:     Card,
   s:        PostExhaustState,
 ): PostExhaustState {
   let { hand, drawPile, discardPile, exhaustPile, player, block } = s;
 
+  const drawEff        = card.effects.find(e => e.type === "draw")         as Extract<CardEffect, { type: "draw" }>         | undefined;
+  const exhaustDrawEff = card.effects.find(e => e.type === "exhaust_draw") as Extract<CardEffect, { type: "exhaust_draw" }> | undefined;
+
   // 1. Draw cards mid-turn (effects resolve before the played card enters discard — STS timing)
-  if (card.draw > 0) {
-    const drawn = drawCards(drawPile, discardPile, card.draw);
+  if (drawEff && drawEff.amount > 0) {
+    const drawn = drawCards(drawPile, discardPile, drawEff.amount);
     hand        = [...hand, ...drawn.hand];
     drawPile    = drawn.drawPile;
     discardPile = drawn.discardPile;
   }
 
   // 2. Exhaust from draw pile (Cinder)
-  for (let i = 0; i < card.exhaustDrawCount && drawPile.length > 0; i++) {
+  const exhaustDrawCount = exhaustDrawEff?.count ?? 0;
+  for (let i = 0; i < exhaustDrawCount && drawPile.length > 0; i++) {
     const top = drawPile[drawPile.length - 1]!;
     drawPile = drawPile.slice(0, -1);
     const er = applyExhaustEvent(top, exhaustPile, player);
@@ -107,11 +111,11 @@ function resolvePostExhaust(
   return { hand, drawPile, discardPile, exhaustPile, player, block };
 }
 
-// Applies upgradeHandCount effect (if any) then recurses into dfs.
+// Applies upgrade_hand effect (if any) then recurses into dfs.
 // Called from all three exhaust branches so upgrade interaction bugs can't arise.
 function dfsWithUpgrade(
   state:        TurnState,
-  card:         { upgradeHandCount: number },
+  card:         Card,
   db:           CardDb,
   mode:         Mode,
   played:       string[],
@@ -121,11 +125,16 @@ function dfsWithUpgrade(
   best:         { result: TurnResult; foundInfinite: boolean },
   threshold:    number,
 ): void {
-  if (card.upgradeHandCount === -1) {
+  const upgradeEff = card.effects.find(e => e.type === "upgrade_hand") as
+    Extract<CardEffect, { type: "upgrade_hand" }> | undefined;
+
+  if (!upgradeEff) {
+    dfs(state, db, mode, played, damage, block, initialEnergy, best, threshold);
+  } else if (upgradeEff.count === -1) {
     // Upgrade ALL cards in hand that have a + version (Armaments+)
     const upgradedHand = state.hand.map(c => (db[c + "+"] ? c + "+" : c));
     dfs({ ...state, hand: upgradedHand }, db, mode, played, damage, block, initialEnergy, best, threshold);
-  } else if (card.upgradeHandCount === 1) {
+  } else if (upgradeEff.count === 1) {
     // Upgrade ONE card — DFS branches on each unique upgradeable choice (Armaments)
     const triedUpgrade = new Set<string>();
     let anyUpgradeable = false;
@@ -208,10 +217,13 @@ function dfs(
     let runningDamage   = damage + vals.damage;
 
     // ── Exhaust from hand ─────────────────────────────────────────────────────
-    if (card.exhaustHandCount === -1) {
+    const exHandEff = card.effects.find(e => e.type === "exhaust_hand") as
+      Extract<CardEffect, { type: "exhaust_hand" }> | undefined;
+
+    if (exHandEff && exHandEff.count === -1) {
       // Case B: exhaust ALL matching cards from hand (Fiend Fire, Second Wind) — deterministic
       const candidates = nextHand.filter(n =>
-        card.exhaustHandType === "non-attack" ? db[n]?.type !== "attack" : true
+        exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
       );
       let exhaustCount = 0;
       for (const c of candidates) {
@@ -223,8 +235,8 @@ function dfs(
         runningBlock   += er.blockGained;
         exhaustCount++;
       }
-      runningDamage += card.damagePerExhaustedHand * exhaustCount;
-      runningBlock  += card.blockPerExhaustedHand  * exhaustCount;
+      runningDamage += exHandEff.damagePerCard * exhaustCount;
+      runningBlock  += exHandEff.blockPerCard  * exhaustCount;
 
       ({ hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock } =
@@ -240,11 +252,11 @@ function dfs(
         card, db, mode, [...played, name], runningDamage, runningBlock, initialEnergy, best, threshold,
       );
 
-    } else if (card.exhaustHandCount > 0) {
+    } else if (exHandEff && exHandEff.count > 0) {
       // Case C: exhaust N cards from hand — DFS branches on which card to exhaust
       // NOTE: True Grit is random in-game; modeled here as optimal choice (overestimates true average value)
       const candidates = nextHand.filter(n =>
-        card.exhaustHandType === "non-attack" ? db[n]?.type !== "attack" : true
+        exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
       );
 
       if (candidates.length === 0) {

@@ -1,4 +1,4 @@
-import { Card } from "../src/cards.js";
+import { Card, CardEffect } from "../src/cards.js";
 import { PlayerState } from "../src/optimizer.js";
 
 export const basePlayer: PlayerState = {
@@ -9,13 +9,51 @@ export const basePlayer: PlayerState = {
 
 export function makeCard(overrides: Partial<Card>): Card {
   return {
-    type: "attack", cost: 1,
-    damage: 0, block: 0, poison: 0, doom: 0,
-    orbType: null, orbCount: 0, strGain: 0, vulnApplied: 0, weakApplied: 0,
-    hits: 1, exhaustBonus: 0, blockAsDamage: false, xCost: false, draw: 0, energyGain: 0,
-    selfExhaust: false, exhaustHandCount: 0, exhaustHandType: "", exhaustHandChoice: false,
-    exhaustDrawCount: 0, blockPerExhaustEvent: 0, blockIfExhaustedTurn: 0,
-    damagePerExhaustedHand: 0, blockPerExhaustedHand: 0, upgradeHandCount: 0, notes: "",
+    type: "attack",
+    cost: 1,
+    xCost: false,
+    selfExhaust: false,
+    effects: [],
+    notes: "",
     ...overrides,
   };
 }
+
+// Shorthand effect constructors for readable test code.
+// Usage: makeCard({ effects: [fx.damage(6), fx.draw(1)], cost: 1 })
+export const fx = {
+  damage:    (amount: number, hits = 1): CardEffect =>
+    ({ type: "damage", amount, hits }),
+  blockAsDamage: (hits = 1): CardEffect =>
+    ({ type: "damage", amount: 0, hits, useCurrentBlock: true }),
+  block:     (amount: number): CardEffect =>
+    ({ type: "block", amount }),
+  draw:      (amount: number): CardEffect =>
+    ({ type: "draw", amount }),
+  energyGain:(amount: number): CardEffect =>
+    ({ type: "energy_gain", amount }),
+  strGain:   (amount: number): CardEffect =>
+    ({ type: "str_gain", amount }),
+  vuln:      (amount: number): CardEffect =>
+    ({ type: "vuln", amount }),
+  weak:      (amount: number): CardEffect =>
+    ({ type: "weak", amount }),
+  poison:    (amount: number): CardEffect =>
+    ({ type: "poison", amount }),
+  doom:      (amount: number): CardEffect =>
+    ({ type: "doom", amount }),
+  orb:       (orbType: string, count = 1): CardEffect =>
+    ({ type: "orb", orbType, count }),
+  exhaustBonus: (amount: number): CardEffect =>
+    ({ type: "exhaust_bonus", amount }),
+  exhaustHand: (count: number, opts?: { filter?: string; choice?: boolean; damagePerCard?: number; blockPerCard?: number }): CardEffect =>
+    ({ type: "exhaust_hand", count, filter: opts?.filter ?? "", choice: opts?.choice ?? false, damagePerCard: opts?.damagePerCard ?? 0, blockPerCard: opts?.blockPerCard ?? 0 }),
+  exhaustDraw: (count: number): CardEffect =>
+    ({ type: "exhaust_draw", count }),
+  upgradeHand: (count: number): CardEffect =>
+    ({ type: "upgrade_hand", count }),
+  blockPerExhaustEvent: (amount: number): CardEffect =>
+    ({ type: "block_per_exhaust_event", amount }),
+  blockIfExhaustedTurn: (amount: number): CardEffect =>
+    ({ type: "block_if_exhausted_turn", amount }),
+};

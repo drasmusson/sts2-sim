@@ -33,7 +33,9 @@ self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
       if (seen.has(name)) continue;
       seen.add(name);
       const card = db[name];
-      if (card && card.exhaustHandCount > 0 && !card.exhaustHandChoice) {
+      const exHand = card?.effects.find(e => e.type === "exhaust_hand") as
+        { type: "exhaust_hand"; count: number; choice: boolean } | undefined;
+      if (exHand && exHand.count > 0 && !exHand.choice) {
         approximations.push(name);
       }
     }

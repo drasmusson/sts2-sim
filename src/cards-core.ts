@@ -2,35 +2,34 @@
 
 export type CardType = "attack" | "skill" | "power";
 
+// Each effect a card can produce when played.
+// Using a discriminated union keeps each variant's params self-contained —
+// new mechanics add a new variant without touching existing ones.
+export type CardEffect =
+  | { type: "damage";                   amount: number; hits: number; useCurrentBlock?: boolean }
+  | { type: "block";                    amount: number }
+  | { type: "draw";                     amount: number }
+  | { type: "energy_gain";              amount: number }
+  | { type: "str_gain";                 amount: number }
+  | { type: "vuln";                     amount: number }
+  | { type: "weak";                     amount: number }
+  | { type: "poison";                   amount: number }
+  | { type: "doom";                     amount: number }
+  | { type: "orb";                      orbType: string; count: number }
+  | { type: "exhaust_bonus";            amount: number }   // +amount dmg per card in exhaust pile
+  | { type: "exhaust_hand";             count: number; filter: string; choice: boolean; damagePerCard: number; blockPerCard: number }
+  | { type: "exhaust_draw";             count: number }
+  | { type: "upgrade_hand";             count: number }    // -1 = all, 1 = one (DFS branches)
+  | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
+  | { type: "block_if_exhausted_turn";  amount: number };  // Evil Eye conditional
+
 export interface Card {
-  type:         CardType;
-  cost:         number;
-  damage:       number;
-  block:        number;
-  draw:         number;
-  energyGain:   number;
-  strGain:      number;
-  vulnApplied:  number;
-  weakApplied:  number;
-  poison:       number;
-  doom:         number;
-  orbType:      string | null;
-  orbCount:     number;
-  hits:         number;
-  exhaustBonus:           number;
-  blockAsDamage:          boolean;
-  xCost:                  boolean;
-  selfExhaust:            boolean;  // card goes to exhaustPile when played
-  exhaustHandCount:       number;   // exhaust N cards from hand; -1 = all matching
-  exhaustHandType:        string;   // "" = any, "non-attack" = skip attack cards
-  exhaustHandChoice:      boolean;  // true = player chooses (DFS branches); false = random (modeled as choice)
-  exhaustDrawCount:       number;   // exhaust top N cards from draw pile
-  blockPerExhaustEvent:   number;   // power effect: gain this block for each subsequent exhaust event
-  blockIfExhaustedTurn:   number;   // gain this block if any card was exhausted this turn
-  damagePerExhaustedHand: number;   // deal this damage per card exhausted from hand by this card
-  blockPerExhaustedHand:  number;   // gain this block per card exhausted from hand by this card
-  upgradeHandCount:       number;   // upgrade N cards in hand; -1 = all, 1 = one (DFS branches on choice)
-  notes:                  string;
+  type:        CardType;
+  cost:        number;
+  xCost:       boolean;
+  selfExhaust: boolean;
+  effects:     CardEffect[];
+  notes:       string;
 }
 
 export type CardDb = Record<string, Card>;
@@ -53,37 +52,91 @@ export function parseCsvText(raw: string): CardDb {
     const name = row["Card Name"];
     if (!name) continue;
 
-    const orbType = (row["Orb Type"] || "").toLowerCase() || null;
+    const n = (col: string) => parseInt(row[col]) || 0;
+    const b = (col: string) => row[col] === "1";
+
+    const damage       = n("Damage");
+    const block        = n("Block");
+    const draw         = n("Draw");
+    const energyGain   = n("Energy Gain");
+    const strGain      = n("Str Gain");
+    const vulnApplied  = n("Vuln Applied");
+    const weakApplied  = n("Weak Applied");
+    const poison       = n("Poison");
+    const doom         = n("Doom");
+    const orbTypeRaw   = (row["Orb Type"] || "").toLowerCase() || null;
+    const orbCount     = n("Orb Count") || (orbTypeRaw ? 1 : 0);
+    const hits         = n("Hits") || 1;
+    const exhaustBonus = n("Exhaust Bonus");
+    const blockAsDmg   = b("Block As Damage");
+    const exHandCount  = n("Exhaust Hand Count");
+    const exHandType   = (row["Exhaust Hand Type"] || "").toLowerCase();
+    const exHandChoice = b("Exhaust Hand Choice");
+    const exDrawCount  = n("Exhaust Draw Count");
+    const bpee         = n("Block Per Exhaust Event");
+    const biet         = n("Block If Exhausted Turn");
+    const dmgPerEx     = n("Damage Per Exhausted Hand");
+    const blkPerEx     = n("Block Per Exhausted Hand");
+    const upgradeHand  = parseInt(row["Upgrade Hand Count"]) || 0;
+
+    const effects: CardEffect[] = [];
+
+    if (damage > 0 || blockAsDmg) {
+      effects.push({ type: "damage", amount: damage, hits, ...(blockAsDmg ? { useCurrentBlock: true } : {}) });
+    }
+    if (exhaustBonus > 0) {
+      effects.push({ type: "exhaust_bonus", amount: exhaustBonus });
+    }
+    if (block > 0) {
+      effects.push({ type: "block", amount: block });
+    }
+    if (draw > 0) {
+      effects.push({ type: "draw", amount: draw });
+    }
+    if (energyGain > 0) {
+      effects.push({ type: "energy_gain", amount: energyGain });
+    }
+    if (strGain > 0) {
+      effects.push({ type: "str_gain", amount: strGain });
+    }
+    if (vulnApplied > 0) {
+      effects.push({ type: "vuln", amount: vulnApplied });
+    }
+    if (weakApplied > 0) {
+      effects.push({ type: "weak", amount: weakApplied });
+    }
+    if (poison > 0) {
+      effects.push({ type: "poison", amount: poison });
+    }
+    if (doom > 0) {
+      effects.push({ type: "doom", amount: doom });
+    }
+    if (orbTypeRaw && orbCount > 0) {
+      effects.push({ type: "orb", orbType: orbTypeRaw, count: orbCount });
+    }
+    if (exHandCount !== 0) {
+      effects.push({ type: "exhaust_hand", count: exHandCount, filter: exHandType, choice: exHandChoice, damagePerCard: dmgPerEx, blockPerCard: blkPerEx });
+    }
+    if (exDrawCount > 0) {
+      effects.push({ type: "exhaust_draw", count: exDrawCount });
+    }
+    if (upgradeHand !== 0) {
+      effects.push({ type: "upgrade_hand", count: upgradeHand });
+    }
+    if (bpee > 0) {
+      effects.push({ type: "block_per_exhaust_event", amount: bpee });
+    }
+    if (biet > 0) {
+      effects.push({ type: "block_if_exhausted_turn", amount: biet });
+    }
 
     db[name.toLowerCase()] = {
       type:        row["Type"].toLowerCase() as CardType,
-      cost:        parseInt(row["Cost"])           || 0,
-      damage:      parseInt(row["Damage"])         || 0,
-      block:       parseInt(row["Block"])          || 0,
-      draw:        parseInt(row["Draw"])           || 0,
-      energyGain:  parseInt(row["Energy Gain"])    || 0,
-      strGain:     parseInt(row["Str Gain"])       || 0,
-      vulnApplied: parseInt(row["Vuln Applied"])   || 0,
-      weakApplied: parseInt(row["Weak Applied"])   || 0,
-      poison:      parseInt(row["Poison"])         || 0,
-      doom:        parseInt(row["Doom"])           || 0,
-      orbType,
-      orbCount:    parseInt(row["Orb Count"])      || (orbType ? 1 : 0),
-      hits:        parseInt(row["Hits"])           || 1,
-      exhaustBonus:           parseInt(row["Exhaust Bonus"])            || 0,
-      blockAsDamage:          row["Block As Damage"] === "1",
-      xCost:                  row["X Cost"] === "1",
-      selfExhaust:            row["Self Exhaust"] === "1",
-      exhaustHandCount:       parseInt(row["Exhaust Hand Count"])       || 0,
-      exhaustHandType:        (row["Exhaust Hand Type"] || "").toLowerCase(),
-      exhaustHandChoice:      row["Exhaust Hand Choice"] === "1",
-      exhaustDrawCount:       parseInt(row["Exhaust Draw Count"])       || 0,
-      blockPerExhaustEvent:   parseInt(row["Block Per Exhaust Event"])  || 0,
-      blockIfExhaustedTurn:   parseInt(row["Block If Exhausted Turn"])  || 0,
-      damagePerExhaustedHand: parseInt(row["Damage Per Exhausted Hand"]) || 0,
-      blockPerExhaustedHand:  parseInt(row["Block Per Exhausted Hand"]) || 0,
-      upgradeHandCount:       parseInt(row["Upgrade Hand Count"])       || 0,
-      notes:                  row["Notes"] || "",
+      cost:        n("Cost"),
+      xCost:       b("X Cost"),
+      selfExhaust: b("Self Exhaust"),
+      effects,
+      notes:       row["Notes"] || "",
     };
   }
 

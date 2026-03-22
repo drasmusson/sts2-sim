@@ -1,116 +1,116 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, bestPlay } from "../src/optimizer.js";
-import { basePlayer, makeCard } from "./helpers.js";
+import { basePlayer, makeCard, fx } from "./helpers.js";
 
 // ─── cardEffectiveValues ──────────────────────────────────────────────────────
 
 test("attack damage: base", () => {
-  const card = makeCard({ damage: 6 });
+  const card = makeCard({ effects: [fx.damage(6)] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 6);
 });
 
 test("attack damage: strength adds flat bonus", () => {
-  const card = makeCard({ damage: 6 });
+  const card = makeCard({ effects: [fx.damage(6)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2 });
   assert.equal(damage, 8);
 });
 
 test("attack damage: vulnerable multiplies by 1.5", () => {
-  const card = makeCard({ damage: 6 });
+  const card = makeCard({ effects: [fx.damage(6)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerable: true });
   assert.equal(damage, 9);
 });
 
 test("attack damage: weak multiplies by 0.75", () => {
-  const card = makeCard({ damage: 8 });
+  const card = makeCard({ effects: [fx.damage(8)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, weak: true });
   assert.equal(damage, 6);
 });
 
 test("attack damage: card's vulnerable is not applied to itself", () => {
-  const card = makeCard({ damage: 8, vulnApplied: 2 });
+  const card = makeCard({ effects: [fx.damage(8), fx.vuln(2)] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 8);
 });
 
 test("attack damage: strength + vulnerable stack", () => {
   // Bash: (8+2) * 1.5 = 15
-  const card = makeCard({ damage: 8, vulnApplied: 1 });
+  const card = makeCard({ effects: [fx.damage(8), fx.vuln(1)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, vulnerable: true });
   assert.equal(damage, 15);
 });
 
 test("block: no player state effect", () => {
-  const card = makeCard({ block: 5 });
+  const card = makeCard({ effects: [fx.block(5)] });
   const { block } = cardEffectiveValues(card, { ...basePlayer, strength: 3, vulnerable: true });
   assert.equal(block, 5);
 });
 
 test("poison: single trigger", () => {
-  const card = makeCard({ poison: 3 });
+  const card = makeCard({ effects: [fx.poison(3)] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 3);
 });
 
 test("poison: two triggers — 5 stacks → 5+4 = 9", () => {
-  const card = makeCard({ poison: 5 });
+  const card = makeCard({ effects: [fx.poison(5)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, poisonTriggers: 2 });
   assert.equal(damage, 9);
 });
 
 test("doom: flat damage, no scaling", () => {
-  const card = makeCard({ doom: 10 });
+  const card = makeCard({ effects: [fx.doom(10)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 5, vulnerable: true });
   assert.equal(damage, 10);
 });
 
 test("lightning orb: base 3 damage + focus", () => {
-  const card = makeCard({ orbType: "lightning", orbCount: 1 });
+  const card = makeCard({ effects: [fx.orb("lightning", 1)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, focus: 2 });
   assert.equal(damage, 5);
 });
 
 test("lightning orb: scales with orb count", () => {
-  const card = makeCard({ orbType: "lightning", orbCount: 3 });
+  const card = makeCard({ effects: [fx.orb("lightning", 3)] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 9);
 });
 
 test("frost orb: base 2 block + focus", () => {
-  const card = makeCard({ orbType: "frost", orbCount: 1 });
+  const card = makeCard({ effects: [fx.orb("frost", 1)] });
   const { block } = cardEffectiveValues(card, { ...basePlayer, focus: 1 });
   assert.equal(block, 3);
 });
 
 test("multi-hit: damage multiplies by hit count", () => {
-  const card = makeCard({ damage: 5, hits: 2 });
+  const card = makeCard({ effects: [fx.damage(5, 2)] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 10);
 });
 
 test("multi-hit: strength scales per hit", () => {
-  const card = makeCard({ damage: 5, hits: 2 });
+  const card = makeCard({ effects: [fx.damage(5, 2)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2 });
   assert.equal(damage, 14);
 });
 
 test("multi-hit: vulnerable multiplies total hits, rounded down", () => {
-  const card = makeCard({ damage: 3, hits: 3 });
+  const card = makeCard({ effects: [fx.damage(3, 3)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerable: true });
   assert.equal(damage, 13);
 });
 
 test("card with damage and block: both values returned", () => {
-  const card = makeCard({ damage: 5, block: 5 });
+  const card = makeCard({ effects: [fx.damage(5), fx.block(5)] });
   const { damage, block } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 5);
   assert.equal(block, 5);
 });
 
 test("frost orb: no attack damage contribution", () => {
-  const card = makeCard({ orbType: "frost", orbCount: 1 });
+  const card = makeCard({ effects: [fx.orb("frost", 1)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, focus: 5 });
   assert.equal(damage, 0);
 });
@@ -118,20 +118,20 @@ test("frost orb: no attack damage contribution", () => {
 // ─── weakApplied ─────────────────────────────────────────────────────────────
 
 test("weakApplied: contributes effective block based on enemy attack", () => {
-  const card = makeCard({ weakApplied: 1 });
+  const card = makeCard({ effects: [fx.weak(1)] });
   const player = { ...basePlayer, enemyAttack: 5, enemyHits: 3 };
   const { block } = cardEffectiveValues(card, player);
   assert.equal(block, 6);
 });
 
 test("weakApplied: no block value when enemyAttack not set", () => {
-  const card = makeCard({ weakApplied: 1 });
+  const card = makeCard({ effects: [fx.weak(1)] });
   const { block } = cardEffectiveValues(card, basePlayer);
   assert.equal(block, 0);
 });
 
 test("weakApplied: no double-count if enemy already weak", () => {
-  const card = makeCard({ weakApplied: 1 });
+  const card = makeCard({ effects: [fx.weak(1)] });
   const player = { ...basePlayer, enemyAttack: 5, enemyHits: 1, enemyWeak: true };
   const { block } = cardEffectiveValues(card, player);
   assert.equal(block, 0);
@@ -139,8 +139,8 @@ test("weakApplied: no double-count if enemy already weak", () => {
 
 test("weakApplied: second card applying weak gets no block value", () => {
   const db = {
-    Neutralize: makeCard({ weakApplied: 1, damage: 3, cost: 0 }),
-    Uppercut:   makeCard({ weakApplied: 1, damage: 13, cost: 2 }),
+    Neutralize: makeCard({ effects: [fx.damage(3), fx.weak(1)], cost: 0 }),
+    Uppercut:   makeCard({ effects: [fx.damage(13), fx.weak(1)], cost: 2 }),
   };
   const player = { ...basePlayer, enemyAttack: 10, enemyHits: 1 };
   const { totalBlock } = simulateCombo(["Neutralize", "Uppercut"], db, player);
@@ -150,12 +150,12 @@ test("weakApplied: second card applying weak gets no block value", () => {
 // ─── strGain ─────────────────────────────────────────────────────────────────
 
 const strDb = {
-  Inflame: makeCard({ strGain: 2, cost: 1 }),
-  Strike:  makeCard({ damage: 6, cost: 1 }),
+  Inflame: makeCard({ effects: [fx.strGain(2)], cost: 1 }),
+  Strike:  makeCard({ effects: [fx.damage(6)], cost: 1 }),
 };
 
 test("strGain: does not boost own damage", () => {
-  const card = makeCard({ damage: 6, strGain: 2 });
+  const card = makeCard({ effects: [fx.damage(6), fx.strGain(2)] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 6);
 });
@@ -180,9 +180,9 @@ test("strGain card sorts before damage card regardless of input order", () => {
 // ─── optimalComboOrder ────────────────────────────────────────────────────────
 
 const db = {
-  Bash:   makeCard({ damage: 8, vulnApplied: 2, cost: 2 }),
-  Strike: makeCard({ damage: 6, cost: 1 }),
-  Defend: makeCard({ block: 5, cost: 1 }),
+  Bash:   makeCard({ effects: [fx.damage(8), fx.vuln(2)], cost: 2 }),
+  Strike: makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  Defend: makeCard({ effects: [fx.block(5)], cost: 1 }),
 };
 
 test("Bash sorts before Strike in dmg mode", () => {
@@ -200,8 +200,8 @@ test("equal-value cards are ordered alphabetically as tiebreak", () => {
   // Strike and Twin Strike have no state interaction — equal pairwise value
   // Alphabetical tiebreak: Strike < Twin Strike
   const equalDb = {
-    Strike:      makeCard({ damage: 6, cost: 1 }),
-    "Twin Strike": makeCard({ damage: 6, cost: 1 }),
+    Strike:      makeCard({ effects: [fx.damage(6)], cost: 1 }),
+    "Twin Strike": makeCard({ effects: [fx.damage(6)], cost: 1 }),
   };
   const ordered = optimalComboOrder(["Twin Strike", "Strike"], equalDb, basePlayer, "dmg");
   assert.equal(ordered[0], "Strike");
@@ -211,8 +211,8 @@ test("equal-value cards are ordered alphabetically as tiebreak", () => {
 test("optimalComboOrder produces same result regardless of input order", () => {
   // Strike + Twin Strike + Twin Strike: no state interaction, should always sort the same
   const multiDb = {
-    Strike:        makeCard({ damage: 6, cost: 1 }),
-    "Twin Strike": makeCard({ damage: 10, cost: 1 }),
+    Strike:        makeCard({ effects: [fx.damage(6)], cost: 1 }),
+    "Twin Strike": makeCard({ effects: [fx.damage(10)], cost: 1 }),
   };
   const permutations = [
     ["Strike", "Twin Strike", "Twin Strike"],
@@ -249,13 +249,13 @@ test("simulateCombo accumulates block correctly", () => {
 // ─── exhaustBonus ────────────────────────────────────────────────────────────
 
 test("exhaust bonus: base damage + exhaust bonus * exhaust count", () => {
-  const card = makeCard({ damage: 6, exhaustBonus: 3 });
+  const card = makeCard({ effects: [fx.damage(6), fx.exhaustBonus(3)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, exhaust: 3 });
   assert.equal(damage, 15);
 });
 
 test("exhaust bonus: strength and exhaust bonus stack", () => {
-  const card = makeCard({ damage: 6, exhaustBonus: 3 });
+  const card = makeCard({ effects: [fx.damage(6), fx.exhaustBonus(3)] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, exhaust: 3 });
   assert.equal(damage, 17);
 });
@@ -263,30 +263,30 @@ test("exhaust bonus: strength and exhaust bonus stack", () => {
 // ─── blockAsDamage (Body Slam) ────────────────────────────────────────────────
 
 const bodyDb = {
-  Defend:    makeCard({ block: 5, cost: 1 }),
-  "Body Slam": makeCard({ blockAsDamage: true, cost: 1 }),
+  Defend:    makeCard({ effects: [fx.block(5)], cost: 1 }),
+  "Body Slam": makeCard({ effects: [fx.blockAsDamage()], cost: 1 }),
 };
 
 test("Body Slam: 0 damage with no block accumulated", () => {
-  const card = makeCard({ blockAsDamage: true });
+  const card = makeCard({ effects: [fx.blockAsDamage()] });
   const { damage } = cardEffectiveValues(card, basePlayer);
   assert.equal(damage, 0);
 });
 
 test("Body Slam: damage equals currentBlock", () => {
-  const card = makeCard({ blockAsDamage: true });
+  const card = makeCard({ effects: [fx.blockAsDamage()] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 7 });
   assert.equal(damage, 7);
 });
 
 test("Body Slam: strength adds to currentBlock base", () => {
-  const card = makeCard({ blockAsDamage: true });
+  const card = makeCard({ effects: [fx.blockAsDamage()] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 7, strength: 2 });
   assert.equal(damage, 9);
 });
 
 test("Body Slam: scales with vulnerable", () => {
-  const card = makeCard({ blockAsDamage: true });
+  const card = makeCard({ effects: [fx.blockAsDamage()] });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 10, vulnerable: true });
   assert.equal(damage, 15);
 });
@@ -306,35 +306,35 @@ test("Body Slam sorts after block cards", () => {
 // ─── xCost (Whirlwind) ────────────────────────────────────────────────────────
 
 test("Whirlwind: 0 damage with 0 energy", () => {
-  const card = makeCard({ damage: 5, xCost: true });
+  const card = makeCard({ effects: [fx.damage(5)], xCost: true });
   const { damage } = cardEffectiveValues(card, basePlayer); // energyRemaining: 0
   assert.equal(damage, 0);
 });
 
 test("Whirlwind: 5 damage per energy (3 energy → 15)", () => {
-  const card = makeCard({ damage: 5, xCost: true });
+  const card = makeCard({ effects: [fx.damage(5)], xCost: true });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 3 });
   assert.equal(damage, 15);
 });
 
 test("Whirlwind: strength adds per energy spent", () => {
   // (5 + 2 str) × 3 energy = 21
-  const card = makeCard({ damage: 5, xCost: true });
+  const card = makeCard({ effects: [fx.damage(5)], xCost: true });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 3, strength: 2 });
   assert.equal(damage, 21);
 });
 
 test("Whirlwind: scales with vulnerable", () => {
   // floor(5 × 1.5 × 2 energy) = floor(15) = 15  (same rounding as all multi-hit cards)
-  const card = makeCard({ damage: 5, xCost: true });
+  const card = makeCard({ effects: [fx.damage(5)], xCost: true });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 2, vulnerable: true });
   assert.equal(damage, 15);
 });
 
 test("Whirlwind: Inflame before Whirlwind boosts damage", () => {
   const whirlDb = {
-    Inflame:    makeCard({ strGain: 2, cost: 1 }),
-    Whirlwind:  makeCard({ damage: 5, xCost: true, cost: 0 }),
+    Inflame:    makeCard({ effects: [fx.strGain(2)], cost: 1 }),
+    Whirlwind:  makeCard({ effects: [fx.damage(5)], xCost: true, cost: 0 }),
   };
   // 3 energy total: Inflame costs 1, Whirlwind gets 2 → (5+2)×2 = 14
   const player = { ...basePlayer, energyRemaining: 2 };
@@ -344,8 +344,8 @@ test("Whirlwind: Inflame before Whirlwind boosts damage", () => {
 
 test("Whirlwind sorts after Inflame", () => {
   const whirlDb = {
-    Inflame:   makeCard({ strGain: 2, cost: 1 }),
-    Whirlwind: makeCard({ damage: 5, xCost: true, cost: 0 }),
+    Inflame:   makeCard({ effects: [fx.strGain(2)], cost: 1 }),
+    Whirlwind: makeCard({ effects: [fx.damage(5)], xCost: true, cost: 0 }),
   };
   const player = { ...basePlayer, energyRemaining: 2 };
   const ordered = optimalComboOrder(["Whirlwind", "Inflame"], whirlDb, player, "dmg");
@@ -356,28 +356,28 @@ test("Whirlwind sorts after Inflame", () => {
 // ─── energyGain ───────────────────────────────────────────────────────────────
 
 const energyDb = {
-  Turbo:       makeCard({ energyGain: 2, cost: 0 }),
-  Cinder:      makeCard({ damage: 12, cost: 2 }),
-  Strike:      makeCard({ damage: 6,  cost: 1 }),
-  Quill:       makeCard({ draw: 1, cost: 1 }),
+  Turbo:       makeCard({ effects: [fx.energyGain(2)], cost: 0 }),
+  Cinder:      makeCard({ effects: [fx.damage(12)], cost: 2 }),
+  Strike:      makeCard({ effects: [fx.damage(6)],  cost: 1 }),
+  Quill:       makeCard({ effects: [fx.draw(1)], cost: 1 }),
 };
 
 test("energyGain: applyCardState increases energyRemaining", () => {
-  const card = makeCard({ energyGain: 2, cost: 0 });
+  const card = makeCard({ effects: [fx.energyGain(2)], cost: 0 });
   const next = applyCardState({ ...basePlayer, energyRemaining: 1 }, card);
   assert.equal(next.energyRemaining, 3);
 });
 
 test("energyGain: card is unaffordable without the energy it generates", () => {
   // energyRemaining=1, Cinder costs 2 → should contribute 0 damage
-  const card = makeCard({ damage: 12, cost: 2 });
+  const card = makeCard({ effects: [fx.damage(12)], cost: 2 });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 1 });
   assert.equal(damage, 0);
 });
 
 test("energyGain: card is affordable after energy is generated", () => {
   // energyRemaining=3 (after Turbo gave +2), Cinder costs 2 → full damage
-  const card = makeCard({ damage: 12, cost: 2 });
+  const card = makeCard({ effects: [fx.damage(12)], cost: 2 });
   const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 3 });
   assert.equal(damage, 12);
 });

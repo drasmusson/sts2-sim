@@ -1,6 +1,6 @@
-// ─── ENERGY + KNAPSACK OPTIMIZER ─────────────────────────────────────
+// ─── ENERGY + KNAPSACK OPTIMIZER ─────────────────────────
 
-import { Card, CardDb } from "./cards.js";
+import { Card, CardDb, CardEffect } from "./cards.js";
 
 export interface PlayerState {
   strength:       number;
@@ -43,6 +43,17 @@ const ORB_BASE: Record<string, { damage: number; block: number }> = {
   frost:     { damage: 0, block: 2 },
 };
 
+// Look up the numeric amount/count from a simple effect type.
+// Used by bestPlay / optimalComboOrder which need scalar values from effects.
+function effVal(card: Card | undefined, type: CardEffect["type"]): number {
+  if (!card) return 0;
+  const eff = card.effects.find(e => e.type === type);
+  if (!eff) return 0;
+  return (eff as Record<string, unknown>)["amount"] as number
+      ?? (eff as Record<string, unknown>)["count"]  as number
+      ?? 0;
+}
+
 // Compute the effective damage and block a card contributes given player state.
 export function cardEffectiveValues(card: Card, player: PlayerState): CardValues {
   // Energy constraint: when tracking energy (energyRemaining > 0), an unaffordable
@@ -50,51 +61,59 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
   if (player.energyRemaining > 0 && card.cost > player.energyRemaining) {
     return { damage: 0, block: 0 };
   }
-  const { strength, vulnerable, weak, focus, poisonTriggers } = player;
+  const { strength, vulnerable, weak, focus, poisonTriggers, exhaust } = player;
+  const vulnMult = vulnerable ? 1.5 : 1;
+  const weakMult = weak       ? 0.75 : 1;
 
-  // Attack damage: scaled by Strength, Vulnerable, Weak, Exhaust
+  // Pre-compute exhaust bonus — adds to the base of any attack damage this card deals
+  const exBonusEff = card.effects.find(e => e.type === "exhaust_bonus") as
+    Extract<CardEffect, { type: "exhaust_bonus" }> | undefined;
+  const exhaustBonus = exBonusEff ? exBonusEff.amount * exhaust : 0;
+
   let damage = 0;
-  if (card.damage > 0 || card.blockAsDamage) {
-    const base = (card.blockAsDamage ? player.currentBlock : card.damage)
-               + strength + card.exhaustBonus * player.exhaust;
-    const vulnMult = vulnerable ? 1.5 : 1;
-    const weakMult = weak       ? 0.75 : 1;
-    const hits     = card.xCost ? player.energyRemaining : card.hits;
-    damage += Math.floor(base * vulnMult * weakMult * hits);
-  }
+  let block  = 0;
 
-  // Orb damage: only for orbs that actually deal damage (e.g. lightning)
-  if (card.orbType && card.orbCount > 0) {
-    const base = ORB_BASE[card.orbType];
-    if (base && base.damage > 0) {
-      damage += (base.damage + focus) * card.orbCount;
+  for (const eff of card.effects) {
+    switch (eff.type) {
+      case "damage": {
+        const base = (eff.useCurrentBlock ? player.currentBlock : eff.amount)
+                   + strength + exhaustBonus;
+        const hits = card.xCost ? player.energyRemaining : eff.hits;
+        damage += Math.floor(base * vulnMult * weakMult * hits);
+        break;
+      }
+      case "block":
+        block += eff.amount;
+        break;
+      case "orb": {
+        const base = ORB_BASE[eff.orbType];
+        if (base) {
+          if (base.damage > 0) damage += (base.damage + focus) * eff.count;
+          if (base.block  > 0) block  += (base.block  + focus) * eff.count;
+        }
+        break;
+      }
+      case "poison": {
+        const t = poisonTriggers;
+        if (t > 0) damage += t * eff.amount - (t * (t - 1)) / 2;
+        break;
+      }
+      case "doom":
+        damage += eff.amount;
+        break;
+      case "weak":
+        // Applying Weak to the enemy is modelled as effective block
+        if (!player.enemyWeak && player.enemyAttack > 0) {
+          block += (player.enemyAttack - Math.floor(player.enemyAttack * 0.75)) * player.enemyHits;
+        }
+        break;
+      case "block_if_exhausted_turn":
+        if (player.exhaustedThisTurn) block += eff.amount;
+        break;
+      // exhaust_bonus: pre-computed above and folded into damage effects
+      // Other effect types (draw, energy_gain, exhaust_*, upgrade_hand, etc.)
+      // don't contribute to immediate damage/block scoring
     }
-  }
-
-  // Poison: triggers * stacks - triggers*(triggers-1)/2
-  const t = poisonTriggers;
-  if (card.poison > 0 && t > 0) {
-    damage += t * card.poison - (t * (t - 1)) / 2;
-  }
-
-  // Doom: flat damage
-  damage += card.doom;
-
-  // Block: physical block + frost orb block
-  let block = card.block;
-  if (card.orbType === "frost" && card.orbCount > 0) {
-    block += (ORB_BASE.frost.block + focus) * card.orbCount;
-  }
-
-  // Weak applied to enemy: effective block = damage the enemy won't deal this turn
-  const { enemyAttack, enemyHits, enemyWeak } = player;
-  if (card.weakApplied > 0 && !enemyWeak && enemyAttack > 0) {
-    block += (enemyAttack - Math.floor(enemyAttack * 0.75)) * enemyHits;
-  }
-
-  // Conditional block: only if a card was already exhausted this turn (Evil Eye)
-  if (card.blockIfExhaustedTurn > 0 && player.exhaustedThisTurn) {
-    block += card.blockIfExhaustedTurn;
   }
 
   return { damage, block };
@@ -103,16 +122,30 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
 // Apply the state changes a card produces when played (for intra-turn sequencing)
 export function applyCardState(state: PlayerState, card: Card): PlayerState {
   let next = state;
-  if (card.strGain > 0)     next = { ...next, strength: next.strength + card.strGain };
-  if (card.vulnApplied > 0) next = { ...next, vulnerable: true };
-  if (card.weakApplied > 0) next = { ...next, enemyWeak: true };
-  if (card.energyGain > 0 && next.energyRemaining > 0)
-                            next = { ...next, energyRemaining: next.energyRemaining + card.energyGain };
-  // Feel No Pain passive: each subsequent exhaust event this turn grants block
-  if (card.blockPerExhaustEvent > 0)
-                            next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + card.blockPerExhaustEvent };
+
+  for (const eff of card.effects) {
+    switch (eff.type) {
+      case "str_gain":
+        next = { ...next, strength: next.strength + eff.amount };
+        break;
+      case "vuln":
+        next = { ...next, vulnerable: true };
+        break;
+      case "weak":
+        next = { ...next, enemyWeak: true };
+        break;
+      case "energy_gain":
+        if (next.energyRemaining > 0)
+          next = { ...next, energyRemaining: next.energyRemaining + eff.amount };
+        break;
+      case "block_per_exhaust_event":
+        next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + eff.amount };
+        break;
+    }
+  }
+
   const { block } = cardEffectiveValues(card, state);
-  if (block > 0)            next = { ...next, currentBlock: next.currentBlock + block };
+  if (block > 0) next = { ...next, currentBlock: next.currentBlock + block };
   return next;
 }
 
@@ -148,8 +181,8 @@ export function optimalComboOrder(
     // Hard constraint: draw card must come before any bonus card it unlocked
     const aIsBonus = bonusCards?.has(a) ?? false;
     const bIsBonus = bonusCards?.has(b) ?? false;
-    if (!aIsBonus && cardA.draw > 0 && bIsBonus) return -1;
-    if (!bIsBonus && cardB.draw > 0 && aIsBonus) return 1;
+    if (!aIsBonus && effVal(cardA, "draw") > 0 && bIsBonus) return -1;
+    if (!bIsBonus && effVal(cardB, "draw") > 0 && aIsBonus) return 1;
 
     // Affordable cards sort before unaffordable ones — prevents cyclic comparisons
     // when an energy generator (bonus card) is needed to unlock an expensive card.
@@ -191,8 +224,8 @@ export function bestPlay(
   const secondary = mode === "dmg" ? "totalBlock"  : "totalDamage";
   let best: PlayResult | null = null;
 
-  const maxEnergyGain = hand.reduce((sum, n) => sum + (db[n]?.energyGain ?? 0), 0)
-                      + bonusPool.reduce((sum, n) => sum + (db[n]?.energyGain ?? 0), 0);
+  const maxEnergyGain = hand.reduce((sum, n) => sum + effVal(db[n], "energy_gain"), 0)
+                      + bonusPool.reduce((sum, n) => sum + effVal(db[n], "energy_gain"), 0);
   const playable = hand.filter(name => db[name] && db[name]!.cost <= energy + maxEnergyGain);
 
   for (let mask = 1; mask < (1 << playable.length); mask++) {
@@ -204,13 +237,13 @@ export function bestPlay(
         combo.push(playable[i]);
         const c = db[playable[i]]!;
         if (!c.xCost) cost += c.cost;
-        energyGainSum += c.energyGain;
+        energyGainSum += effVal(c, "energy_gain");
       }
     }
     // Bonus cards available = cards from bonusPool up to total draw count in this combo
-    const drawCount = combo.reduce((sum, n) => sum + (db[n]?.draw ?? 0), 0);
+    const drawCount = combo.reduce((sum, n) => sum + effVal(db[n], "draw"), 0);
     const available = bonusPool.slice(0, drawCount);
-    const maxBonusEnergyGain = available.reduce((sum, n) => sum + (db[n]?.energyGain ?? 0), 0);
+    const maxBonusEnergyGain = available.reduce((sum, n) => sum + effVal(db[n], "energy_gain"), 0);
     if (cost - energyGainSum - maxBonusEnergyGain > energy) continue;
 
     // Enumerate subsets of bonus cards (including the empty subset = no bonus cards played)
@@ -222,7 +255,7 @@ export function bestPlay(
         if (bonusMask & (1 << i)) {
           bonusCombo.push(available[i]);
           const c = db[available[i]];
-          if (c) { if (!c.xCost) bonusCost += c.cost; bonusEnergyGain += c.energyGain; }
+          if (c) { if (!c.xCost) bonusCost += c.cost; bonusEnergyGain += effVal(c, "energy_gain"); }
         }
       }
       const netCost = cost + bonusCost - energyGainSum - bonusEnergyGain;

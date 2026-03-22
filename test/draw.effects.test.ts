@@ -2,15 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { optimalComboOrder, bestPlay } from "../src/optimizer.js";
 import { CardDb } from "../src/cards.js";
-import { basePlayer, makeCard } from "./helpers.js";
+import { basePlayer, makeCard, fx } from "./helpers.js";
 
 // ─── Bonus pool: bonus cards sort after the draw card ────────────────────────
 
 test("bonus card sorts after the draw card that unlocked it", () => {
   // Pommel Strike must be played before Bludgeon+ can be used
   const db: CardDb = {
-    "pommel strike": makeCard({ damage: 9, draw: 1, cost: 1 }),
-    "bludgeon+":     makeCard({ damage: 42, cost: 3 }),
+    "pommel strike": makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
+    "bludgeon+":     makeCard({ effects: [fx.damage(42)], cost: 3 }),
   };
   const ordered = optimalComboOrder(
     ["bludgeon+", "pommel strike"],
@@ -34,9 +34,9 @@ test("draw card enabling high-damage card beats playing vuln card first", () => 
   //
   // Correct answer: {Pommel, Bludgeon+} = 51 dmg
   const db: CardDb = {
-    "pommel strike": makeCard({ damage: 9, draw: 1, cost: 1 }),
-    "bash":          makeCard({ damage: 8, vulnApplied: 2, cost: 2 }),
-    "bludgeon+":     makeCard({ damage: 42, cost: 3 }),
+    "pommel strike": makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
+    "bash":          makeCard({ effects: [fx.damage(8), fx.vuln(2)], cost: 2 }),
+    "bludgeon+":     makeCard({ effects: [fx.damage(42)], cost: 3 }),
   };
 
   const result = bestPlay(
@@ -56,9 +56,9 @@ test("vuln card is correct first play when energy allows the full combo", () => 
   // Bash → Pommel (×1.5) → Bludgeon+ (×1.5) = 8 + 13 + 63 = 84 dmg
   // vs Pommel → Bludgeon+ (no vuln)           = 9 + 42     = 51 dmg
   const db: CardDb = {
-    "pommel strike": makeCard({ damage: 9, draw: 1, cost: 1 }),
-    "bash":          makeCard({ damage: 8, vulnApplied: 2, cost: 2 }),
-    "bludgeon+":     makeCard({ damage: 42, cost: 3 }),
+    "pommel strike": makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
+    "bash":          makeCard({ effects: [fx.damage(8), fx.vuln(2)], cost: 2 }),
+    "bludgeon+":     makeCard({ effects: [fx.damage(42)], cost: 3 }),
   };
 
   const result = bestPlay(
@@ -75,8 +75,8 @@ test("vuln card is correct first play when energy allows the full combo", () => 
 
 test("draw card with empty bonus pool draws nothing and doesn't crash", () => {
   const db: CardDb = {
-    "pommel strike": makeCard({ damage: 9, draw: 1, cost: 1 }),
-    "bash":          makeCard({ damage: 8, vulnApplied: 2, cost: 2 }),
+    "pommel strike": makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
+    "bash":          makeCard({ effects: [fx.damage(8), fx.vuln(2)], cost: 2 }),
   };
 
   const result = bestPlay(["pommel strike", "bash"], [], db, basePlayer, 3, "dmg");
