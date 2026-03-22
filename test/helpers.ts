@@ -5,6 +5,7 @@ export const basePlayer: PlayerState = {
   strength: 0, vulnerable: false, weak: false, focus: 0, poisonTriggers: 1,
   exhaust: 0, blockPerExhaustEvent: 0, exhaustedThisTurn: false,
   currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false,
+  selfDamageThisTurn: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -60,4 +61,8 @@ export const fx = {
     ({ type: "discard_to_draw", count }),
   copyToDiscard: (): CardEffect =>
     ({ type: "copy_to_discard" }),
+  selfDamage: (amount: number): CardEffect =>
+    ({ type: "self_damage", amount }),
+  damagePerSelfDamage: (amount: number): CardEffect =>
+    ({ type: "damage_per_self_damage", amount }),
 };

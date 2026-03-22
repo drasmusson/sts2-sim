@@ -16,6 +16,7 @@ export interface PlayerState {
   enemyAttack:     number;
   enemyHits:      number;
   enemyWeak:      boolean;
+  selfDamageThisTurn: number;     // HP lost to self-damage cards played this turn
 }
 
 export interface ComboResult {
@@ -110,8 +111,11 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "block_if_exhausted_turn":
         if (player.exhaustedThisTurn) block += eff.amount;
         break;
+      case "damage_per_self_damage":
+        damage += eff.amount * player.selfDamageThisTurn;
+        break;
       // exhaust_bonus: pre-computed above and folded into damage effects
-      // Other effect types (draw, energy_gain, exhaust_*, upgrade_hand, etc.)
+      // Other effect types (draw, energy_gain, exhaust_*, upgrade_hand, self_damage, etc.)
       // don't contribute to immediate damage/block scoring
     }
   }
@@ -140,6 +144,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "block_per_exhaust_event":
         next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + eff.amount };
+        break;
+      case "self_damage":
+        next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + eff.amount };
         break;
     }
   }

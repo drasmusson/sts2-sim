@@ -22,6 +22,8 @@ export type CardEffect =
   | { type: "upgrade_hand";             count: number }    // -1 = all, 1 = one (DFS branches)
   | { type: "discard_to_draw";          count: number }    // put N cards from discard on top of draw (player chooses)
   | { type: "copy_to_discard" }                            // add a copy of this card to the discard pile (e.g. Anger)
+  | { type: "self_damage";              amount: number }   // deal X damage to yourself when played (bypasses block)
+  | { type: "damage_per_self_damage";   amount: number }   // +X damage per HP of self-damage taken this turn
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
   | { type: "block_if_exhausted_turn";  amount: number };  // Evil Eye conditional
 
@@ -81,7 +83,9 @@ export function parseCsvText(raw: string): CardDb {
     const blkPerEx     = n("Block Per Exhausted Hand");
     const upgradeHand   = parseInt(row["Upgrade Hand Count"]) || 0;
     const fetchDiscard  = n("Fetch Discard Count");
-    const copyToDiscard = b("Copy To Discard");
+    const copyToDiscard     = b("Copy To Discard");
+    const selfDamage        = n("Self Damage");
+    const dmgPerSelfDamage  = n("Damage Per Self Damage");
 
     const effects: CardEffect[] = [];
 
@@ -138,6 +142,12 @@ export function parseCsvText(raw: string): CardDb {
     }
     if (copyToDiscard) {
       effects.push({ type: "copy_to_discard" });
+    }
+    if (selfDamage > 0) {
+      effects.push({ type: "self_damage", amount: selfDamage });
+    }
+    if (dmgPerSelfDamage > 0) {
+      effects.push({ type: "damage_per_self_damage", amount: dmgPerSelfDamage });
     }
 
     db[name.toLowerCase()] = {
