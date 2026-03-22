@@ -91,6 +91,15 @@ Applying Weak to the enemy reduces their incoming damage by 25%, but the sim has
 ### Card instances vs card types
 Currently the sim uses type-based card lookup (one row in CSV = one card type). The plan is to move to an instance-based model where each copy of a card in the deck can have its own stat overrides (cost, damage, block, play twice, etc.). This is required to support enchantments and variable-stat cards like Genetic Algorithm.
 
+### DFS branching: exhaust vs discard from hand
+The DFS has three branches for `exhaust_hand`: count === -1 (exhaust all), count > 0 (exhaust N), and no exhaust. When Silent discard-from-hand cards are added, the same three-branch pattern will appear for `discard_hand`. At that point, generalize both into a single "remove cards from hand" effect with a `destination: "exhaust" | "discard"` field so the DFS handles both with one code path. Don't do this before the first discard card exists — the right shape will be clearer once there's a real case to design against.
+
+### `effVal` in optimizer.ts
+`effVal` does a runtime cast to `Record<string, unknown>` to extract `amount` or `count` from a discriminated union effect. This works but discards the type safety gained from the union. It's low risk because it's only used by `bestPlay` and `optimalComboOrder`, which are reference implementations not called by the live sim. If `effVal` starts appearing in new code paths, replace it with per-effect-type accessors or rethink the call site.
+
+### `PlayerState` structure
+`PlayerState` is currently a flat bag mixing player buffs (strength, weak), enemy state (enemyAttack, enemyWeak), and turn-scoped temporaries (exhaustedThisTurn, currentBlock). This is fine for Ironclad and Silent but will become painful when adding character-specific state: orb slots (Defect), Forge stacks and Stars energy (Regent), Soul count (Necrobinder). Restructure `PlayerState` into logical sub-objects when starting work on Defect or Regent, not before.
+
 ### Frequency output
 - **Draw frequency** — % of sims where the card appears in the drawn hand
 - **Play frequency** — % of sims where the card appears in the optimal play
