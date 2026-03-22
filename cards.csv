@@ -1,4 +1,4 @@
-Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Block As Damage,X Cost,Self Exhaust,Exhaust Hand Count,Exhaust Hand Type,Exhaust Hand Choice,Exhaust Draw Count,Block Per Exhaust Event,Block If Exhausted Turn,Damage Per Exhausted Hand,Block Per Exhausted Hand,Upgrade Hand Count,Notes
+Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Block As Damage,X Cost,Self Exhaust,Exhaust Hand Count,Exhaust Hand Type,Exhaust Hand Choice,Exhaust Draw Count,Block Per Exhaust Event,Block If Exhausted Turn,Damage Per Exhausted Hand,Block Per Exhausted Hand,Upgrade Hand Count,Fetch Discard Count,Notes
 Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Strike+,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Defend,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
@@ -15,8 +15,8 @@ Break,Attack,2,20,0,0,0,0,5,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Break+,Attack,2,25,0,0,0,0,7,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Feast,Attack,1,10,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Feast+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
-Headbutt,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,move 1 specific card from discard to top of draw
-Headbutt+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,move 1 specific card from discard to top of draw
+Headbutt,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,
+Headbutt+,Attack,1,12,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,1,
 Impervious,Skill,2,0,30,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Impervious+,Skill,2,0,40,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
 Iron Wave,Attack,1,5,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,

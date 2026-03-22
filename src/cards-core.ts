@@ -20,6 +20,7 @@ export type CardEffect =
   | { type: "exhaust_hand";             count: number; filter: string; choice: boolean; damagePerCard: number; blockPerCard: number }
   | { type: "exhaust_draw";             count: number }
   | { type: "upgrade_hand";             count: number }    // -1 = all, 1 = one (DFS branches)
+  | { type: "fetch_discard";            count: number }    // put N cards from discard on top of draw (player chooses)
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
   | { type: "block_if_exhausted_turn";  amount: number };  // Evil Eye conditional
 
@@ -77,7 +78,8 @@ export function parseCsvText(raw: string): CardDb {
     const biet         = n("Block If Exhausted Turn");
     const dmgPerEx     = n("Damage Per Exhausted Hand");
     const blkPerEx     = n("Block Per Exhausted Hand");
-    const upgradeHand  = parseInt(row["Upgrade Hand Count"]) || 0;
+    const upgradeHand   = parseInt(row["Upgrade Hand Count"]) || 0;
+    const fetchDiscard  = n("Fetch Discard Count");
 
     const effects: CardEffect[] = [];
 
@@ -128,6 +130,9 @@ export function parseCsvText(raw: string): CardDb {
     }
     if (biet > 0) {
       effects.push({ type: "block_if_exhausted_turn", amount: biet });
+    }
+    if (fetchDiscard > 0) {
+      effects.push({ type: "fetch_discard", count: fetchDiscard });
     }
 
     db[name.toLowerCase()] = {
