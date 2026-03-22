@@ -45,10 +45,13 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - If a fresh `cards.csv` has been provided, use that version
 - Upgraded cards are separate rows, identified by `+` suffix (e.g. `Strike+`)
 
-**CSV schema:**
-`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Exhaust Bonus | Notes`
+**CSV schema (full column order):**
+`Card Name | Type | Cost | Damage | Block | Draw | Energy Gain | Str Gain | Vuln Applied | Weak Applied | Poison | Doom | Orb Type | Orb Count | Hits | Exhaust Bonus | Block As Damage | X Cost | Self Exhaust | Exhaust Hand Count | Exhaust Hand Type | Exhaust Hand Choice | Exhaust Draw Count | Block Per Exhaust Event | Block If Exhausted Turn | Damage Per Exhausted Hand | Block Per Exhausted Hand | Upgrade Hand Count | Notes`
 
-- `Damage` — attack damage (scales with Strength, Vulnerable, Weak)
+The CSV parser converts these flat columns into a typed `CardEffect[]` array on the `Card` struct (see `src/cards-core.ts`). `X Cost` and `Self Exhaust` remain as flat fields on `Card` since they affect routing, not play effects.
+
+- `Damage` — attack damage per hit (scales with Strength, Vulnerable, Weak); set `Hits` > 1 for multi-hit attacks
+- `Block As Damage` — `1` if the card deals damage equal to current block (e.g. Body Slam)
 - `Poison` — poison stacks applied per play
 - `Doom` — doom stacks applied per play (modeled as flat damage; no scaling)
 - `Orb Type` — `lightning`, `frost`, or empty; extensible to future orb types
@@ -56,6 +59,8 @@ These are pre-existing effects that can't be modelled as cards in the draw pile.
 - `Exhaust Bonus` — bonus damage per card in the exhaust pile (e.g. Ashen Strike)
 - `Energy Gain` — energy generated mid-turn (e.g. Bloodletting +2) unlocks cards that would otherwise be unaffordable; resolved dynamically by the turn simulator
 - `Draw` — cards drawn when this card is played; drawn cards are immediately available in the same turn
+- `Exhaust Hand Count` — `0` = none, `N` = exhaust N cards from hand, `-1` = exhaust all; `Exhaust Hand Type` filters by card type (`attack`/`skill`/`power`/empty); `Exhaust Hand Choice` = `1` means player chooses (sim optimizes), `0` means random (sim also optimizes, which is slightly generous)
+- `Upgrade Hand Count` — `0` = none, `1` = upgrade 1 card in hand (sim branches on each choice), `-1` = upgrade all (deterministic, e.g. Armaments+)
 
 ## Key design decisions
 

@@ -84,6 +84,50 @@ The DFS (`simulateTurn` in `src/turn-simulator.ts`) tracks energy, hand, draw pi
 
 `cards.csv` is the card database. Upgraded cards are separate rows with a `+` suffix (e.g. `Strike+`). Not all cards are present — check before testing a specific card.
 
+### Adding cards
+
+Each row in `cards.csv` is one card. Columns (in order):
+
+| Column | Description |
+|---|---|
+| Card Name | Exact name used in `--draw`/`--discard` flags. Use `+` suffix for upgraded versions (e.g. `Bash+`). |
+| Type | `Attack`, `Skill`, or `Power` |
+| Cost | Energy cost (use `0` for 0-cost cards; X-cost cards set `X Cost` = 1 and `Cost` = 0) |
+| Damage | Attack damage per hit (scales with Strength, Vulnerable, Weak) |
+| Block | Block gained |
+| Draw | Cards drawn when played |
+| Energy Gain | Energy generated mid-turn |
+| Str Gain | Strength gained |
+| Vuln Applied | Turns of Vulnerable applied to enemy |
+| Weak Applied | Turns of Weak applied to enemy |
+| Poison | Poison stacks applied |
+| Doom | Doom stacks applied (modeled as flat damage, no scaling) |
+| Orb Type | `lightning`, `frost`, or empty |
+| Orb Count | Orbs channeled (default 1 when Orb Type is set) |
+| Hits | Number of hits (Strength and multipliers apply per hit) |
+| Exhaust Bonus | Bonus damage per card currently in exhaust pile (e.g. Ashen Strike) |
+| Block As Damage | `1` if this card deals damage equal to current block (e.g. Body Slam) |
+| X Cost | `1` if cost is X (uses all remaining energy; damage/block scales with energy spent) |
+| Self Exhaust | `1` if this card exhausts itself on play |
+| Exhaust Hand Count | Cards exhausted from hand: `0` = none, `N` = exhaust N cards, `-1` = exhaust all |
+| Exhaust Hand Type | Filter for which cards can be exhausted: `attack`, `skill`, `power`, or empty for any |
+| Exhaust Hand Choice | `1` if player chooses which card to exhaust (sim optimizes choice), `0` if random (sim picks best) |
+| Exhaust Draw Count | Cards exhausted from draw pile |
+| Block Per Exhaust Event | Block gained each time a card is exhausted this turn |
+| Block If Exhausted Turn | Block gained if any card was exhausted this turn |
+| Damage Per Exhausted Hand | Bonus damage per card exhausted from hand this play |
+| Block Per Exhausted Hand | Bonus block per card exhausted from hand this play |
+| Upgrade Hand Count | `0` = none, `1` = upgrade 1 card in hand (sim branches on choice), `-1` = upgrade all |
+| Notes | Free text, not parsed |
+
+**Example rows:**
+```
+Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
+Bash,Attack,2,8,0,0,0,0,2,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,
+Armaments,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,1,upgrade 1 card in hand
+Armaments+,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,-1,upgrade ALL cards in hand
+```
+
 ## Deploying the web app
 
 The repo includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that builds and deploys to GitHub Pages on every push to `main`.
