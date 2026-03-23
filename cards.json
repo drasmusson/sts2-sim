@@ -278,10 +278,10 @@
     "type": "attack",
     "cost": 3,
     "damage": 15,
-    "notes": "enemy loses 10 str; not modeled",
+    "strDown": 10,
     "upgraded": {
       "damage": 20,
-      "notes": "enemy loses 15 str; not modeled"
+      "strDown": 15
     }
   },
   {

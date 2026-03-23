@@ -17,6 +17,7 @@ export interface PlayerState {
   enemyAttack:     number;
   enemyHits:      number;
   enemyWeak:      boolean;
+  enemyStrength:   number;   // enemy's current strength (flat bonus to their attack damage per hit)
   selfDamageThisTurn: number;     // HP lost to self-damage cards played this turn
 }
 
@@ -110,6 +111,12 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
           block += (player.enemyAttack - Math.floor(player.enemyAttack * 0.75)) * player.enemyHits;
         }
         break;
+      case "str_down":
+        // Reducing enemy strength is modelled as effective block (not subject to frailMult)
+        if (player.enemyAttack > 0) {
+          block += eff.amount * player.enemyHits;
+        }
+        break;
       case "block_if_exhausted_turn":
         if (player.exhaustedThisTurn) block += eff.amount;
         break;
@@ -149,6 +156,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "weak":
         next = { ...next, enemyWeak: true };
+        break;
+      case "str_down":
+        next = { ...next, enemyStrength: next.enemyStrength - eff.amount };
         break;
       case "energy_gain":
         if (next.energyRemaining > 0)

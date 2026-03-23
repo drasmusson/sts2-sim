@@ -92,6 +92,7 @@ function printResults(results: MCResult, config: Config): void {
   if (p.focus)                parts.push(`Focus ${p.focus}`);
   if (p.poisonTriggers !== 1) parts.push(`Poison triggers ×${p.poisonTriggers}`);
   if (p.enemyAttack)          parts.push(`Enemy attack ${p.enemyAttack}×${p.enemyHits}`);
+  if (p.enemyStrength)        parts.push(`Enemy strength ${p.enemyStrength}`);
   if (parts.length)           console.log(`  Player state: ${parts.join(", ")}`);
   console.log(line);
 
@@ -161,6 +162,7 @@ const player: PlayerState = {
   enemyAttack:    parseIntArg(args["enemy-attack"], 0),
   enemyHits:      parseIntArg(args["enemy-hits"], 1),
   enemyWeak:      !!args["enemy-weak"],
+  enemyStrength:  parseIntArg(args["enemy-strength"], 0),
   exhaust:              parseIntArg(args.exhaust, 0),
   blockPerExhaustEvent: 0,
   exhaustedThisTurn:    false,

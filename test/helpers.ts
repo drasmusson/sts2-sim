@@ -4,7 +4,7 @@ import { PlayerState } from "../src/optimizer.js";
 export const basePlayer: PlayerState = {
   strength: 0, vulnerableStacks: 0, weak: false, frail: false, focus: 0, poisonTriggers: 1,
   exhaust: 0, blockPerExhaustEvent: 0, exhaustedThisTurn: false,
-  currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false,
+  currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false, enemyStrength: 0,
   selfDamageThisTurn: 0,
 };
 
@@ -71,4 +71,6 @@ export const fx = {
     ({ type: "double_vuln_stacks" }),
   damagePerVulnStack: (amount: number): CardEffect =>
     ({ type: "damage_per_vuln_stack", amount }),
+  strDown: (amount: number): CardEffect =>
+    ({ type: "str_down", amount }),
 };

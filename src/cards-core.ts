@@ -28,7 +28,8 @@ export type CardEffect =
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
   | { type: "block_if_exhausted_turn";  amount: number }   // Evil Eye conditional
   | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
-  | { type: "damage_per_vuln_stack";    amount: number };  // Bully: +N dmg per enemy vulnerable stack
+  | { type: "damage_per_vuln_stack";    amount: number }   // Bully: +N dmg per enemy vulnerable stack
+  | { type: "str_down";                 amount: number };  // reduce enemy strength by N (modelled as effective block)
 
 export interface Card {
   type:        CardType;
@@ -80,6 +81,7 @@ export interface CardJson {
   damageIfSelfDamaged?:   number;
   doubleVulnStacks?:      boolean;
   damagePerVulnStack?:    number;
+  strDown?:               number;
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -119,6 +121,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.damageIfSelfDamaged)    effects.push({ type: "damage_if_self_damaged",   amount: c.damageIfSelfDamaged });
   if (c.doubleVulnStacks)       effects.push({ type: "double_vuln_stacks" });
   if (c.damagePerVulnStack)     effects.push({ type: "damage_per_vuln_stack",    amount: c.damagePerVulnStack });
+  if (c.strDown)                effects.push({ type: "str_down",                 amount: c.strDown });
 
   return {
     type:        c.type,

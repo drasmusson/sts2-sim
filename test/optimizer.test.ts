@@ -230,6 +230,28 @@ test("weakApplied: second card applying weak gets no block value", () => {
   assert.equal(totalBlock, 3);
 });
 
+// ─── strDown ─────────────────────────────────────────────────────────────────
+
+test("strDown: contributes effective block based on enemy attack and hits", () => {
+  const card = makeCard({ effects: [fx.strDown(2)] });
+  const player = { ...basePlayer, enemyAttack: 10, enemyHits: 3 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 6); // 2 str × 3 hits
+});
+
+test("strDown: no block value when enemyAttack not set", () => {
+  const card = makeCard({ effects: [fx.strDown(2)] });
+  const { block } = cardEffectiveValues(card, basePlayer);
+  assert.equal(block, 0);
+});
+
+test("strDown: frail does not affect strength reduction block", () => {
+  const card = makeCard({ effects: [fx.strDown(2)] });
+  const player = { ...basePlayer, enemyAttack: 10, enemyHits: 3, frail: true };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 6); // frail does not apply — same as without frail
+});
+
 // ─── strGain ─────────────────────────────────────────────────────────────────
 
 const strDb = {
