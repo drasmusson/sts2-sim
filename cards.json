@@ -116,7 +116,6 @@
     "selfExhaust": true,
     "damage": 10,
     "doubleVulnStacks": true,
-    "notes": "doubles enemy vulnerable stacks; exhausts",
     "upgraded": {
       "damage": 14
     }
@@ -227,7 +226,6 @@
     "cost": 0,
     "damage": 6,
     "copyToDiscard": true,
-    "notes": "adds copy to discard",
     "upgraded": {
       "damage": 8
     }
@@ -238,7 +236,6 @@
     "cost": 2,
     "damage": 17,
     "exhaustDraw": 1,
-    "notes": "exhausts top card in draw pile",
     "upgraded": {
       "damage": 22
     }
@@ -272,7 +269,6 @@
     "cost": 1,
     "damage": 14,
     "damagePerSelfDamage": 2,
-    "notes": "deals 2 damage to self",
     "upgraded": {
       "damage": 19
     }

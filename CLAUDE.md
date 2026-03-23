@@ -129,6 +129,7 @@ The DFS has three branches for `exhaust_hand`: count === -1 (exhaust all), count
 
 ### Up Next
 - ✅ Starting decks — presets for Ironclad, Silent, Defect; `--character` CLI flag + web UI dropdown
+- ⬜ Add powers played to a seperate pile "powers in play", separate from both discard and exhaust.
 - ⬜ Multi-copy input — easier way to add multiple of the same card (e.g. `Strike ×3`) in the web UI
 - ⬜ UI improvements — general polish, layout, usability
 - ⬜ Config file — save deck setups and run with `--config deck.json`
