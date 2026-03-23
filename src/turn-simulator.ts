@@ -8,22 +8,24 @@ import { cardEffectiveValues, applyCardState, PlayerState, Mode } from "./optimi
 import { Card, CardDb, CardEffect } from "./cards.js";
 
 export interface TurnResult {
-  played:      string[];
-  totalDamage: number;
-  totalBlock:  number;
-  energySpent: number;
-  infinite:    boolean;   // true if truncated at the infinite-combo threshold
-  exhaustPile: string[];  // cards exhausted this turn (useful for testing + Howl From Beyond)
+  played:       string[];
+  totalDamage:  number;
+  totalBlock:   number;
+  energySpent:  number;
+  infinite:     boolean;   // true if truncated at the infinite-combo threshold
+  exhaustPile:  string[];  // cards exhausted this turn (useful for testing + Howl From Beyond)
+  powersInPlay: string[];  // power cards played this turn (never re-enter draw cycle)
 }
 
 interface TurnState {
-  energy:      number;
-  hand:        string[];
-  drawPile:    string[];
-  discardPile: string[];
-  exhaustPile: string[];
-  player:      PlayerState;
-  playsCount:  number;    // cards played so far in this branch
+  energy:       number;
+  hand:         string[];
+  drawPile:     string[];
+  discardPile:  string[];
+  exhaustPile:  string[];
+  powersInPlay: string[];
+  player:       PlayerState;
+  playsCount:   number;    // cards played so far in this branch
 }
 
 function primary(mode: Mode, r: TurnResult)   { return mode === "dmg" ? r.totalDamage : r.totalBlock; }
@@ -58,12 +60,13 @@ function applyExhaustEvent(
 
 // Bundles the mutable pile/player/block state that resolvePostExhaust operates on.
 interface PostExhaustState {
-  hand:        string[];
-  drawPile:    string[];
-  discardPile: string[];
-  exhaustPile: string[];
-  player:      PlayerState;
-  block:       number;
+  hand:         string[];
+  drawPile:     string[];
+  discardPile:  string[];
+  exhaustPile:  string[];
+  powersInPlay: string[];
+  player:       PlayerState;
+  block:        number;
 }
 
 // The sequence draw → exhaust-from-draw → route-played-card is identical across
@@ -74,7 +77,7 @@ function resolvePostExhaust(
   card:     Card,
   s:        PostExhaustState,
 ): PostExhaustState {
-  let { hand, drawPile, discardPile, exhaustPile, player, block } = s;
+  let { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block } = s;
 
   const drawEff        = card.effects.find(e => e.type === "draw")         as Extract<CardEffect, { type: "draw" }>         | undefined;
   const exhaustDrawEff = card.effects.find(e => e.type === "exhaust_draw") as Extract<CardEffect, { type: "exhaust_draw" }> | undefined;
@@ -103,17 +106,19 @@ function resolvePostExhaust(
     discardPile = [...discardPile, cardName];
   }
 
-  // 4. Route played card to exhaust or discard
+  // 4. Route played card to exhaust, powers-in-play, or discard
   if (card.selfExhaust) {
     const er = applyExhaustEvent(cardName, exhaustPile, player);
     exhaustPile = er.exhaustPile;
     player      = er.player;
     block      += er.blockGained;
+  } else if (card.type === "power") {
+    powersInPlay = [...powersInPlay, cardName];
   } else {
     discardPile = [...discardPile, cardName];
   }
 
-  return { hand, drawPile, discardPile, exhaustPile, player, block };
+  return { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block };
 }
 
 // Applies discard_to_draw effect (if any): branches on each unique card in discard,
@@ -141,7 +146,7 @@ function resolveDiscardToDraw(
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
         discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-        player: post.player, playsCount },
+        powersInPlay: post.powersInPlay, player: post.player, playsCount },
       card, db, mode, played, damage, post.block, initialEnergy, best, threshold,
     );
     return;
@@ -160,7 +165,7 @@ function resolveDiscardToDraw(
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
         discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-        player: post.player, playsCount },
+        powersInPlay: post.powersInPlay, player: post.player, playsCount },
       card, db, mode, played, damage, post.block, initialEnergy, best, threshold,
     );
   }
@@ -228,7 +233,7 @@ function dfs(
   // Infinite combo guard — truncate and record the branch
   if (state.playsCount > threshold) {
     best.result = { played, totalDamage: damage, totalBlock: block, energySpent,
-                    infinite: true, exhaustPile: state.exhaustPile };
+                    infinite: true, exhaustPile: state.exhaustPile, powersInPlay: state.powersInPlay };
     best.foundInfinite = true;
     return;
   }
@@ -236,7 +241,7 @@ function dfs(
   // Current state (playing no more cards) is always a valid candidate
   const candidate: TurnResult = {
     played, totalDamage: damage, totalBlock: block, energySpent,
-    infinite: false, exhaustPile: state.exhaustPile,
+    infinite: false, exhaustPile: state.exhaustPile, powersInPlay: state.powersInPlay,
   };
   if (isBetter(candidate, best.result, mode)) best.result = candidate;
 
@@ -264,10 +269,11 @@ function dfs(
 
     // Remove first occurrence of this card from hand
     const idx = state.hand.indexOf(name);
-    let nextHand        = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
-    let nextDrawPile    = state.drawPile;
-    let nextDiscardPile = state.discardPile;
-    let nextExhaustPile = state.exhaustPile;
+    let nextHand         = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
+    let nextDrawPile     = state.drawPile;
+    let nextDiscardPile  = state.discardPile;
+    let nextExhaustPile  = state.exhaustPile;
+    const nextPowersInPlay = state.powersInPlay;
     let runningBlock    = block + vals.block;
     let runningDamage   = damage + vals.damage;
 
@@ -297,7 +303,7 @@ function dfs(
 
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
-        exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+        exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
       }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
 
     } else if (exHandEff && exHandEff.count > 0) {
@@ -311,7 +317,7 @@ function dfs(
         // No valid exhaust targets — treat as if no exhaust happened
         resolveDiscardToDraw(name, card, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
-          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+          exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
         }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       } else {
         // Branch on each unique exhaust choice
@@ -329,7 +335,7 @@ function dfs(
 
           resolveDiscardToDraw(name, card, {
             hand: cHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
-            exhaustPile: cExhaustPile, player: cPlayer, block: cBlock,
+            exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
           }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
         }
       }
@@ -338,34 +344,35 @@ function dfs(
       // No exhaust-from-hand effect
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
-        exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock,
+        exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
       }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
     }
   }
 }
 
 export function simulateTurn(
-  hand:               string[],
-  drawPile:           string[],
-  discardPile:        string[],
-  db:                 CardDb,
-  player:             PlayerState,
-  energy:             number,
-  mode:               Mode,
-  initialExhaustPile: string[] = [],
+  hand:                string[],
+  drawPile:            string[],
+  discardPile:         string[],
+  db:                  CardDb,
+  player:              PlayerState,
+  energy:              number,
+  mode:                Mode,
+  initialExhaustPile:  string[] = [],
+  initialPowersInPlay: string[] = [],
 ): TurnResult {
   const deckSize  = hand.length + drawPile.length + discardPile.length;
   const threshold = Math.max(deckSize * 3, 20);
 
   const emptyResult: TurnResult = {
     played: [], totalDamage: 0, totalBlock: 0, energySpent: 0,
-    infinite: false, exhaustPile: initialExhaustPile,
+    infinite: false, exhaustPile: initialExhaustPile, powersInPlay: initialPowersInPlay,
   };
   const best = { result: emptyResult, foundInfinite: false };
 
   dfs(
     { energy, hand: [...hand], drawPile: [...drawPile], discardPile: [...discardPile],
-      exhaustPile: [...initialExhaustPile],
+      exhaustPile: [...initialExhaustPile], powersInPlay: [...initialPowersInPlay],
       player: { ...player, energyRemaining: energy }, playsCount: 0 },
     db, mode, [], 0, 0, energy, best, threshold,
   );
