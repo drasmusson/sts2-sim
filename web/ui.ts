@@ -51,6 +51,7 @@ export function renderResults(results: MCResult, config: WebConfig, approximatio
   if (p.exhaust)              statParts.push(`Exhaust ${p.exhaust}`);
   if (p.vulnerableStacks > 0) statParts.push(`Vulnerable ×${p.vulnerableStacks}`);
   if (p.weak)                 statParts.push("Weak");
+  if (p.frail)                statParts.push("Frail");
   if (p.focus)                statParts.push(`Focus ${p.focus}`);
   if (p.poisonTriggers !== 1) statParts.push(`Poison ×${p.poisonTriggers}`);
   if (p.enemyAttack)          statParts.push(`Enemy ${p.enemyAttack}×${p.enemyHits}`);

@@ -69,6 +69,7 @@ function readConfig(): WebConfig {
     strength:       parseInt(d.get("strength") as string)        || 0,
     vulnerableStacks: parseInt(d.get("enemy-vulnerable") as string) || 0,
     weak:           (d.get("weak")       as string) === "on",
+    frail:          (d.get("frail")      as string) === "on",
     focus:          parseInt(d.get("focus") as string)           || 0,
     poisonTriggers: parseInt(d.get("poison-triggers") as string) || 1,
     enemyAttack:    parseInt(d.get("enemy-attack") as string)    || 0,

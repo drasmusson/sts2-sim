@@ -50,6 +50,31 @@ test("block: no player state effect", () => {
   assert.equal(block, 5);
 });
 
+test("block: frail reduces block by 0.75x (floor)", () => {
+  const card = makeCard({ effects: [fx.block(5)] });
+  const { block } = cardEffectiveValues(card, { ...basePlayer, frail: true });
+  assert.equal(block, 3);  // floor(5 * 0.75) = 3
+});
+
+test("block: frail does not affect damage", () => {
+  const card = makeCard({ effects: [fx.damage(8)] });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, frail: true });
+  assert.equal(damage, 8);
+});
+
+test("block: frail does not affect weakApplied effective block", () => {
+  const card = makeCard({ effects: [fx.weak(1)] });
+  const player = { ...basePlayer, frail: true, enemyAttack: 8, enemyHits: 1 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 2);  // (8 - floor(8 * 0.75)) * 1 = 2, unchanged by frail
+});
+
+test("frost orb: frail does not affect orb block", () => {
+  const card = makeCard({ effects: [fx.orb("frost", 1)] });
+  const { block } = cardEffectiveValues(card, { ...basePlayer, frail: true });
+  assert.equal(block, 2);  // base 2, frail has no effect on orb outputs
+});
+
 test("poison: single trigger", () => {
   const card = makeCard({ effects: [fx.poison(3)] });
   const { damage } = cardEffectiveValues(card, basePlayer);

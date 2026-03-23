@@ -6,6 +6,7 @@ export interface PlayerState {
   strength:       number;
   vulnerableStacks: number;   // current enemy vulnerable stacks (0 = not vulnerable; 1.5× damage if >0)
   weak:           boolean;
+  frail:          boolean;   // player is frail (block from cards ×0.75)
   focus:          number;
   poisonTriggers: number;
   exhaust:              number;
@@ -62,9 +63,10 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
   if (player.energyRemaining > 0 && card.cost > player.energyRemaining) {
     return { damage: 0, block: 0 };
   }
-  const { strength, vulnerableStacks, weak, focus, poisonTriggers, exhaust } = player;
-  const vulnMult = vulnerableStacks > 0 ? 1.5 : 1;
-  const weakMult = weak       ? 0.75 : 1;
+  const { strength, vulnerableStacks, weak, frail, focus, poisonTriggers, exhaust } = player;
+  const vulnMult  = vulnerableStacks > 0 ? 1.5  : 1;
+  const weakMult  = weak  ? 0.75 : 1;
+  const frailMult = frail ? 0.75 : 1;
 
   // Pre-compute exhaust bonus — adds to the base of any attack damage this card deals
   const exBonusEff = card.effects.find(e => e.type === "exhaust_bonus") as
@@ -84,7 +86,7 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
         break;
       }
       case "block":
-        block += eff.amount;
+        block += Math.floor(eff.amount * frailMult);
         break;
       case "orb": {
         const base = ORB_BASE[eff.orbType];

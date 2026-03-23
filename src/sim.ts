@@ -155,6 +155,7 @@ const player: PlayerState = {
   strength:       parseIntArg(args.strength, 0),
   vulnerableStacks: parseIntArg(args["enemy-vulnerable"], 0),
   weak:           !!args.weak,
+  frail:          !!args.frail,
   focus:          parseIntArg(args.focus, 0),
   poisonTriggers: parseIntArg(args["poison-triggers"], 1),
   enemyAttack:    parseIntArg(args["enemy-attack"], 0),
