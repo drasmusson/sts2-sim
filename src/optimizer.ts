@@ -112,10 +112,10 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
         }
         break;
       case "str_down":
-        // Reducing enemy strength is modelled as effective block (not subject to frailMult)
-        if (player.enemyAttack > 0) {
-          block += eff.amount * player.enemyHits;
-        }
+        // Reducing enemy strength is modelled as effective block (not subject to frailMult).
+        // Unlike weak (which is a % of enemy attack), str_down is a flat N×hits reduction
+        // that is meaningful regardless of the enemy's base attack value.
+        block += eff.amount * player.enemyHits;
         break;
       case "block_if_exhausted_turn":
         if (player.exhaustedThisTurn) block += eff.amount;

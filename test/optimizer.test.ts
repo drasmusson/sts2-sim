@@ -239,10 +239,10 @@ test("strDown: contributes effective block based on enemy attack and hits", () =
   assert.equal(block, 6); // 2 str × 3 hits
 });
 
-test("strDown: no block value when enemyAttack not set", () => {
+test("strDown: contributes block even when enemyAttack not set (flat reduction, not % based)", () => {
   const card = makeCard({ effects: [fx.strDown(2)] });
-  const { block } = cardEffectiveValues(card, basePlayer);
-  assert.equal(block, 0);
+  const { block } = cardEffectiveValues(card, basePlayer); // basePlayer has enemyHits: 1
+  assert.equal(block, 2); // 2 str × 1 hit — independent of enemyAttack
 });
 
 test("strDown: frail does not affect strength reduction block", () => {
