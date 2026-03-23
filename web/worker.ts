@@ -15,14 +15,17 @@ export interface WebConfig {
 export interface RunRequest  { type: "run";      cardsJson: string; config: WebConfig; n: number; }
 export interface RunComplete { type: "complete"; result: MCResult; approximations: string[]; }
 export interface RunError    { type: "error";    message: string; }
+export interface RunProgress { type: "progress"; done: number; total: number; }
 
-export type WorkerMessage = RunComplete | RunError;
+export type WorkerMessage = RunComplete | RunError | RunProgress;
 
 self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
   try {
     const db = parseJsonDb(data.cardsJson);
     const config: Config = { ...data.config, relics: [], db };
-    const result = runMC(config, data.n);
+    const result = runMC(config, data.n, (done) => {
+      self.postMessage({ type: "progress", done, total: data.n } satisfies RunProgress);
+    });
 
     // Detect cards in the deck whose exhaust effect is random (not player-chosen).
     // These are modeled as optimal choice in the DFS, which overestimates their average value.

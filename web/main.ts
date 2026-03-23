@@ -99,7 +99,13 @@ function runSim(config: WebConfig, n: number): void {
   if (worker) worker.terminate();
   worker = new Worker(new URL("./worker.ts", import.meta.url), { type: "module" });
 
+  const spinner = document.getElementById("spinner") as HTMLElement;
+
   worker.onmessage = ({ data }: MessageEvent<WorkerMessage>) => {
+    if (data.type === "progress") {
+      spinner.textContent = `Simulating… ${data.done.toLocaleString()} / ${data.total.toLocaleString()}`;
+      return;
+    }
     setRunning(false);
     if (data.type === "complete") {
       clearError();
@@ -118,11 +124,16 @@ function runSim(config: WebConfig, n: number): void {
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────
-function setRunning(running: boolean): void {
+function setRunning(running: boolean, total?: number): void {
   const btn     = document.getElementById("run-btn")     as HTMLButtonElement;
   const spinner = document.getElementById("spinner")     as HTMLElement;
   btn.disabled  = running;
   spinner.hidden = !running;
+  if (running && total !== undefined) {
+    spinner.textContent = `Simulating… 0 / ${total.toLocaleString()}`;
+  } else if (!running) {
+    spinner.textContent = "Running…";
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -173,7 +184,7 @@ async function init(): Promise<void> {
       return;
     }
 
-    setRunning(true);
+    setRunning(true, n);
     runSim(config, n);
   });
 }

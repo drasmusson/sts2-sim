@@ -75,7 +75,7 @@ export function percentile(sorted: number[], p: number): number {
   return sorted[Math.floor(sorted.length * p)] ?? 0;
 }
 
-export function runMC(config: Config, n: number): MCResult {
+export function runMC(config: Config, n: number, onProgress?: (done: number) => void): MCResult {
   const damages: number[] = [], blocks: number[] = [];
   const drawFreq: Record<string, number> = {};
   const dmgDist:  Record<number, number> = {};
@@ -102,6 +102,7 @@ export function runMC(config: Config, n: number): MCResult {
     for (const c of new Set(r.hand)) {
       drawFreq[c] = (drawFreq[c] ?? 0) + 1;
     }
+    if (onProgress && i % 100 === 99) onProgress(i + 1);
   }
 
   damages.sort((a, b) => a - b);
