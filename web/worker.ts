@@ -1,4 +1,4 @@
-import { parseCsvText } from "../src/cards-core";
+import { parseJsonDb } from "../src/cards-core";
 import { runMC } from "../src/mc";
 import type { Config, MCResult } from "../src/mc";
 import type { PlayerState, Mode } from "../src/optimizer";
@@ -12,7 +12,7 @@ export interface WebConfig {
   player:         PlayerState;
 }
 
-export interface RunRequest  { type: "run";      csvText: string; config: WebConfig; n: number; }
+export interface RunRequest  { type: "run";      cardsJson: string; config: WebConfig; n: number; }
 export interface RunComplete { type: "complete"; result: MCResult; approximations: string[]; }
 export interface RunError    { type: "error";    message: string; }
 
@@ -20,7 +20,7 @@ export type WorkerMessage = RunComplete | RunError;
 
 self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
   try {
-    const db = parseCsvText(data.csvText);
+    const db = parseJsonDb(data.cardsJson);
     const config: Config = { ...data.config, relics: [], db };
     const result = runMC(config, data.n);
 

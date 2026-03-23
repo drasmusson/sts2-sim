@@ -1,20 +1,20 @@
-import { parseCsvText } from "../src/cards-core";
+import { parseJsonDb } from "../src/cards-core";
 import { renderResults, renderError, clearError } from "./ui";
 import type { WebConfig, WorkerMessage } from "./worker";
 import type { Mode } from "../src/optimizer";
 import { STARTING_DECKS, CHARACTER_NAMES } from "../src/characters";
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
-let csvText = "";
+let cardsJson = "";
 let cardNames: string[] = [];
 let worker: Worker | null = null;
 
 // ─── LOAD CSV ─────────────────────────────────────────────────────────────────
 async function loadCsv(): Promise<void> {
-  const res = await fetch(`${import.meta.env.BASE_URL}cards.csv`);
-  if (!res.ok) throw new Error(`Failed to load cards.csv: ${res.status}`);
-  csvText = await res.text();
-  const db = parseCsvText(csvText);
+  const res = await fetch(`${import.meta.env.BASE_URL}cards.json`);
+  if (!res.ok) throw new Error(`Failed to load cards.json: ${res.status}`);
+  cardsJson = await res.text();
+  const db = parseJsonDb(cardsJson);
   cardNames = Object.keys(db).sort();
 }
 
@@ -67,7 +67,7 @@ function readConfig(): WebConfig {
 
   const player = {
     strength:       parseInt(d.get("strength") as string)        || 0,
-    vulnerable:     (d.get("vulnerable") as string) === "on",
+    vulnerableStacks: parseInt(d.get("enemy-vulnerable") as string) || 0,
     weak:           (d.get("weak")       as string) === "on",
     focus:          parseInt(d.get("focus") as string)           || 0,
     poisonTriggers: parseInt(d.get("poison-triggers") as string) || 1,
@@ -79,6 +79,7 @@ function readConfig(): WebConfig {
     exhaustedThisTurn:    false,
     currentBlock:         0,
     energyRemaining:      0,
+    selfDamageThisTurn:   0,
   };
 
   return {
@@ -111,7 +112,7 @@ function runSim(config: WebConfig, n: number): void {
     renderError(e.message);
   };
 
-  worker.postMessage({ type: "run", csvText, config, n });
+  worker.postMessage({ type: "run", cardsJson, config, n });
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────────────────────

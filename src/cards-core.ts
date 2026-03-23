@@ -26,7 +26,9 @@ export type CardEffect =
   | { type: "damage_per_self_damage";   amount: number }   // +X damage per self-damage instance this turn
   | { type: "damage_if_self_damaged";   amount: number }   // deal X damage if any self-damage was taken this turn (e.g. Spite)
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
-  | { type: "block_if_exhausted_turn";  amount: number };  // Evil Eye conditional
+  | { type: "block_if_exhausted_turn";  amount: number }   // Evil Eye conditional
+  | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
+  | { type: "damage_per_vuln_stack";    amount: number };  // Bully: +N dmg per enemy vulnerable stack
 
 export interface Card {
   type:        CardType;
@@ -39,131 +41,106 @@ export interface Card {
 
 export type CardDb = Record<string, Card>;
 
-export function parseCsvText(raw: string): CardDb {
-  const lines = raw.trim().split("\n");
-  const headers = lines[0].split(",").map(h => h.trim());
+// ─── JSON CARD FORMAT ─────────────────────────────────────────────────────────
 
-  const db: CardDb = {};
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
+// Sparse representation: only non-default fields are required.
+// Upgraded variants are expressed as a delta merged over the base card.
+export interface CardJson {
+  name:                   string;
+  type:                   CardType;
+  cost:                   number;
+  xCost?:                 boolean;
+  selfExhaust?:           boolean;
+  notes?:                 string;
+  // Effect fields (omit = 0 / false / default)
+  damage?:                number;
+  hits?:                  number;       // default 1 when damage is set
+  blockAsDamage?:         boolean;
+  block?:                 number;
+  draw?:                  number;
+  energyGain?:            number;
+  strGain?:               number;
+  vuln?:                  number;
+  weak?:                  number;
+  poison?:                number;
+  doom?:                  number;
+  orbType?:               string;
+  orbCount?:              number;       // default 1 when orbType is set
+  exhaustBonus?:          number;
+  exhaustDraw?:           number;
+  blockPerExhaustEvent?:  number;
+  blockIfExhaustedTurn?:  number;
+  damagePerExhaustedHand?: number;
+  blockPerExhaustedHand?: number;
+  upgradeHand?:           number;       // 1 = one card, -1 = all
+  fetchDiscard?:          number;
+  copyToDiscard?:         boolean;
+  selfDamage?:            number;
+  damagePerSelfDamage?:   number;
+  damageIfSelfDamaged?:   number;
+  doubleVulnStacks?:      boolean;
+  damagePerVulnStack?:    number;
+  exhaustHand?: {
+    count:          number;             // -1 = all
+    filter?:        string;             // "attack" | "skill" | "power"
+    choice?:        boolean;
+    damagePerCard?: number;
+    blockPerCard?:  number;
+  };
+  upgraded?: Omit<CardJson, "name" | "upgraded">;
+}
 
-    const values = line.split(",");
-    const row: Record<string, string> = {};
-    headers.forEach((h, idx) => {
-      row[h] = (values[idx] || "").trim();
-    });
+function jsonToCard(c: CardJson): Card {
+  const effects: CardEffect[] = [];
 
-    const name = row["Card Name"];
-    if (!name) continue;
-
-    const n = (col: string) => parseInt(row[col]) || 0;
-    const b = (col: string) => row[col] === "1";
-
-    const damage       = n("Damage");
-    const block        = n("Block");
-    const draw         = n("Draw");
-    const energyGain   = n("Energy Gain");
-    const strGain      = n("Str Gain");
-    const vulnApplied  = n("Vuln Applied");
-    const weakApplied  = n("Weak Applied");
-    const poison       = n("Poison");
-    const doom         = n("Doom");
-    const orbTypeRaw   = (row["Orb Type"] || "").toLowerCase() || null;
-    const orbCount     = n("Orb Count") || (orbTypeRaw ? 1 : 0);
-    const hits         = n("Hits") || 1;
-    const exhaustBonus = n("Exhaust Bonus");
-    const blockAsDmg   = b("Block As Damage");
-    const exHandCount  = n("Exhaust Hand Count");
-    const exHandType   = (row["Exhaust Hand Type"] || "").toLowerCase();
-    const exHandChoice = b("Exhaust Hand Choice");
-    const exDrawCount  = n("Exhaust Draw Count");
-    const bpee         = n("Block Per Exhaust Event");
-    const biet         = n("Block If Exhausted Turn");
-    const dmgPerEx     = n("Damage Per Exhausted Hand");
-    const blkPerEx     = n("Block Per Exhausted Hand");
-    const upgradeHand   = parseInt(row["Upgrade Hand Count"]) || 0;
-    const fetchDiscard  = n("Fetch Discard Count");
-    const copyToDiscard     = b("Copy To Discard");
-    const selfDamage        = n("Self Damage");
-    const dmgPerSelfDamage  = n("Damage Per Self Damage");
-    const dmgIfSelfDamaged  = n("Damage If Self Damaged");
-
-    const effects: CardEffect[] = [];
-
-    if (damage > 0 || blockAsDmg) {
-      effects.push({ type: "damage", amount: damage, hits, ...(blockAsDmg ? { useCurrentBlock: true } : {}) });
-    }
-    if (exhaustBonus > 0) {
-      effects.push({ type: "exhaust_bonus", amount: exhaustBonus });
-    }
-    if (block > 0) {
-      effects.push({ type: "block", amount: block });
-    }
-    if (draw > 0) {
-      effects.push({ type: "draw", amount: draw });
-    }
-    if (energyGain > 0) {
-      effects.push({ type: "energy_gain", amount: energyGain });
-    }
-    if (strGain > 0) {
-      effects.push({ type: "str_gain", amount: strGain });
-    }
-    if (vulnApplied > 0) {
-      effects.push({ type: "vuln", amount: vulnApplied });
-    }
-    if (weakApplied > 0) {
-      effects.push({ type: "weak", amount: weakApplied });
-    }
-    if (poison > 0) {
-      effects.push({ type: "poison", amount: poison });
-    }
-    if (doom > 0) {
-      effects.push({ type: "doom", amount: doom });
-    }
-    if (orbTypeRaw && orbCount > 0) {
-      effects.push({ type: "orb", orbType: orbTypeRaw, count: orbCount });
-    }
-    if (exHandCount !== 0) {
-      effects.push({ type: "exhaust_hand", count: exHandCount, filter: exHandType, choice: exHandChoice, damagePerCard: dmgPerEx, blockPerCard: blkPerEx });
-    }
-    if (exDrawCount > 0) {
-      effects.push({ type: "exhaust_draw", count: exDrawCount });
-    }
-    if (upgradeHand !== 0) {
-      effects.push({ type: "upgrade_hand", count: upgradeHand });
-    }
-    if (bpee > 0) {
-      effects.push({ type: "block_per_exhaust_event", amount: bpee });
-    }
-    if (biet > 0) {
-      effects.push({ type: "block_if_exhausted_turn", amount: biet });
-    }
-    if (fetchDiscard > 0) {
-      effects.push({ type: "discard_to_draw", count: fetchDiscard });
-    }
-    if (copyToDiscard) {
-      effects.push({ type: "copy_to_discard" });
-    }
-    if (selfDamage > 0) {
-      effects.push({ type: "self_damage", amount: selfDamage });
-    }
-    if (dmgPerSelfDamage > 0) {
-      effects.push({ type: "damage_per_self_damage", amount: dmgPerSelfDamage });
-    }
-    if (dmgIfSelfDamaged > 0) {
-      effects.push({ type: "damage_if_self_damaged", amount: dmgIfSelfDamaged });
-    }
-
-    db[name.toLowerCase()] = {
-      type:        row["Type"].toLowerCase() as CardType,
-      cost:        n("Cost"),
-      xCost:       b("X Cost"),
-      selfExhaust: b("Self Exhaust"),
-      effects,
-      notes:       row["Notes"] || "",
-    };
+  if ((c.damage !== undefined && c.damage > 0) || c.blockAsDamage) {
+    effects.push({ type: "damage", amount: c.damage ?? 0, hits: c.hits ?? 1,
+      ...(c.blockAsDamage ? { useCurrentBlock: true } : {}) });
   }
+  if (c.exhaustBonus)           effects.push({ type: "exhaust_bonus",            amount: c.exhaustBonus });
+  if (c.block)                  effects.push({ type: "block",                    amount: c.block });
+  if (c.draw)                   effects.push({ type: "draw",                     amount: c.draw });
+  if (c.energyGain)             effects.push({ type: "energy_gain",              amount: c.energyGain });
+  if (c.strGain)                effects.push({ type: "str_gain",                 amount: c.strGain });
+  if (c.vuln)                   effects.push({ type: "vuln",                     amount: c.vuln });
+  if (c.weak)                   effects.push({ type: "weak",                     amount: c.weak });
+  if (c.poison)                 effects.push({ type: "poison",                   amount: c.poison });
+  if (c.doom)                   effects.push({ type: "doom",                     amount: c.doom });
+  if (c.orbType)                effects.push({ type: "orb",                      orbType: c.orbType.toLowerCase(), count: c.orbCount ?? 1 });
+  if (c.exhaustHand)            effects.push({ type: "exhaust_hand",             count: c.exhaustHand.count, filter: c.exhaustHand.filter ?? "", choice: c.exhaustHand.choice ?? false, damagePerCard: c.exhaustHand.damagePerCard ?? 0, blockPerCard: c.exhaustHand.blockPerCard ?? 0 });
+  if (c.exhaustDraw)            effects.push({ type: "exhaust_draw",             count: c.exhaustDraw });
+  if (c.upgradeHand)            effects.push({ type: "upgrade_hand",             count: c.upgradeHand });
+  if (c.blockPerExhaustEvent)   effects.push({ type: "block_per_exhaust_event",  amount: c.blockPerExhaustEvent });
+  if (c.blockIfExhaustedTurn)   effects.push({ type: "block_if_exhausted_turn",  amount: c.blockIfExhaustedTurn });
+  if (c.fetchDiscard)           effects.push({ type: "discard_to_draw",          count: c.fetchDiscard });
+  if (c.copyToDiscard)          effects.push({ type: "copy_to_discard" });
+  if (c.selfDamage)             effects.push({ type: "self_damage",              amount: c.selfDamage });
+  if (c.damagePerSelfDamage)    effects.push({ type: "damage_per_self_damage",   amount: c.damagePerSelfDamage });
+  if (c.damageIfSelfDamaged)    effects.push({ type: "damage_if_self_damaged",   amount: c.damageIfSelfDamaged });
+  if (c.doubleVulnStacks)       effects.push({ type: "double_vuln_stacks" });
+  if (c.damagePerVulnStack)     effects.push({ type: "damage_per_vuln_stack",    amount: c.damagePerVulnStack });
 
+  return {
+    type:        c.type,
+    cost:        c.cost,
+    xCost:       c.xCost       ?? false,
+    selfExhaust: c.selfExhaust ?? false,
+    effects,
+    notes:       c.notes       ?? "",
+  };
+}
+
+export function parseJsonDb(jsonText: string): CardDb {
+  const cards: CardJson[] = JSON.parse(jsonText);
+  const db: CardDb = {};
+  for (const card of cards) {
+    db[card.name.toLowerCase()] = jsonToCard(card);
+    if (card.upgraded) {
+      const merged: CardJson = { ...card, ...card.upgraded };
+      db[(card.name + "+").toLowerCase()] = jsonToCard(merged);
+    }
+  }
   return db;
 }
+
+

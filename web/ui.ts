@@ -49,7 +49,7 @@ export function renderResults(results: MCResult, config: WebConfig, approximatio
   const statParts: string[] = [];
   if (p.strength)             statParts.push(`Strength ${p.strength}`);
   if (p.exhaust)              statParts.push(`Exhaust ${p.exhaust}`);
-  if (p.vulnerable)           statParts.push("Vulnerable");
+  if (p.vulnerableStacks > 0) statParts.push(`Vulnerable ×${p.vulnerableStacks}`);
   if (p.weak)                 statParts.push("Weak");
   if (p.focus)                statParts.push(`Focus ${p.focus}`);
   if (p.poisonTriggers !== 1) statParts.push(`Poison ×${p.poisonTriggers}`);

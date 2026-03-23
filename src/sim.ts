@@ -14,7 +14,7 @@ import { runMC, Config, MCResult } from "./mc.js";
 import { STARTING_DECKS, CHARACTER_NAMES } from "./characters.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CSV_PATH = path.join(__dirname, "../cards.csv");
+const JSON_PATH = path.join(__dirname, "../cards.json");
 let N = 10_000;
 
 // ─── CLI PARSER ──────────────────────────────────────────────────────────────
@@ -87,7 +87,7 @@ function printResults(results: MCResult, config: Config): void {
   const parts: string[] = [];
   if (p.strength)             parts.push(`Strength ${p.strength}`);
   if (p.exhaust)              parts.push(`Exhaust ${p.exhaust}`);
-  if (p.vulnerable)           parts.push("Vulnerable");
+  if (p.vulnerableStacks > 0) parts.push(`Vulnerable ×${p.vulnerableStacks}`);
   if (p.weak)                 parts.push("Weak");
   if (p.focus)                parts.push(`Focus ${p.focus}`);
   if (p.poisonTriggers !== 1) parts.push(`Poison triggers ×${p.poisonTriggers}`);
@@ -153,7 +153,7 @@ const relics      = parseList(args.relics);
 
 const player: PlayerState = {
   strength:       parseIntArg(args.strength, 0),
-  vulnerable:     !!args.vulnerable,
+  vulnerableStacks: parseIntArg(args["enemy-vulnerable"], 0),
   weak:           !!args.weak,
   focus:          parseIntArg(args.focus, 0),
   poisonTriggers: parseIntArg(args["poison-triggers"], 1),
@@ -165,6 +165,7 @@ const player: PlayerState = {
   exhaustedThisTurn:    false,
   currentBlock:         0,
   energyRemaining:      0,
+  selfDamageThisTurn:   0,
 };
 
 if (!drawPile.length) {
@@ -172,7 +173,7 @@ if (!drawPile.length) {
   process.exit(1);
 }
 
-const db = loadCards(CSV_PATH);
+const db = loadCards(JSON_PATH);
 
 const unknown = [...drawPile, ...discardPile].filter(c => !db[c]);
 if (unknown.length) {

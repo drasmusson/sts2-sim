@@ -4,7 +4,7 @@ import { Card, CardDb, CardEffect } from "./cards.js";
 
 export interface PlayerState {
   strength:       number;
-  vulnerable:     boolean;
+  vulnerableStacks: number;   // current enemy vulnerable stacks (0 = not vulnerable; 1.5× damage if >0)
   weak:           boolean;
   focus:          number;
   poisonTriggers: number;
@@ -62,8 +62,8 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
   if (player.energyRemaining > 0 && card.cost > player.energyRemaining) {
     return { damage: 0, block: 0 };
   }
-  const { strength, vulnerable, weak, focus, poisonTriggers, exhaust } = player;
-  const vulnMult = vulnerable ? 1.5 : 1;
+  const { strength, vulnerableStacks, weak, focus, poisonTriggers, exhaust } = player;
+  const vulnMult = vulnerableStacks > 0 ? 1.5 : 1;
   const weakMult = weak       ? 0.75 : 1;
 
   // Pre-compute exhaust bonus — adds to the base of any attack damage this card deals
@@ -111,6 +111,9 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "block_if_exhausted_turn":
         if (player.exhaustedThisTurn) block += eff.amount;
         break;
+      case "damage_per_vuln_stack":
+        damage += eff.amount * player.vulnerableStacks;
+        break;
       case "damage_per_self_damage":
         damage += eff.amount * player.selfDamageThisTurn;
         break;
@@ -136,7 +139,11 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         next = { ...next, strength: next.strength + eff.amount };
         break;
       case "vuln":
-        next = { ...next, vulnerable: true };
+        next = { ...next, vulnerableStacks: next.vulnerableStacks + eff.amount };
+        break;
+      case "double_vuln_stacks":
+        if (next.vulnerableStacks > 0)
+          next = { ...next, vulnerableStacks: next.vulnerableStacks * 2 };
         break;
       case "weak":
         next = { ...next, enemyWeak: true };

@@ -6,7 +6,7 @@ import { STARTING_DECKS, CHARACTER_NAMES } from "../src/characters.js";
 import { loadCards } from "../src/cards.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const db = loadCards(path.join(__dirname, "../cards.csv"));
+const db = loadCards(path.join(__dirname, "../cards.json"));
 
 // ─── deck composition ─────────────────────────────────────────────────────────
 
@@ -48,7 +48,7 @@ test("defect starting deck: 4 strikes, 4 defends, 1 zap, 1 dualcast", () => {
 // ─── CSV integration ──────────────────────────────────────────────────────────
 
 for (const char of CHARACTER_NAMES) {
-  test(`all ${char} starting deck cards exist in cards.csv`, () => {
+  test(`all ${char} starting deck cards exist in cards.json`, () => {
     const missing = STARTING_DECKS[char].filter(name => !db[name]);
     assert.deepEqual(missing, [], `Missing from CSV: ${missing.join(", ")}`);
   });

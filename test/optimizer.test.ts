@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, bestPlay } from "../src/optimizer.js";
+import { simulateTurn } from "../src/turn-simulator.js";
+import { CardDb } from "../src/cards.js";
 import { basePlayer, makeCard, fx } from "./helpers.js";
 
 // ─── cardEffectiveValues ──────────────────────────────────────────────────────
@@ -19,7 +21,7 @@ test("attack damage: strength adds flat bonus", () => {
 
 test("attack damage: vulnerable multiplies by 1.5", () => {
   const card = makeCard({ effects: [fx.damage(6)] });
-  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerable: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerableStacks: 1 });
   assert.equal(damage, 9);
 });
 
@@ -38,13 +40,13 @@ test("attack damage: card's vulnerable is not applied to itself", () => {
 test("attack damage: strength + vulnerable stack", () => {
   // Bash: (8+2) * 1.5 = 15
   const card = makeCard({ effects: [fx.damage(8), fx.vuln(1)] });
-  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, vulnerable: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, vulnerableStacks: 1 });
   assert.equal(damage, 15);
 });
 
 test("block: no player state effect", () => {
   const card = makeCard({ effects: [fx.block(5)] });
-  const { block } = cardEffectiveValues(card, { ...basePlayer, strength: 3, vulnerable: true });
+  const { block } = cardEffectiveValues(card, { ...basePlayer, strength: 3, vulnerableStacks: 1 });
   assert.equal(block, 5);
 });
 
@@ -62,7 +64,7 @@ test("poison: two triggers — 5 stacks → 5+4 = 9", () => {
 
 test("doom: flat damage, no scaling", () => {
   const card = makeCard({ effects: [fx.doom(10)] });
-  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 5, vulnerable: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 5, vulnerableStacks: 1 });
   assert.equal(damage, 10);
 });
 
@@ -98,8 +100,64 @@ test("multi-hit: strength scales per hit", () => {
 
 test("multi-hit: vulnerable multiplies total hits, rounded down", () => {
   const card = makeCard({ effects: [fx.damage(3, 3)] });
-  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerable: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerableStacks: 1 });
   assert.equal(damage, 13);
+});
+
+// ─── vulnerable stacks ───────────────────────────────────────────────────────
+
+test("vulnerable multiplier is binary: 2 stacks gives same 1.5× as 1 stack", () => {
+  const card = makeCard({ effects: [fx.damage(6)] });
+  const d1 = cardEffectiveValues(card, { ...basePlayer, vulnerableStacks: 1 }).damage;
+  const d3 = cardEffectiveValues(card, { ...basePlayer, vulnerableStacks: 3 }).damage;
+  assert.equal(d1, 9);
+  assert.equal(d3, 9);  // stacks extend duration, not multiplier
+});
+
+test("damage_per_vuln_stack: scales with stack count, not HP multiplier", () => {
+  // Bully base: 4 atk + 2 per stack; with 3 stacks → floor(4×1.5) + 2×3 = 6 + 6 = 12
+  const card = makeCard({ effects: [fx.damage(4), fx.damagePerVulnStack(2)] });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerableStacks: 3 });
+  assert.equal(damage, 12);
+});
+
+test("damage_per_vuln_stack: bonus is flat — strength does not scale it", () => {
+  // 4 base + 2 str + 3 vuln stacks: floor((4+2)*1.5) + 2*3 = 9 + 6 = 15
+  // WRONG would be: floor((4+2)*1.5) + 2*3*2 = 9+12=21, or floor((4+2*3+2)*1.5) = 18
+  const card = makeCard({ effects: [fx.damage(4), fx.damagePerVulnStack(2)] });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 2, vulnerableStacks: 3 });
+  assert.equal(damage, 15);
+});
+
+test("damage_per_vuln_stack: zero stacks gives zero bonus", () => {
+  const card = makeCard({ effects: [fx.damage(4), fx.damagePerVulnStack(2)] });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 4);
+});
+
+test("double_vuln_stacks: doubles current stacks in applyCardState", () => {
+  const card = makeCard({ effects: [fx.damage(10), fx.doubleVulnStacks()], selfExhaust: true });
+  const stateAfter = applyCardState({ ...basePlayer, vulnerableStacks: 2 }, card);
+  assert.equal(stateAfter.vulnerableStacks, 4);
+});
+
+test("double_vuln_stacks: does nothing when stacks are 0", () => {
+  const card = makeCard({ effects: [fx.doubleVulnStacks()], selfExhaust: true });
+  const stateAfter = applyCardState(basePlayer, card);
+  assert.equal(stateAfter.vulnerableStacks, 0);
+});
+
+test("sim plays double_vuln_stacks before damage_per_vuln_stack card", () => {
+  // doubler(floor(10×1.5)=15, doubles 2→4 stacks) → scaler(floor(4×1.5)+2×4=14) = 29 total
+  // reverse: scaler(floor(4×1.5)+2×2=10) → doubler(floor(10×1.5)=15) = 25 total
+  const db: CardDb = {
+    doubler: makeCard({ effects: [fx.damage(10), fx.doubleVulnStacks()], cost: 2, selfExhaust: true }),
+    scaler:  makeCard({ effects: [fx.damage(4),  fx.damagePerVulnStack(2)], cost: 1 }),
+  };
+  const result = simulateTurn(["doubler", "scaler"], [], [], db, { ...basePlayer, vulnerableStacks: 2 }, 3, "dmg");
+  assert.equal(result.played[0], "doubler");
+  assert.equal(result.played[1], "scaler");
+  assert.equal(result.totalDamage, 29);
 });
 
 test("card with damage and block: both values returned", () => {
@@ -237,7 +295,7 @@ test("Strike then Bash: 6 + 8 = 14 (no Vulnerable benefit)", () => {
 });
 
 test("enemy already Vulnerable: Bash first gives 12 + 9 = 21", () => {
-  const { totalDamage } = simulateCombo(["Bash", "Strike"], db, { ...basePlayer, vulnerable: true });
+  const { totalDamage } = simulateCombo(["Bash", "Strike"], db, { ...basePlayer, vulnerableStacks: 1 });
   assert.equal(totalDamage, 21);
 });
 
@@ -287,7 +345,7 @@ test("Body Slam: strength adds to currentBlock base", () => {
 
 test("Body Slam: scales with vulnerable", () => {
   const card = makeCard({ effects: [fx.blockAsDamage()] });
-  const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 10, vulnerable: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, currentBlock: 10, vulnerableStacks: 1 });
   assert.equal(damage, 15);
 });
 
@@ -327,7 +385,7 @@ test("Whirlwind: strength adds per energy spent", () => {
 test("Whirlwind: scales with vulnerable", () => {
   // floor(5 × 1.5 × 2 energy) = floor(15) = 15  (same rounding as all multi-hit cards)
   const card = makeCard({ effects: [fx.damage(5)], xCost: true });
-  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 2, vulnerable: true });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, energyRemaining: 2, vulnerableStacks: 1 });
   assert.equal(damage, 15);
 });
 

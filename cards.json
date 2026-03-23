@@ -1,0 +1,556 @@
+[
+  {
+    "name": "Strike",
+    "type": "attack",
+    "cost": 1,
+    "damage": 6,
+    "upgraded": {
+      "damage": 9
+    }
+  },
+  {
+    "name": "Defend",
+    "type": "skill",
+    "cost": 1,
+    "block": 5,
+    "upgraded": {
+      "block": 8
+    }
+  },
+  {
+    "name": "Bash",
+    "type": "attack",
+    "cost": 2,
+    "damage": 8,
+    "vuln": 2,
+    "upgraded": {
+      "damage": 10,
+      "vuln": 3
+    }
+  },
+  {
+    "name": "Neutralize",
+    "type": "attack",
+    "cost": 0,
+    "damage": 3,
+    "weak": 1,
+    "upgraded": {
+      "damage": 4,
+      "weak": 2
+    }
+  },
+  {
+    "name": "Survivor",
+    "type": "skill",
+    "cost": 1,
+    "block": 8,
+    "upgraded": {
+      "block": 11
+    }
+  },
+  {
+    "name": "Bludgeon",
+    "type": "attack",
+    "cost": 3,
+    "damage": 32,
+    "upgraded": {
+      "damage": 42
+    }
+  },
+  {
+    "name": "Break",
+    "type": "attack",
+    "cost": 2,
+    "damage": 20,
+    "vuln": 5,
+    "upgraded": {
+      "damage": 25,
+      "vuln": 7
+    }
+  },
+  {
+    "name": "Feed",
+    "type": "attack",
+    "cost": 1,
+    "damage": 10,
+    "selfExhaust": true,
+    "upgraded": {
+      "damage": 12
+    }
+  },
+  {
+    "name": "Headbutt",
+    "type": "attack",
+    "cost": 1,
+    "damage": 9,
+    "fetchDiscard": 1,
+    "upgraded": {
+      "damage": 12
+    }
+  },
+  {
+    "name": "Impervious",
+    "type": "skill",
+    "cost": 2,
+    "block": 30,
+    "selfExhaust": true,
+    "upgraded": {
+      "block": 40
+    }
+  },
+  {
+    "name": "Iron Wave",
+    "type": "attack",
+    "cost": 1,
+    "damage": 5,
+    "block": 5,
+    "upgraded": {
+      "damage": 7,
+      "block": 7
+    }
+  },
+  {
+    "name": "Molten Fist",
+    "type": "attack",
+    "cost": 1,
+    "selfExhaust": true,
+    "damage": 10,
+    "doubleVulnStacks": true,
+    "notes": "doubles enemy vulnerable stacks; exhausts",
+    "upgraded": {
+      "damage": 14
+    }
+  },
+  {
+    "name": "Pommel Strike",
+    "type": "attack",
+    "cost": 1,
+    "damage": 9,
+    "draw": 1,
+    "upgraded": {
+      "damage": 12,
+      "draw": 2
+    }
+  },
+  {
+    "name": "Shrug It Off",
+    "type": "skill",
+    "cost": 1,
+    "block": 8,
+    "upgraded": {
+      "block": 11
+    }
+  },
+  {
+    "name": "Sword Boomerang",
+    "type": "attack",
+    "cost": 1,
+    "damage": 3,
+    "hits": 3,
+    "upgraded": {
+      "hits": 4
+    }
+  },
+  {
+    "name": "Taunt",
+    "type": "skill",
+    "cost": 1,
+    "block": 7,
+    "vuln": 1,
+    "upgraded": {
+      "block": 8,
+      "vuln": 2
+    }
+  },
+  {
+    "name": "Thunderclap",
+    "type": "attack",
+    "cost": 1,
+    "damage": 4,
+    "vuln": 1,
+    "upgraded": {
+      "damage": 7
+    }
+  },
+  {
+    "name": "True Grit",
+    "type": "skill",
+    "cost": 1,
+    "block": 7,
+    "exhaustHand": {
+      "count": 1
+    },
+    "notes": "exhaust 1 random card in hand",
+    "upgraded": {
+      "block": 9,
+      "exhaustHand": {
+        "count": 1,
+        "choice": true
+      },
+      "notes": "exhaust 1 card in hand; player chooses"
+    }
+  },
+  {
+    "name": "Twin Strike",
+    "type": "attack",
+    "cost": 1,
+    "damage": 5,
+    "hits": 2,
+    "upgraded": {
+      "damage": 7
+    }
+  },
+  {
+    "name": "Uppercut",
+    "type": "attack",
+    "cost": 2,
+    "damage": 13,
+    "vuln": 1,
+    "weak": 1,
+    "upgraded": {
+      "vuln": 2,
+      "weak": 2
+    }
+  },
+  {
+    "name": "Inflame",
+    "type": "power",
+    "cost": 1,
+    "strGain": 2,
+    "upgraded": {
+      "strGain": 3
+    }
+  },
+  {
+    "name": "Anger",
+    "type": "attack",
+    "cost": 0,
+    "damage": 6,
+    "copyToDiscard": true,
+    "notes": "adds copy to discard",
+    "upgraded": {
+      "damage": 8
+    }
+  },
+  {
+    "name": "Cinder",
+    "type": "attack",
+    "cost": 2,
+    "damage": 17,
+    "exhaustDraw": 1,
+    "notes": "exhausts top card in draw pile",
+    "upgraded": {
+      "damage": 22
+    }
+  },
+  {
+    "name": "Fight Me",
+    "type": "attack",
+    "cost": 2,
+    "damage": 5,
+    "hits": 2,
+    "strGain": 2,
+    "notes": "gives 1 str to enemy; enemy str gain not modeled",
+    "upgraded": {
+      "damage": 6,
+      "strGain": 3
+    }
+  },
+  {
+    "name": "Howl From Beyond",
+    "type": "attack",
+    "cost": 3,
+    "damage": 16,
+    "notes": "replays from exhaust next turn; not modeled",
+    "upgraded": {
+      "damage": 21
+    }
+  },
+  {
+    "name": "Hemokinesis",
+    "type": "attack",
+    "cost": 1,
+    "damage": 14,
+    "damagePerSelfDamage": 2,
+    "notes": "deals 2 damage to self",
+    "upgraded": {
+      "damage": 19
+    }
+  },
+  {
+    "name": "Mangle",
+    "type": "attack",
+    "cost": 3,
+    "damage": 15,
+    "notes": "enemy loses 10 str; not modeled",
+    "upgraded": {
+      "damage": 20,
+      "notes": "enemy loses 15 str; not modeled"
+    }
+  },
+  {
+    "name": "Setup Strike",
+    "type": "attack",
+    "cost": 1,
+    "damage": 7,
+    "strGain": 2,
+    "upgraded": {
+      "damage": 9,
+      "strGain": 3
+    }
+  },
+  {
+    "name": "Spite",
+    "type": "attack",
+    "cost": 0,
+    "damage": 6,
+    "notes": "draws a card if player took damage this turn; draw not modeled",
+    "upgraded": {
+      "damage": 9
+    }
+  },
+  {
+    "name": "Stomp",
+    "type": "attack",
+    "cost": 3,
+    "damage": 12,
+    "notes": "costs 1 less per attack played this turn; dynamic cost not modeled",
+    "upgraded": {
+      "damage": 15
+    }
+  },
+  {
+    "name": "Unrelenting",
+    "type": "attack",
+    "cost": 2,
+    "damage": 12,
+    "notes": "next attack played this turn is free; not modeled",
+    "upgraded": {
+      "damage": 18
+    }
+  },
+  {
+    "name": "Tremble",
+    "type": "skill",
+    "cost": 1,
+    "vuln": 2,
+    "upgraded": {
+      "vuln": 3
+    }
+  },
+  {
+    "name": "Bully",
+    "type": "attack",
+    "cost": 0,
+    "damage": 4,
+    "damagePerVulnStack": 2,
+    "notes": "+2 dmg per enemy vulnerable stack",
+    "upgraded": {
+      "damagePerVulnStack": 3,
+      "notes": "+3 dmg per enemy vulnerable stack"
+    }
+  },
+  {
+    "name": "Breakthrough",
+    "type": "attack",
+    "cost": 1,
+    "damage": 9,
+    "damagePerSelfDamage": 1,
+    "notes": "lose 1 hp",
+    "upgraded": {
+      "damage": 13
+    }
+  },
+  {
+    "name": "Blood Wall",
+    "type": "skill",
+    "cost": 2,
+    "block": 16,
+    "damagePerSelfDamage": 2,
+    "notes": "lose 2 hp",
+    "upgraded": {
+      "block": 20
+    }
+  },
+  {
+    "name": "Ashen Strike",
+    "type": "attack",
+    "cost": 1,
+    "damage": 6,
+    "exhaustBonus": 3,
+    "upgraded": {
+      "exhaustBonus": 4
+    }
+  },
+  {
+    "name": "Brand",
+    "type": "skill",
+    "cost": 0,
+    "strGain": 1,
+    "damagePerSelfDamage": 1,
+    "exhaustHand": {
+      "count": 1,
+      "choice": true
+    },
+    "notes": "exhaust 1 card; lose 1 hp",
+    "upgraded": {
+      "strGain": 2
+    }
+  },
+  {
+    "name": "Body Slam",
+    "type": "attack",
+    "cost": 1,
+    "blockAsDamage": true,
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Whirlwind",
+    "type": "attack",
+    "cost": 0,
+    "xCost": true,
+    "damage": 5,
+    "upgraded": {
+      "damage": 8
+    }
+  },
+  {
+    "name": "Bloodletting",
+    "type": "skill",
+    "cost": 0,
+    "energyGain": 2,
+    "damagePerSelfDamage": 3,
+    "notes": "lose 3 hp",
+    "upgraded": {
+      "energyGain": 3
+    }
+  },
+  {
+    "name": "Expect a Fight",
+    "type": "skill",
+    "cost": 2,
+    "notes": "gain 1 energy per attack in hand; not modeled — use --energy workaround",
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
+    "name": "Forgotten Ritual",
+    "type": "skill",
+    "cost": 1,
+    "notes": "if exhausted a card this turn gain 3 energy; not modeled — use --energy workaround",
+    "upgraded": {
+      "notes": "if exhausted a card this turn gain 4 energy; not modeled — use --energy workaround"
+    }
+  },
+  {
+    "name": "Offering",
+    "type": "skill",
+    "cost": 0,
+    "draw": 3,
+    "energyGain": 2,
+    "damagePerSelfDamage": 6,
+    "notes": "lose 6 hp",
+    "upgraded": {
+      "draw": 5
+    }
+  },
+  {
+    "name": "Zap",
+    "type": "skill",
+    "cost": 1,
+    "orbType": "lightning",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Dualcast",
+    "type": "skill",
+    "cost": 1,
+    "notes": "evoke rightmost orb twice; evoke not modeled",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Burning Pact",
+    "type": "skill",
+    "cost": 1,
+    "draw": 2,
+    "exhaustHand": {
+      "count": 1,
+      "choice": true
+    },
+    "upgraded": {
+      "draw": 3
+    }
+  },
+  {
+    "name": "Fiend Fire",
+    "type": "attack",
+    "cost": 1,
+    "selfExhaust": true,
+    "exhaustHand": {
+      "count": -1,
+      "damagePerCard": 7
+    },
+    "upgraded": {
+      "exhaustHand": {
+        "count": -1,
+        "damagePerCard": 10
+      }
+    }
+  },
+  {
+    "name": "Second Wind",
+    "type": "skill",
+    "cost": 1,
+    "exhaustHand": {
+      "count": -1,
+      "filter": "non-attack",
+      "blockPerCard": 5
+    },
+    "upgraded": {
+      "exhaustHand": {
+        "count": -1,
+        "filter": "non-attack",
+        "blockPerCard": 7
+      }
+    }
+  },
+  {
+    "name": "Evil Eye",
+    "type": "skill",
+    "cost": 1,
+    "block": 8,
+    "blockIfExhaustedTurn": 8,
+    "upgraded": {
+      "block": 11,
+      "blockIfExhaustedTurn": 11
+    }
+  },
+  {
+    "name": "Feel No Pain",
+    "type": "power",
+    "cost": 1,
+    "blockPerExhaustEvent": 3,
+    "upgraded": {
+      "blockPerExhaustEvent": 4
+    }
+  },
+  {
+    "name": "Armaments",
+    "type": "skill",
+    "cost": 1,
+    "block": 5,
+    "upgradeHand": 1,
+    "notes": "upgrade 1 card in hand",
+    "upgraded": {
+      "upgradeHand": -1,
+      "notes": "upgrade ALL cards in hand"
+    }
+  }
+]
