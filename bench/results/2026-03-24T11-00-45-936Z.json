@@ -1,0 +1,87 @@
+{
+  "timestamp": "2026-03-24T11:00:45.936Z",
+  "gitCommit": "a3d0a46",
+  "nodeVersion": "v24.14.0",
+  "results": [
+    {
+      "name": "1. Baseline",
+      "description": "10-card deck, draw 5, energy 3, no draw/energy effects",
+      "sims": 5000,
+      "elapsedMs": 33.42212500000005,
+      "msPerSim": 0.00668442500000001,
+      "vsBaseline": 1
+    },
+    {
+      "name": "2. Moderate draw",
+      "description": "10-card deck with 3× draw-1 cards; hand grows mid-DFS by ~1–2 cards",
+      "sims": 5000,
+      "elapsedMs": 62.702417000000025,
+      "msPerSim": 0.012540483400000005,
+      "vsBaseline": 1.8760751149126493
+    },
+    {
+      "name": "3. High draw",
+      "description": "12-card deck with 4× draw-2 cards; hand can grow to 9+ cards mid-DFS",
+      "sims": 2000,
+      "elapsedMs": 30.401417000000038,
+      "msPerSim": 0.015200708500000019,
+      "vsBaseline": 2.274048777568751
+    },
+    {
+      "name": "4. High energy",
+      "description": "10-card deck with 3× energy-gain cards; more branches remain affordable throughout DFS",
+      "sims": 2000,
+      "elapsedMs": 44.39350000000002,
+      "msPerSim": 0.022196750000000008,
+      "vsBaseline": 3.3206670730840684
+    },
+    {
+      "name": "5. High draw + energy (worst case)",
+      "description": "12-card deck with cards that both draw AND generate energy; multiplicative branching",
+      "sims": 500,
+      "elapsedMs": 53.497916999999916,
+      "msPerSim": 0.10699583399999983,
+      "vsBaseline": 16.006737153906233
+    },
+    {
+      "name": "6. Bloodletting rush (real cards)",
+      "description": "3× Bloodletting (0-cost, +2 energy each) with Strikes/Bash; energy snowballs mid-turn",
+      "sims": 2000,
+      "elapsedMs": 59.55366600000002,
+      "msPerSim": 0.02977683300000001,
+      "vsBaseline": 4.454658852481696
+    },
+    {
+      "name": "7. Offering chain (real cards)",
+      "description": "3× Offering (0-cost, draw 3 + energy +2) — each play expands hand and unlocks more plays",
+      "sims": 500,
+      "elapsedMs": 10130.961667,
+      "msPerSim": 20.261923334,
+      "vsBaseline": 3031.2141035317127
+    },
+    {
+      "name": "8. Offering+ chain (real cards)",
+      "description": "3× Offering+ (0-cost, draw 5 + energy +2) — maximum hand/energy explosion",
+      "sims": 200,
+      "elapsedMs": 7132.938333999999,
+      "msPerSim": 35.664691669999996,
+      "vsBaseline": 5335.491335455173
+    },
+    {
+      "name": "9. Burning Pact (exhaust branching)",
+      "description": "3× Burning Pact (draw 2, exhaust 1 from hand — player choice); DFS branches per exhaust target",
+      "sims": 2000,
+      "elapsedMs": 61.19233299999905,
+      "msPerSim": 0.030596166499999525,
+      "vsBaseline": 4.577232372268292
+    },
+    {
+      "name": "10. Stacked chains (real ceiling)",
+      "description": "2× Offering + 2× Bloodletting + 2× Pommel Strike+: draw, energy gain, and exhaust branching combined",
+      "sims": 500,
+      "elapsedMs": 20491.093500000003,
+      "msPerSim": 40.982187,
+      "vsBaseline": 6130.996607786001
+    }
+  ]
+}

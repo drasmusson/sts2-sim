@@ -147,10 +147,7 @@ function resolveDiscardToDraw(
   best:          { result: TurnResult; foundInfinite: boolean },
   threshold:     number,
 ): void {
-  const eff = card.effects.find(e => e.type === "discard_to_draw") as
-    Extract<CardEffect, { type: "discard_to_draw" }> | undefined;
-
-  if (!eff || s.discardPile.length === 0) {
+  if (!card.hasDiscardToDraw || s.discardPile.length === 0) {
     const post = resolvePostExhaust(name, card, s);
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
@@ -194,12 +191,15 @@ function dfsWithUpgrade(
   best:         { result: TurnResult; foundInfinite: boolean },
   threshold:    number,
 ): void {
-  const upgradeEff = card.effects.find(e => e.type === "upgrade_hand") as
-    Extract<CardEffect, { type: "upgrade_hand" }> | undefined;
-
-  if (!upgradeEff) {
+  if (!card.hasUpgradeHand) {
     dfs(state, db, mode, played, damage, block, initialEnergy, best, threshold);
-  } else if (upgradeEff.count === -1) {
+    return;
+  }
+
+  const upgradeEff = card.effects.find(e => e.type === "upgrade_hand") as
+    Extract<CardEffect, { type: "upgrade_hand" }>;
+
+  if (upgradeEff.count === -1) {
     // Upgrade ALL cards in hand that have a + version (Armaments+)
     const upgradedHand = state.hand.map(c => (db[c + "+"] ? c + "+" : c));
     dfs({ ...state, hand: upgradedHand }, db, mode, played, damage, block, initialEnergy, best, threshold);

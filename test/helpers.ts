@@ -1,4 +1,4 @@
-import { Card, CardEffect } from "../src/cards.js";
+import { Card, CardEffect, CardType } from "../src/cards.js";
 import { PlayerState } from "../src/optimizer.js";
 
 export const basePlayer: PlayerState = {
@@ -10,16 +10,23 @@ export const basePlayer: PlayerState = {
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
-  return {
-    type: "attack",
+  const card = {
+    type: "attack" as CardType,
     cost: 1,
     xCost: false,
     selfExhaust: false,
     costReductionPerAttack: 0,
-    effects: [],
+    hasDiscardToDraw: false,
+    hasUpgradeHand: false,
+    effects: [] as CardEffect[],
     notes: "",
     ...overrides,
   };
+  // Ensure flags are always consistent with the effects array, even when only
+  // effects are overridden (e.g. makeCard({ effects: [fx.discardToDraw(1)] }))
+  card.hasDiscardToDraw = card.effects.some(e => e.type === "discard_to_draw");
+  card.hasUpgradeHand   = card.effects.some(e => e.type === "upgrade_hand");
+  return card;
 }
 
 // Shorthand effect constructors for readable test code.

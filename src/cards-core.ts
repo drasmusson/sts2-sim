@@ -38,6 +38,8 @@ export interface Card {
   xCost:       boolean;
   selfExhaust: boolean;
   costReductionPerAttack: number;   // cost reduced by N per attack played this turn (e.g. Stomp)
+  hasDiscardToDraw: boolean;        // precomputed: has discard_to_draw effect (avoids find() in hot DFS path)
+  hasUpgradeHand:   boolean;        // precomputed: has upgrade_hand effect (avoids find() in hot DFS path)
   effects:     CardEffect[];
   notes:       string;
 }
@@ -134,6 +136,8 @@ function jsonToCard(c: CardJson): Card {
     xCost:       c.xCost       ?? false,
     selfExhaust: c.selfExhaust ?? false,
     costReductionPerAttack: c.costReductionPerAttack ?? 0,
+    hasDiscardToDraw: effects.some(e => e.type === "discard_to_draw"),
+    hasUpgradeHand:   effects.some(e => e.type === "upgrade_hand"),
     effects,
     notes:       c.notes       ?? "",
   };
