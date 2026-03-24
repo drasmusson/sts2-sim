@@ -434,9 +434,9 @@
     "name": "Forgotten Ritual",
     "type": "skill",
     "cost": 1,
-    "notes": "if exhausted a card this turn gain 3 energy; not modeled — use --energy workaround",
+    "energyIfExhaustedTurn": 3,
     "upgraded": {
-      "notes": "if exhausted a card this turn gain 4 energy; not modeled — use --energy workaround"
+      "energyIfExhaustedTurn": 4
     }
   },
   {

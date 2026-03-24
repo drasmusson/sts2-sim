@@ -81,8 +81,8 @@ Bloodletting,Skill,0,0,0,0,2,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,3,0,0
 Bloodletting+,Skill,0,0,0,0,3,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,3,0,0,0,lose 3 hp
 Expect a Fight,Skill,2,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,gain 1 energy per attack in hand; not modeled — use --energy workaround
 Expect a Fight+,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,gain 1 energy per attack in hand; not modeled — use --energy workaround
-Forgotten Ritual,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,if exhausted a card this turn gain 3 energy; not modeled — use --energy workaround
-Forgotten Ritual+,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,if exhausted a card this turn gain 4 energy; not modeled — use --energy workaround
+Forgotten Ritual,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,gain 3 energy if any card was exhausted this turn
+Forgotten Ritual+,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,gain 4 energy if any card was exhausted this turn
 Offering,Skill,0,0,0,3,2,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,6,0,0,0,lose 6 hp
 Offering+,Skill,0,0,0,5,2,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,6,0,0,0,lose 6 hp
 Zap,Skill,1,0,0,0,0,0,0,0,0,0,lightning,1,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

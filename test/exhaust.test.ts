@@ -381,6 +381,52 @@ test("upgrade + exhaust interaction: upgradeHandCount applies even when exhaustH
   assert.ok(result.played.includes("strike+"));
 });
 
+// ─── energy_if_exhausted_turn (Forgotten Ritual) ──────────────────────────────
+
+test("Forgotten Ritual: no exhaust this turn → no energy bonus, expensive card unaffordable", () => {
+  const db = {
+    "forgotten ritual": makeCard({ type: "skill", cost: 1, effects: [fx.energyIfExhaustedTurn(3)] }),
+    "heavy strike":     makeCard({ effects: [fx.damage(20)], cost: 4 }),
+  };
+  // 2 energy: can play ritual (1), leaves 1 energy — not enough for heavy strike (4)
+  // heavy strike is not directly playable either (costs 4 > 2)
+  // best play: ritual only, 0 damage
+  const result = sim(["forgotten ritual", "heavy strike"], [], db, 2);
+  assert.equal(result.totalDamage, 0);
+});
+
+test("Forgotten Ritual: exhaust this turn → gains 3 energy, enables expensive card", () => {
+  const db = {
+    "forgotten ritual": makeCard({ type: "skill", cost: 1, effects: [fx.energyIfExhaustedTurn(3)] }),
+    "true grit":        makeCard({ type: "skill", cost: 1, effects: [fx.block(7), fx.exhaustHand(1)] }),
+    "heavy strike":     makeCard({ effects: [fx.damage(20)], cost: 3 }),
+    "junk":             makeCard({ type: "skill", cost: 0, effects: [] }),
+  };
+  // 2 energy: true grit (cost 1, exhaust junk) → exhaustedThisTurn=true, 1 energy left
+  // ritual (cost 1) → gains 3 energy = 3 energy remaining
+  // heavy strike (cost 3) → 20 damage
+  const result = sim(["forgotten ritual", "true grit", "heavy strike", "junk"], [], db, 2);
+  assert.ok(result.played.includes("forgotten ritual"));
+  assert.ok(result.played.includes("heavy strike"));
+  assert.equal(result.totalDamage, 20);
+});
+
+test("Forgotten Ritual: selfExhaust card triggers energy bonus", () => {
+  const db = {
+    "forgotten ritual": makeCard({ type: "skill", cost: 1, effects: [fx.energyIfExhaustedTurn(3)] }),
+    "clash":            makeCard({ effects: [fx.damage(14)], cost: 0, selfExhaust: true }),
+    "heavy strike":     makeCard({ effects: [fx.damage(20)], cost: 3 }),
+  };
+  // 1 energy: clash (cost 0, selfExhaust) → 14 dmg, exhaustedThisTurn=true, 1 energy left
+  // ritual (cost 1) → gains 3 energy = 3 energy remaining
+  // heavy strike (cost 3) → 20 damage
+  const result = sim(["forgotten ritual", "clash", "heavy strike"], [], db, 1);
+  assert.ok(result.played.includes("forgotten ritual"));
+  assert.ok(result.played.includes("clash"));
+  assert.ok(result.played.includes("heavy strike"));
+  assert.equal(result.totalDamage, 34);
+});
+
 // ─── block_if_exhausted_turn + frail interaction ──────────────────────────────
 
 test("block_if_exhausted_turn: frail does not reduce conditional block", () => {

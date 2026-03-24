@@ -171,6 +171,10 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         if (next.energyRemaining > 0)
           next = { ...next, energyRemaining: next.energyRemaining + eff.amount };
         break;
+      case "energy_if_exhausted_turn":
+        if (next.energyRemaining > 0 && next.exhaustedThisTurn)
+          next = { ...next, energyRemaining: next.energyRemaining + eff.amount };
+        break;
       case "block_per_exhaust_event":
         next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + eff.amount };
         break;

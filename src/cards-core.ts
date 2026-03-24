@@ -30,7 +30,8 @@ export type CardEffect =
   | { type: "block_if_exhausted_turn";  amount: number }   // Evil Eye conditional
   | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
   | { type: "damage_per_vuln_stack";    amount: number }   // Bully: +N dmg per enemy vulnerable stack
-  | { type: "str_down";                 amount: number };  // reduce enemy strength by N (modelled as effective block)
+  | { type: "str_down";                 amount: number }   // reduce enemy strength by N (modelled as effective block)
+  | { type: "energy_if_exhausted_turn"; amount: number };  // gain N energy if any card was exhausted this turn
 
 export interface Card {
   type:        CardType;
@@ -92,6 +93,7 @@ export interface CardJson {
   doubleVulnStacks?:      boolean;
   damagePerVulnStack?:    number;
   strDown?:               number;
+  energyIfExhaustedTurn?: number;
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -133,6 +135,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.doubleVulnStacks)       effects.push({ type: "double_vuln_stacks" });
   if (c.damagePerVulnStack)     effects.push({ type: "damage_per_vuln_stack",    amount: c.damagePerVulnStack });
   if (c.strDown)                effects.push({ type: "str_down",                 amount: c.strDown });
+  if (c.energyIfExhaustedTurn) effects.push({ type: "energy_if_exhausted_turn", amount: c.energyIfExhaustedTurn });
 
   return {
     type:        c.type,

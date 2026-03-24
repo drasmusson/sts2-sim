@@ -87,4 +87,6 @@ export const fx = {
     ({ type: "damage_per_vuln_stack", amount }),
   strDown: (amount: number): CardEffect =>
     ({ type: "str_down", amount }),
+  energyIfExhaustedTurn: (amount: number): CardEffect =>
+    ({ type: "energy_if_exhausted_turn", amount }),
 };
