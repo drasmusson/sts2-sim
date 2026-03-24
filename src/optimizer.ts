@@ -128,6 +128,13 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "block_if_exhausted_turn":
         if (player.exhaustedThisTurn) block += eff.amount;
         break;
+      case "damage_reduction_if_enemy_vuln":
+        // If the enemy is vulnerable, player takes (fraction×100)% less damage from them.
+        // Modelled as effective block: damage saved = (attack - floor(attack × (1−fraction))) × hits.
+        if (player.vulnerableStacks > 0 && player.enemyAttack > 0) {
+          block += (player.enemyAttack - Math.floor(player.enemyAttack * (1 - eff.fraction))) * player.enemyHits;
+        }
+        break;
       case "damage_per_vuln_stack":
         damage += eff.amount * player.vulnerableStacks;
         break;

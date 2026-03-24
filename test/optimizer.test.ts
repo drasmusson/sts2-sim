@@ -252,6 +252,36 @@ test("strDown: frail does not affect strength reduction block", () => {
   assert.equal(block, 6); // frail does not apply — same as without frail
 });
 
+// ─── damageReductionIfEnemyVuln ───────────────────────────────────────────────
+
+test("damageReductionIfEnemyVuln: 50% reduction contributes effective block when enemy is vulnerable", () => {
+  const card = makeCard({ type: "skill", effects: [fx.block(5), fx.damageReductionIfEnemyVuln(0.5)] });
+  const player = { ...basePlayer, enemyAttack: 10, enemyHits: 1, vulnerableStacks: 2 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 5 + 5); // 5 block + (10 - floor(10 * 0.5)) * 1 = 5
+});
+
+test("damageReductionIfEnemyVuln: no effective block when enemy is not vulnerable", () => {
+  const card = makeCard({ type: "skill", effects: [fx.block(5), fx.damageReductionIfEnemyVuln(0.5)] });
+  const player = { ...basePlayer, enemyAttack: 10, enemyHits: 1, vulnerableStacks: 0 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 5); // only base block; reduction doesn't apply
+});
+
+test("damageReductionIfEnemyVuln: no effective block when enemyAttack is 0", () => {
+  const card = makeCard({ type: "skill", effects: [fx.damageReductionIfEnemyVuln(0.5)] });
+  const player = { ...basePlayer, enemyAttack: 0, enemyHits: 1, vulnerableStacks: 2 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, 0);
+});
+
+test("damageReductionIfEnemyVuln: scales with enemyHits", () => {
+  const card = makeCard({ type: "skill", effects: [fx.damageReductionIfEnemyVuln(0.5)] });
+  const player = { ...basePlayer, enemyAttack: 7, enemyHits: 3, vulnerableStacks: 1 };
+  const { block } = cardEffectiveValues(card, player);
+  assert.equal(block, (7 - Math.floor(7 * 0.5)) * 3); // (7 - 3) * 3 = 12
+});
+
 // ─── strGain ─────────────────────────────────────────────────────────────────
 
 const strDb = {

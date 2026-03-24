@@ -1,5 +1,15 @@
 [
   {
+    "name": "Colossus",
+    "type": "skill",
+    "cost": 1,
+    "block": 5,
+    "damageReductionIfEnemyVuln": 0.5,
+    "upgraded": {
+      "block": 8
+    }
+  },
+  {
     "name": "Strike",
     "type": "attack",
     "cost": 1,
