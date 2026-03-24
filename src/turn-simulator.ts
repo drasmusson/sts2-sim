@@ -86,14 +86,16 @@ function resolvePostExhaust(
     Extract<CardEffect, { type: "draw_if_self_damaged" }> | undefined;
 
   // 1. Draw cards mid-turn (effects resolve before the played card enters discard — STS timing)
+  // hand.length is the post-play size (played card already removed), which is the correct hand
+  // size for the limit check: playing a card frees one slot before the draw resolves.
   if (drawEff && drawEff.amount > 0) {
-    const drawn = drawCards(drawPile, discardPile, drawEff.amount);
+    const drawn = drawCards(drawPile, discardPile, drawEff.amount, hand.length);
     hand        = [...hand, ...drawn.hand];
     drawPile    = drawn.drawPile;
     discardPile = drawn.discardPile;
   }
   if (drawIfSelfDamagedEff && drawIfSelfDamagedEff.amount > 0 && player.selfDamageThisTurn > 0) {
-    const drawn = drawCards(drawPile, discardPile, drawIfSelfDamagedEff.amount);
+    const drawn = drawCards(drawPile, discardPile, drawIfSelfDamagedEff.amount, hand.length);
     hand        = [...hand, ...drawn.hand];
     drawPile    = drawn.drawPile;
     discardPile = drawn.discardPile;

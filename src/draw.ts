@@ -15,7 +15,14 @@ export interface DrawResult {
   discardPile: string[];
 }
 
-export function drawCards(drawPile: string[], discardPile: string[], n: number): DrawResult {
+export const HAND_LIMIT = 10;
+
+export function drawCards(
+  drawPile: string[],
+  discardPile: string[],
+  n: number,
+  currentHandSize = 0,
+): DrawResult {
   let draw = [...drawPile];
   let discard = [...discardPile];
   const hand: string[] = [];
@@ -26,7 +33,12 @@ export function drawCards(drawPile: string[], discardPile: string[], n: number):
       draw = shuffle(discard);
       discard = [];
     }
-    hand.push(draw.pop()!);
+    const card = draw.pop()!;
+    if (currentHandSize + hand.length >= HAND_LIMIT) {
+      discard = [...discard, card];
+    } else {
+      hand.push(card);
+    }
   }
 
   return { hand, drawPile: draw, discardPile: discard };

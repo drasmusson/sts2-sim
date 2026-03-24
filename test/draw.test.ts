@@ -49,6 +49,28 @@ test("draw pile empty, discard has cards — reshuffles and draws", () => {
   assert.equal(hand.length, 2);
 });
 
+// ─── hand limit ───────────────────────────────────────────────────────────────
+
+test("cards drawn beyond hand limit go to discard", () => {
+  // Hand already has 10 cards; drawing 2 should add both to discard
+  const { hand, discardPile } = drawCards(["a", "b"], [], 2, 10);
+  assert.equal(hand.length, 0);
+  assert.equal(discardPile.length, 2);
+});
+
+test("partial overflow: fills hand to limit, remainder goes to discard", () => {
+  // Hand has 9 cards; drawing 3 should add 1 to hand and 2 to discard
+  const { hand, discardPile } = drawCards(["a", "b", "c"], [], 3, 9);
+  assert.equal(hand.length, 1);
+  assert.equal(discardPile.length, 2);
+});
+
+test("no overflow when hand is below limit", () => {
+  const { hand, discardPile } = drawCards(["a", "b", "c"], [], 3, 7);
+  assert.equal(hand.length, 3);
+  assert.equal(discardPile.length, 0);
+});
+
 test("shuffle produces non-trivial reordering across runs", () => {
   const arr = [0, 1, 2, 3, 4];
   const orderings = new Set(
