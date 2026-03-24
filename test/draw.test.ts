@@ -48,3 +48,11 @@ test("draw pile empty, discard has cards — reshuffles and draws", () => {
   const { hand } = drawCards([], ["x", "y", "z"], 2);
   assert.equal(hand.length, 2);
 });
+
+test("shuffle produces non-trivial reordering across runs", () => {
+  const arr = [0, 1, 2, 3, 4];
+  const orderings = new Set(
+    Array.from({ length: 20 }, () => shuffle([...arr]).join(",")),
+  );
+  assert.ok(orderings.size > 1, "shuffle should produce multiple distinct orderings");
+});

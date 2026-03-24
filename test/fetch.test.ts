@@ -69,6 +69,28 @@ test("sim fetches the higher-value card when discard has multiple choices", () =
   assert.equal(result.totalDamage, 50);
 });
 
+// ─── Sequential fetch: discard shrinks between picks ─────────────────────────
+
+test("fetched card is removed from discard; second fetch cannot re-fetch it", () => {
+  // bludgeon self-exhausts so it cannot resurface via reshuffle.
+  // hb0 fetches it; hb1 sees a discard without bludgeon and cannot fetch it again.
+  // If the discard didn't shrink, a buggy sim could put bludgeon in draw twice → played twice.
+  const db: CardDb = {
+    headbutt: makeCard({ effects: [fx.damage(9), fx.discardToDraw(1)], cost: 1 }),
+    pommel:   makeCard({ effects: [fx.damage(9), fx.draw(1)], cost: 1 }),
+    bludgeon: makeCard({ effects: [fx.damage(32)], cost: 1, selfExhaust: true }),
+  };
+  // energy 4: hb(1)+pommel(1)+bludgeon(1)+hb(1) = 4 → damage 9+9+32+9 = 59
+  const result = simulateTurn(
+    ["headbutt", "headbutt", "pommel"], [], ["bludgeon"],
+    db, basePlayer, 4, "dmg",
+  );
+  const bludgeonCount = result.played.filter(n => n === "bludgeon").length;
+  assert.equal(bludgeonCount, 1, "bludgeon should be fetched and played exactly once");
+  assert.ok(result.exhaustPile.includes("bludgeon"));
+  assert.equal(result.totalDamage, 59);
+});
+
 test("fetch is skipped when fetched card is unaffordable (sim uses it next turn)", () => {
   // energy 2: headbutt(1) is playable; bludgeon(3) in discard is fetchable but unaffordable
   // fetching bludgeon puts it on draw — but no draw card in hand, and can't afford it anyway

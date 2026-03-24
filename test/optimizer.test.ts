@@ -503,8 +503,8 @@ test("energyGain: simulateCombo gives correct damage with Turbo before Cinder", 
 test("energyGain: bestPlay includes card only affordable via energy gain", () => {
   // energy=1, Cinder costs 2 — unaffordable alone, but Turbo (+2 energy) enables it
   const result = bestPlay(["Turbo", "Cinder"], [], energyDb, basePlayer, 1, "dmg");
-  assert.ok(result.played.includes("Turbo"));
-  assert.ok(result.played.includes("Cinder"));
+  // optimalComboOrder sorts Turbo before Cinder (energy-generator before consumer)
+  assert.deepEqual(result.played, ["Turbo", "Cinder"]);
   assert.equal(result.totalDamage, 12);
 });
 

@@ -137,6 +137,15 @@ Far from all cards are in the CSV. When working on new features, check whether r
 - Power cards played this turn (Inflame, etc.): reduce `--energy` by cost, set `--strength N`
 - Accelerant in play: `--poison-triggers 2`, reduce `--energy` by 1
 
+## Agents
+
+Two specialist agents are available in `.claude/agents/`:
+
+- **test-reviewer** — use when reviewing test coverage, checking if new code is tested, or auditing existing tests. Invoke after implementing new functionality.
+- **performance-analyst** — use when analyzing algorithmic complexity, identifying bottlenecks, or assessing scaling risk. Read-only, produces analysis only.
+
+When a task is clearly within one of these domains, delegate to the agent rather than handling it inline.
+
 ## Working style
 - Build step by step and explain decisions
 - Always run code and show actual output — don't just describe what the output would be

@@ -381,6 +381,23 @@ test("upgrade + exhaust interaction: upgradeHandCount applies even when exhaustH
   assert.ok(result.played.includes("strike+"));
 });
 
+// ─── block_if_exhausted_turn + frail interaction ──────────────────────────────
+
+test("block_if_exhausted_turn: frail does not reduce conditional block", () => {
+  // frailMult applies to regular block only; block_if_exhausted_turn is conditional and exempt
+  const db = {
+    "true grit": makeCard({ type: "skill", cost: 1, effects: [fx.block(7), fx.exhaustHand(1)] }),
+    "evil eye":  makeCard({ type: "skill", cost: 1, effects: [fx.block(0), fx.blockIfExhaustedTurn(8)] }),
+    "defend":    makeCard({ type: "skill", effects: [fx.block(5)], cost: 1 }),
+  };
+  const frailPlayer = { ...basePlayer, frail: true };
+  // True Grit exhausts defend → exhaustedThisTurn=true → Evil Eye gets 8 conditional block
+  // frail should NOT reduce the 8 (only regular block is frail-scaled)
+  const result = simulateTurn(["true grit", "evil eye", "defend"], [], [], db, frailPlayer, 2, "block");
+  // true grit: floor(7 * 0.75) = 5 block; evil eye: 8 conditional (no frail)
+  assert.equal(result.totalBlock, 13);
+});
+
 test("Armaments: no upgradeable cards in hand — plays normally without crashing", () => {
   const db = {
     "armaments": makeCard({ type: "skill", cost: 1, effects: [fx.block(5), fx.upgradeHand(1)] }),
