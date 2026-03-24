@@ -94,6 +94,75 @@ test("damage_per_self_damage scales by number of self-damage instances, not HP",
   assert.equal(result.totalDamage, 5);  // 1 instance × 5 = 5, not 3 × 5
 });
 
+// ─── draw_if_self_damaged ─────────────────────────────────────────────────────
+
+test("draw_if_self_damaged does not draw when no self-damage taken", () => {
+  // "reaper" draws 2 if damaged — but no self-damage card in hand, so it draws nothing
+  // with only 1 energy it must choose reaper (0 bonus) or strike (6 dmg); strike wins
+  const db: CardDb = {
+    reaper: makeCard({ effects: [fx.drawIfSelfDamaged(2)], cost: 1 }),
+    strike: makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  };
+
+  const result = simulateTurn(["reaper", "strike"], [], [], db, basePlayer, 1, "dmg");
+
+  assert.ok(result.played.includes("strike"));
+  assert.ok(!result.played.includes("reaper"), "no draw benefit without self-damage; sim skips it");
+  assert.equal(result.totalDamage, 6);
+});
+
+test("draw_if_self_damaged draws N cards when self-damage was taken this turn", () => {
+  // blood wall (self-damage) → reaper (draw 2) → play drawn strikes
+  const db: CardDb = {
+    "blood wall": makeCard({ effects: [fx.block(12), fx.selfDamage(3)], cost: 2, type: "skill" }),
+    reaper:       makeCard({ effects: [fx.drawIfSelfDamaged(2)], cost: 1 }),
+    strike:       makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  };
+
+  // draw pile has 2 strikes to be drawn by reaper; energy 5 = blood wall(2) + reaper(1) + strike(1) + strike(1)
+  const result = simulateTurn(["blood wall", "reaper"], ["strike", "strike"], [], db, basePlayer, 5, "dmg");
+
+  assert.ok(result.played.includes("blood wall"));
+  assert.ok(result.played.includes("reaper"));
+  assert.equal(result.played.filter(c => c === "strike").length, 2, "both drawn strikes played");
+  assert.equal(result.totalDamage, 12);
+});
+
+test("sim plays self-damage card before draw_if_self_damaged card to unlock the draw", () => {
+  // Optimal: blood wall → reaper (draws 2 strikes) → play strikes = 12 dmg + 12 block
+  // Suboptimal: reaper first (draws nothing) → blood wall = 0 dmg + 12 block
+  const db: CardDb = {
+    "blood wall": makeCard({ effects: [fx.block(12), fx.selfDamage(3)], cost: 2, type: "skill" }),
+    reaper:       makeCard({ effects: [fx.drawIfSelfDamaged(2)], cost: 1 }),
+    strike:       makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  };
+
+  // energy 5 = blood wall(2) + reaper(1) + strike(1) + strike(1)
+  const result = simulateTurn(["blood wall", "reaper"], ["strike", "strike"], [], db, basePlayer, 5, "dmg");
+
+  assert.equal(result.played[0], "blood wall");
+  assert.equal(result.played[1], "reaper");
+  assert.equal(result.totalDamage, 12);
+});
+
+test("draw_if_self_damaged drawn cards are immediately playable", () => {
+  // Offering (self-dmg, +energy, draw) → reaper (draw 1 more) → play all
+  const db: CardDb = {
+    offering: makeCard({ effects: [fx.selfDamage(6), fx.energyGain(2), fx.draw(1)], cost: 0, type: "skill" }),
+    reaper:   makeCard({ effects: [fx.drawIfSelfDamaged(1)], cost: 1 }),
+    strike:   makeCard({ effects: [fx.damage(6)], cost: 1 }),
+    defend:   makeCard({ effects: [fx.block(5)], cost: 1, type: "skill" }),
+  };
+
+  // offering draws strike (from draw pile), then reaper draws defend
+  const result = simulateTurn(["offering", "reaper"], ["strike", "defend"], [], db, basePlayer, 1, "dmg");
+
+  assert.ok(result.played.includes("offering"));
+  assert.ok(result.played.includes("reaper"));
+  assert.ok(result.played.includes("strike"), "card drawn by offering is playable");
+  assert.equal(result.totalDamage, 6);
+});
+
 test("damage_per_self_damage stacks with multiple self-damage instances", () => {
   // two blood walls = 2 instances → damage_per_self_damage(5) = 10
   const db: CardDb = {

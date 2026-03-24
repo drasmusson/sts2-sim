@@ -82,9 +82,18 @@ function resolvePostExhaust(
   const drawEff        = card.effects.find(e => e.type === "draw")         as Extract<CardEffect, { type: "draw" }>         | undefined;
   const exhaustDrawEff = card.effects.find(e => e.type === "exhaust_draw") as Extract<CardEffect, { type: "exhaust_draw" }> | undefined;
 
+  const drawIfSelfDamagedEff = card.effects.find(e => e.type === "draw_if_self_damaged") as
+    Extract<CardEffect, { type: "draw_if_self_damaged" }> | undefined;
+
   // 1. Draw cards mid-turn (effects resolve before the played card enters discard — STS timing)
   if (drawEff && drawEff.amount > 0) {
     const drawn = drawCards(drawPile, discardPile, drawEff.amount);
+    hand        = [...hand, ...drawn.hand];
+    drawPile    = drawn.drawPile;
+    discardPile = drawn.discardPile;
+  }
+  if (drawIfSelfDamagedEff && drawIfSelfDamagedEff.amount > 0 && player.selfDamageThisTurn > 0) {
+    const drawn = drawCards(drawPile, discardPile, drawIfSelfDamagedEff.amount);
     hand        = [...hand, ...drawn.hand];
     drawPile    = drawn.drawPile;
     discardPile = drawn.discardPile;

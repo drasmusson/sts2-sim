@@ -25,6 +25,7 @@ export type CardEffect =
   | { type: "self_damage";              amount: number }   // deal X damage to yourself when played (bypasses block)
   | { type: "damage_per_self_damage";   amount: number }   // +X damage per self-damage instance this turn
   | { type: "damage_if_self_damaged";   amount: number }   // deal X damage if any self-damage was taken this turn (e.g. Spite)
+  | { type: "draw_if_self_damaged";     amount: number }   // draw N cards if any self-damage was taken this turn
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
   | { type: "block_if_exhausted_turn";  amount: number }   // Evil Eye conditional
   | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
@@ -79,6 +80,7 @@ export interface CardJson {
   selfDamage?:            number;
   damagePerSelfDamage?:   number;
   damageIfSelfDamaged?:   number;
+  drawIfSelfDamaged?:     number;
   doubleVulnStacks?:      boolean;
   damagePerVulnStack?:    number;
   strDown?:               number;
@@ -119,6 +121,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.selfDamage)             effects.push({ type: "self_damage",              amount: c.selfDamage });
   if (c.damagePerSelfDamage)    effects.push({ type: "damage_per_self_damage",   amount: c.damagePerSelfDamage });
   if (c.damageIfSelfDamaged)    effects.push({ type: "damage_if_self_damaged",   amount: c.damageIfSelfDamaged });
+  if (c.drawIfSelfDamaged)      effects.push({ type: "draw_if_self_damaged",     amount: c.drawIfSelfDamaged });
   if (c.doubleVulnStacks)       effects.push({ type: "double_vuln_stacks" });
   if (c.damagePerVulnStack)     effects.push({ type: "damage_per_vuln_stack",    amount: c.damagePerVulnStack });
   if (c.strDown)                effects.push({ type: "str_down",                 amount: c.strDown });

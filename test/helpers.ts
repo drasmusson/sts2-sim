@@ -67,6 +67,8 @@ export const fx = {
     ({ type: "damage_per_self_damage", amount }),
   damageIfSelfDamaged: (amount: number): CardEffect =>
     ({ type: "damage_if_self_damaged", amount }),
+  drawIfSelfDamaged: (amount: number): CardEffect =>
+    ({ type: "draw_if_self_damaged", amount }),
   doubleVulnStacks: (): CardEffect =>
     ({ type: "double_vuln_stacks" }),
   damagePerVulnStack: (amount: number): CardEffect =>
