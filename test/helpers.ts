@@ -10,6 +10,7 @@ export const basePlayer: PlayerState = {
   nextAttackFree: false,
   noMoreDraws: false,
   corruptionActive: false,
+  vulnMultBonus: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {

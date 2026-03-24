@@ -23,6 +23,7 @@ export interface PlayerState {
   nextAttackFree: boolean;        // true if the next attack played this turn costs 0 (e.g. Unrelenting)
   noMoreDraws: boolean;           // true after Battle Trance is played; all subsequent draw effects are skipped
   corruptionActive: boolean;      // true after Corruption is played; skills cost 0 and exhaust
+  vulnMultBonus: number;          // added to base 1.5× vulnerable multiplier (e.g. Cruelty: +0.25 / +0.5)
 }
 
 export interface ComboResult {
@@ -74,7 +75,7 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
     return { damage: 0, block: 0 };
   }
   const { strength, vulnerableStacks, weak, frail, focus, poisonTriggers, exhaust } = player;
-  const vulnMult  = vulnerableStacks > 0 ? 1.5  : 1;
+  const vulnMult  = vulnerableStacks > 0 ? 1.5 + player.vulnMultBonus : 1;
   const weakMult  = weak  ? 0.75 : 1;
   const frailMult = frail ? 0.75 : 1;
 
@@ -186,6 +187,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
       case "energy_if_exhausted_turn":
         if (next.energyRemaining > 0 && next.exhaustedThisTurn)
           next = { ...next, energyRemaining: next.energyRemaining + eff.amount };
+        break;
+      case "vuln_mult_bonus":
+        next = { ...next, vulnMultBonus: next.vulnMultBonus + eff.amount };
         break;
       case "block_per_exhaust_event":
         next = { ...next, blockPerExhaustEvent: next.blockPerExhaustEvent + eff.amount };

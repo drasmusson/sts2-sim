@@ -178,6 +178,7 @@ const player: PlayerState = {
   nextAttackFree: false,
   noMoreDraws: false,
   corruptionActive: false,
+  vulnMultBonus: 0,
 };
 
 if (!drawPile.length) {

@@ -581,6 +581,15 @@
     }
   },
   {
+    "name": "Cruelty",
+    "type": "power",
+    "cost": 1,
+    "vulnMultBonus": 0.25,
+    "upgraded": {
+      "vulnMultBonus": 0.5
+    }
+  },
+  {
     "name": "Corruption",
     "type": "power",
     "cost": 3,
