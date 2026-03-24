@@ -334,3 +334,41 @@ test("unrelenting: only the immediately next attack is free, not subsequent ones
   assert.equal(result.energySpent, 3); // 2+0+1
   assert.equal(result.totalDamage, 24); // 12+6+6
 });
+
+// ─── energyPerAttackInHand (Expect a Fight) ──────────────────────────────────
+
+test("expect a fight: gains 1 energy per attack in hand", () => {
+  const db: CardDb = {
+    eaf:    makeCard({ type: "skill", cost: 2, energyPerAttackInHand: true, effects: [] }),
+    strike: makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // EaF(2) with 1 attack in hand → +1 energy → net 1 left → plays strike
+  const result = sim(["eaf", "strike"], [], db, 2);
+  assert.deepEqual(result.played, ["eaf", "strike"]);
+  assert.equal(result.energySpent, 2); // 2 - 2 + 1 - 1 = 0
+  assert.equal(result.totalDamage, 6);
+});
+
+test("expect a fight: 0 attacks in hand gives no bonus", () => {
+  const db: CardDb = {
+    eaf:    makeCard({ type: "skill", cost: 2, energyPerAttackInHand: true, effects: [] }),
+    defend: makeCard({ type: "skill", cost: 1, effects: [fx.block(5)] }),
+  };
+  // EaF with no attacks → 0 bonus → 0 energy left after paying 2; not worth playing
+  const result = sim(["eaf", "defend"], [], db, 2, "block");
+  assert.deepEqual(result.played, ["defend"]); // DFS prefers defend alone (1e) over EaF+nothing (2e)
+});
+
+test("expect a fight: counts all attacks in hand after card is removed", () => {
+  const db: CardDb = {
+    eaf:      makeCard({ type: "skill", cost: 2, energyPerAttackInHand: true, effects: [] }),
+    strike:   makeCard({ cost: 1, effects: [fx.damage(6)] }),
+    bludgeon: makeCard({ cost: 3, effects: [fx.damage(32)] }),
+  };
+  // EaF(2) with 3 attacks in hand (strike×2 + bludgeon) → +3 energy → net 3 left
+  // Can play bludgeon(3) for 32 damage — better than 2 strikes (12) without EaF
+  const result = sim(["eaf", "strike", "strike", "bludgeon"], [], db, 2);
+  assert.ok(result.played.includes("eaf"));
+  assert.ok(result.played.includes("bludgeon"));
+  assert.equal(result.totalDamage, 32);
+});

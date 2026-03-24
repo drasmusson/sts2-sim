@@ -326,6 +326,15 @@
     }
   },
   {
+    "name": "Expect a Fight",
+    "type": "skill",
+    "cost": 2,
+    "energyPerAttackInHand": true,
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
     "name": "Tremble",
     "type": "skill",
     "cost": 1,
@@ -340,10 +349,8 @@
     "cost": 0,
     "damage": 4,
     "damagePerVulnStack": 2,
-    "notes": "+2 dmg per enemy vulnerable stack",
     "upgraded": {
-      "damagePerVulnStack": 3,
-      "notes": "+3 dmg per enemy vulnerable stack"
+      "damagePerVulnStack": 3
     }
   },
   {
@@ -421,15 +428,6 @@
     "notes": "lose 3 hp",
     "upgraded": {
       "energyGain": 3
-    }
-  },
-  {
-    "name": "Expect a Fight",
-    "type": "skill",
-    "cost": 2,
-    "notes": "gain 1 energy per attack in hand; not modeled — use --energy workaround",
-    "upgraded": {
-      "cost": 1
     }
   },
   {

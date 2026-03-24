@@ -275,15 +275,19 @@ function dfs(
     // Score this card with current player state (including live energyRemaining and exhaust count)
     const vals = cardEffectiveValues(card, { ...state.player, energyRemaining: state.energy });
 
+    // Remove first occurrence of this card from hand (before energy calc so
+    // energyPerAttackInHand can count attacks in the post-play hand)
+    const idx = state.hand.indexOf(name);
+    let nextHand         = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
+
     // Update player state (strength, vulnerable, block, energy gain, Feel No Pain, etc.)
     // applyCardState adds card.energyGain to energyRemaining — deduct cost afterwards
     let nextPlayer = applyCardState({ ...state.player, energyRemaining: state.energy }, card);
-    const nextEnergy = nextPlayer.energyRemaining - cardCost;
+    const attackBonus = card.energyPerAttackInHand
+      ? nextHand.filter(n => db[n]?.type === "attack").length
+      : 0;
+    const nextEnergy = nextPlayer.energyRemaining - cardCost + attackBonus;
     nextPlayer = { ...nextPlayer, energyRemaining: nextEnergy };
-
-    // Remove first occurrence of this card from hand
-    const idx = state.hand.indexOf(name);
-    let nextHand         = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
     let nextDrawPile     = state.drawPile;
     let nextDiscardPile  = state.discardPile;
     let nextExhaustPile  = state.exhaustPile;

@@ -18,6 +18,7 @@ export function makeCard(overrides: Partial<Card>): Card {
     selfExhaust: false,
     costReductionPerAttack: 0,
     nextAttackFree: false,
+    energyPerAttackInHand: false,
     hasDiscardToDraw: false,
     hasUpgradeHand: false,
     effects: [] as CardEffect[],
