@@ -616,5 +616,15 @@
     "upgraded": {
       "cascade": 1
     }
+  },
+  {
+    "name": "Dismantle",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "bonusHitsIfVulnerable": 1,
+    "upgraded": {
+      "damage": 10
+    }
   }
 ]

@@ -44,6 +44,26 @@ test("attack damage: strength + vulnerable stack", () => {
   assert.equal(damage, 15);
 });
 
+test("bonusHitsIfVulnerable: no bonus when enemy not vulnerable", () => {
+  const card = makeCard({ effects: [fx.damage(8, 1, 1)] });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 8);  // 1 hit only
+});
+
+test("bonusHitsIfVulnerable: hits twice when enemy is vulnerable", () => {
+  const card = makeCard({ effects: [fx.damage(8, 1, 1)] });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, vulnerableStacks: 1 });
+  assert.equal(damage, 24);  // floor(8 * 1.5 * 2) = 24
+});
+
+test("bonusHitsIfVulnerable: strength applies to all hits including bonus hit", () => {
+  // Dismantle-like: 8 dmg, 1 base hit, +1 hit if vulnerable. Strength 3.
+  // floor((8+3) * 1.5 * 2) = floor(33) = 33
+  const card = makeCard({ effects: [fx.damage(8, 1, 1)] });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, strength: 3, vulnerableStacks: 1 });
+  assert.equal(damage, 33);
+});
+
 test("block: no player state effect", () => {
   const card = makeCard({ effects: [fx.block(5)] });
   const { block } = cardEffectiveValues(card, { ...basePlayer, strength: 3, vulnerableStacks: 1 });

@@ -93,7 +93,8 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "damage": {
         const base = (eff.useCurrentBlock ? player.currentBlock : eff.amount)
                    + strength + exhaustBonus;
-        const hits = card.xCost ? player.energyRemaining : eff.hits;
+        const bonusHits = (eff.bonusHitsIfVulnerable && vulnerableStacks > 0) ? eff.bonusHitsIfVulnerable : 0;
+        const hits = (card.xCost ? player.energyRemaining : eff.hits) + bonusHits;
         damage += Math.floor(base * vulnMult * weakMult * hits);
         break;
       }

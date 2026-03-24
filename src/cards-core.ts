@@ -6,7 +6,7 @@ export type CardType = "attack" | "skill" | "power";
 // Using a discriminated union keeps each variant's params self-contained —
 // new mechanics add a new variant without touching existing ones.
 export type CardEffect =
-  | { type: "damage";                   amount: number; hits: number; useCurrentBlock?: boolean }
+  | { type: "damage";                   amount: number; hits: number; useCurrentBlock?: boolean; bonusHitsIfVulnerable?: number }
   | { type: "block";                    amount: number }
   | { type: "draw";                     amount: number }
   | { type: "energy_gain";              amount: number }
@@ -71,6 +71,7 @@ export interface CardJson {
   // Effect fields (omit = 0 / false / default)
   damage?:                number;
   hits?:                  number;       // default 1 when damage is set
+  bonusHitsIfVulnerable?: number;       // extra hits applied only when enemy is vulnerable (e.g. Dismantle)
   blockAsDamage?:         boolean;
   block?:                 number;
   draw?:                  number;
@@ -124,7 +125,8 @@ function jsonToCard(c: CardJson): Card {
 
   if ((c.damage !== undefined && c.damage > 0) || c.blockAsDamage) {
     effects.push({ type: "damage", amount: c.damage ?? 0, hits: c.hits ?? 1,
-      ...(c.blockAsDamage ? { useCurrentBlock: true } : {}) });
+      ...(c.blockAsDamage ? { useCurrentBlock: true } : {}),
+      ...(c.bonusHitsIfVulnerable ? { bonusHitsIfVulnerable: c.bonusHitsIfVulnerable } : {}) });
   }
   if (c.exhaustBonus)           effects.push({ type: "exhaust_bonus",            amount: c.exhaustBonus });
   if (c.block)                  effects.push({ type: "block",                    amount: c.block });
