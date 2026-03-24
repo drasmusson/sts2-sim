@@ -300,7 +300,7 @@
     "type": "attack",
     "cost": 0,
     "damage": 6,
-    "notes": "draws a card if player took damage this turn; draw not modeled",
+    "drawIfSelfDamaged": 1,
     "upgraded": {
       "damage": 9
     }
@@ -310,7 +310,7 @@
     "type": "attack",
     "cost": 3,
     "damage": 12,
-    "notes": "costs 1 less per attack played this turn; dynamic cost not modeled",
+    "costReductionPerAttack": 1,
     "upgraded": {
       "damage": 15
     }
@@ -448,6 +448,7 @@
     "draw": 3,
     "energyGain": 2,
     "damagePerSelfDamage": 6,
+    "selfExhaust": true,
     "notes": "lose 6 hp",
     "upgraded": {
       "draw": 5

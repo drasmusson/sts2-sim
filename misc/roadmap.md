@@ -29,6 +29,11 @@
 - ⬜ **Regent** — Forge keyword (Sovereign Blade creation, damage accumulation); Stars persistent-energy resource; full card coverage
 - ⬜ **Necrobinder** — Otsy minion (separate HP pool, Summon keyword, damage intercept order); Doom timing (currently approximated as flat damage, needs post-enemy-turn check); Soul generating cards and the Soul card itself; full card coverage
 
+### Performance
+- ⬜ **Worker thread parallelism** — split the 10,000-sim outer loop across CPU cores; hardware-linear speedup (4–8×), no accuracy tradeoff; gate on `--sims ≥ 5000` or explicit `--parallel` flag; each worker needs an independently seeded RNG
+- ⬜ **Branch bounding** — before recursing into a DFS subtree, compute an upper bound (sum of `cardEffectiveValues` of remaining hand, ignoring energy/ordering constraints); prune if ≤ global best; use the loose bound — it's provably safe; validate against `bestPlay` reference before shipping
+- ⬜ **Skip no-op DFS wrapper layers** — fast-path `resolveDiscardToDraw` and `dfsWithUpgrade` when the card has no `discard_to_draw` or `upgrade_hand` effect; zero correctness risk, fires on most card plays
+
 ### Out of Scope (for now)
 - 🚫 Card instances + enchantments — full instance-based model with per-copy stat overrides. Custom cards (above) cover most practical cases as a workaround.
 - 🚫 Relic support — partially stubbed but deferred.
