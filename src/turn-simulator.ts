@@ -297,7 +297,7 @@ function dfs(
     let nextDrawPile     = state.drawPile;
     let nextDiscardPile  = state.discardPile;
     let nextExhaustPile  = state.exhaustPile;
-    const nextPowersInPlay = state.powersInPlay;
+    let nextPowersInPlay = state.powersInPlay;
     let runningBlock    = block + vals.block;
     let runningDamage   = damage + vals.damage;
 
@@ -306,6 +306,41 @@ function dfs(
       Extract<CardEffect, { type: "exhaust_hand" }> | undefined;
 
     const playsCount = state.playsCount + 1;
+
+    // ── Cascade: play top (X + bonus) cards from draw pile for free ───────────
+    // X = cardCost (all energy spent, since Cascade is xCost).
+    // Each cascaded card has its effects fully resolved but costs no energy.
+    let effectivePlaysCount = playsCount;
+    if (card.hasCascade) {
+      const cascadeEff = card.effects.find(e => e.type === "cascade") as Extract<CardEffect, { type: "cascade" }>;
+      const cascadeCount = cardCost + (cascadeEff?.bonus ?? 0);
+      for (let i = 0; i < cascadeCount; i++) {
+        if (nextDrawPile.length === 0) break;
+        const cascadeName = nextDrawPile[nextDrawPile.length - 1]!;
+        const cascadeCard = db[cascadeName];
+        nextDrawPile = nextDrawPile.slice(0, -1);
+        if (!cascadeCard) continue;
+        // Score and apply state (energyRemaining=0 means "not tracking" — card is free)
+        const cascadeVals = cardEffectiveValues(cascadeCard, { ...nextPlayer, energyRemaining: 0 });
+        nextPlayer     = applyCardState(nextPlayer, cascadeCard);
+        runningDamage += cascadeVals.damage;
+        runningBlock  += cascadeVals.block;
+        // Resolve draw, exhaust-from-draw, and route cascaded card to discard/exhaust/powers
+        const cascadePost = resolvePostExhaust(cascadeName, cascadeCard, {
+          hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay,
+          player: nextPlayer, block: runningBlock,
+        });
+        nextHand         = cascadePost.hand;
+        nextDrawPile     = cascadePost.drawPile;
+        nextDiscardPile  = cascadePost.discardPile;
+        nextExhaustPile  = cascadePost.exhaustPile;
+        nextPowersInPlay = cascadePost.powersInPlay;
+        nextPlayer       = cascadePost.player;
+        runningBlock     = cascadePost.block;
+        effectivePlaysCount++;
+      }
+    }
 
     if (exHandEff && exHandEff.count === -1) {
       // Case B: exhaust ALL matching cards from hand (Fiend Fire, Second Wind) — deterministic
@@ -328,7 +363,7 @@ function dfs(
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
-      }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+      }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
 
     } else if (exHandEff && exHandEff.count > 0) {
       // Case C: exhaust N cards from hand — DFS branches on which card to exhaust
@@ -342,7 +377,7 @@ function dfs(
         resolveDiscardToDraw(name, card, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
-        }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       } else {
         // Branch on each unique exhaust choice
         const triedExhaust = new Set<string>();
@@ -360,7 +395,7 @@ function dfs(
           resolveDiscardToDraw(name, card, {
             hand: cHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
             exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
-          }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+          }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
         }
       }
 
@@ -369,7 +404,7 @@ function dfs(
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
-      }, nextEnergy, playsCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+      }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
     }
   }
 }

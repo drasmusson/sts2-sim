@@ -558,5 +558,15 @@
       "upgradeHand": -1,
       "notes": "upgrade ALL cards in hand"
     }
+  },
+  {
+    "name": "Cascade",
+    "type": "skill",
+    "cost": 0,
+    "xCost": true,
+    "cascade": 0,
+    "upgraded": {
+      "cascade": 1
+    }
   }
 ]

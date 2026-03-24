@@ -31,7 +31,8 @@ export type CardEffect =
   | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
   | { type: "damage_per_vuln_stack";    amount: number }   // Bully: +N dmg per enemy vulnerable stack
   | { type: "str_down";                 amount: number }   // reduce enemy strength by N (modelled as effective block)
-  | { type: "energy_if_exhausted_turn"; amount: number };  // gain N energy if any card was exhausted this turn
+  | { type: "energy_if_exhausted_turn"; amount: number }
+  | { type: "cascade";                  bonus: number };  // play top (X + bonus) cards from draw pile (X = energy spent)  // gain N energy if any card was exhausted this turn
 
 export interface Card {
   type:        CardType;
@@ -44,6 +45,7 @@ export interface Card {
   blocksFutureDraws: boolean;       // after this card's own draw resolves, no more draws this turn (e.g. Battle Trance)
   hasDiscardToDraw: boolean;        // precomputed: has discard_to_draw effect (avoids find() in hot DFS path)
   hasUpgradeHand:   boolean;        // precomputed: has upgrade_hand effect (avoids find() in hot DFS path)
+  hasCascade:       boolean;        // precomputed: has cascade effect (avoids find() in hot DFS path)
   effects:     CardEffect[];
   notes:       string;
 }
@@ -96,6 +98,7 @@ export interface CardJson {
   damagePerVulnStack?:    number;
   strDown?:               number;
   energyIfExhaustedTurn?: number;
+  cascade?: number;                 // play top (X + cascade) cards from draw pile; 0 for base, 1 for upgraded
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -138,6 +141,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.damagePerVulnStack)     effects.push({ type: "damage_per_vuln_stack",    amount: c.damagePerVulnStack });
   if (c.strDown)                effects.push({ type: "str_down",                 amount: c.strDown });
   if (c.energyIfExhaustedTurn) effects.push({ type: "energy_if_exhausted_turn", amount: c.energyIfExhaustedTurn });
+  if (c.cascade !== undefined)  effects.push({ type: "cascade",                  bonus: c.cascade });
 
   return {
     type:        c.type,
@@ -150,6 +154,7 @@ function jsonToCard(c: CardJson): Card {
     blocksFutureDraws: c.blocksFutureDraws ?? false,
     hasDiscardToDraw: effects.some(e => e.type === "discard_to_draw"),
     hasUpgradeHand:   effects.some(e => e.type === "upgrade_hand"),
+    hasCascade:       effects.some(e => e.type === "cascade"),
     effects,
     notes:       c.notes       ?? "",
   };
