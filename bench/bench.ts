@@ -26,7 +26,7 @@ const BASE_PLAYER: PlayerState = {
   strength: 0, vulnerableStacks: 0, weak: false, frail: false, focus: 0, poisonTriggers: 1,
   exhaust: 0, blockPerExhaustEvent: 0, exhaustedThisTurn: false,
   currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false, enemyStrength: 0,
-  selfDamageThisTurn: 0, attacksPlayedThisTurn: 0,
+  selfDamageThisTurn: 0, attacksPlayedThisTurn: 0, nextAttackFree: false,
 };
 
 // ─── SCENARIO DEFINITIONS ────────────────────────────────────────────────────

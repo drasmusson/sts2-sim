@@ -247,6 +247,33 @@ test("stomp is free after 3 attacks", () => {
   assert.equal(result.totalDamage, 30); // 6+6+6+12
 });
 
+// ─── initialExhaustPile / initialPowersInPlay passthrough ────────────────────
+
+test("initialExhaustPile is preserved in result", () => {
+  const db = { strike: makeCard({ effects: [fx.damage(6)], cost: 1 }) };
+  const result = simulateTurn(["strike"], [], [], db, basePlayer, 1, "dmg", ["pre-exhausted"]);
+  assert.ok(result.exhaustPile.includes("pre-exhausted"));
+});
+
+test("initialPowersInPlay is preserved in result", () => {
+  const db = { strike: makeCard({ effects: [fx.damage(6)], cost: 1 }) };
+  const result = simulateTurn(["strike"], [], [], db, basePlayer, 1, "dmg", [], ["feel no pain"]);
+  assert.ok(result.powersInPlay.includes("feel no pain"));
+});
+
+test("power card goes to powersInPlay not discardPile", () => {
+  const db = {
+    "feel no pain": makeCard({ type: "power", cost: 1, effects: [fx.blockPerExhaustEvent(3)] }),
+    "true grit":    makeCard({ type: "skill", cost: 1, effects: [fx.block(7), fx.exhaustHand(1)] }),
+    "strike":       makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  };
+  // block mode: feel no pain(1) + true grit(1) exhausts strike → 3 passive + 7 = 10 block
+  // DFS prefers this over just true grit (7 block) so feel no pain is played
+  const result = simulateTurn(["feel no pain", "true grit", "strike"], [], [], db, basePlayer, 2, "block");
+  assert.ok(result.powersInPlay.includes("feel no pain"), "power card should be in powersInPlay");
+  assert.ok(!result.exhaustPile.includes("feel no pain"), "power card should not be in exhaustPile");
+});
+
 test("stomp is not playable when attacks don't free up enough energy", () => {
   const db: CardDb = {
     bash:  makeCard({ cost: 2, effects: [fx.damage(8)] }),
@@ -255,4 +282,55 @@ test("stomp is not playable when attacks don't free up enough energy", () => {
   // bash costs 2 → stomp now costs 2 → 0 energy left, can't play stomp
   const result = sim(["bash", "stomp"], [], db, 2);
   assert.deepEqual(result.played, ["bash"]);
+});
+
+// ─── nextAttackFree (Unrelenting) ────────────────────────────────────────────
+
+test("unrelenting: next attack played is free (strike)", () => {
+  const db: CardDb = {
+    unrelenting: makeCard({ cost: 2, nextAttackFree: true, effects: [fx.damage(12)] }),
+    strike:      makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // Unrelenting(2) + Strike(free=0) = 2 energy spent
+  const result = sim(["unrelenting", "strike"], [], db, 3);
+  assert.deepEqual(result.played, ["unrelenting", "strike"]);
+  assert.equal(result.energySpent, 2);
+  assert.equal(result.totalDamage, 18);
+});
+
+test("unrelenting: non-attack between unrelenting and free attack doesn't consume token", () => {
+  const db: CardDb = {
+    unrelenting: makeCard({ cost: 2, nextAttackFree: true, effects: [fx.damage(12)] }),
+    defend:      makeCard({ type: "skill", cost: 1, effects: [fx.block(5)] }),
+    strike:      makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // Unrelenting(2) + Defend(1) + Strike(free=0) = 3 energy spent
+  const result = sim(["unrelenting", "defend", "strike"], [], db, 4);
+  assert.deepEqual(result.played, ["unrelenting", "defend", "strike"]);
+  assert.equal(result.energySpent, 3);
+});
+
+test("unrelenting: free applies to expensive attacks (bludgeon)", () => {
+  const db: CardDb = {
+    unrelenting: makeCard({ cost: 2, nextAttackFree: true, effects: [fx.damage(12)] }),
+    bludgeon:    makeCard({ cost: 3, effects: [fx.damage(32)] }),
+  };
+  // Unrelenting(2) + Bludgeon(free=0) = 2 energy spent, all at 3 energy
+  const result = sim(["unrelenting", "bludgeon"], [], db, 3);
+  assert.deepEqual(result.played, ["unrelenting", "bludgeon"]);
+  assert.equal(result.energySpent, 2);
+  assert.equal(result.totalDamage, 44);
+});
+
+test("unrelenting: only the immediately next attack is free, not subsequent ones", () => {
+  const db: CardDb = {
+    unrelenting: makeCard({ cost: 2, nextAttackFree: true, effects: [fx.damage(12)] }),
+    strike:      makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // Unrelenting(2) + Strike(free=0) + Strike(1) = 3 energy
+  const result = sim(["unrelenting", "strike", "strike"], [], db, 4);
+  assert.ok(result.played.includes("unrelenting"));
+  assert.equal(result.played.filter(c => c === "strike").length, 2);
+  assert.equal(result.energySpent, 3); // 2+0+1
+  assert.equal(result.totalDamage, 24); // 12+6+6
 });

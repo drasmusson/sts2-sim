@@ -20,6 +20,7 @@ export interface PlayerState {
   enemyStrength:   number;   // enemy's current strength (flat bonus to their attack damage per hit)
   selfDamageThisTurn: number;     // HP lost to self-damage cards played this turn
   attacksPlayedThisTurn: number;  // attack cards played so far this turn (for Stomp cost reduction)
+  nextAttackFree: boolean;        // true if the next attack played this turn costs 0 (e.g. Unrelenting)
 }
 
 export interface ComboResult {
@@ -62,9 +63,11 @@ function effVal(card: Card | undefined, type: CardEffect["type"]): number {
 export function cardEffectiveValues(card: Card, player: PlayerState): CardValues {
   // Energy constraint: when tracking energy (energyRemaining > 0), an unaffordable
   // card contributes nothing. energyRemaining = 0 means not tracking (legacy / default).
-  const effectiveCardCost = card.costReductionPerAttack > 0
-    ? Math.max(0, card.cost - player.attacksPlayedThisTurn * card.costReductionPerAttack)
-    : card.cost;
+  const effectiveCardCost = card.type === "attack" && player.nextAttackFree
+    ? 0
+    : card.costReductionPerAttack > 0
+      ? Math.max(0, card.cost - player.attacksPlayedThisTurn * card.costReductionPerAttack)
+      : card.cost;
   if (player.energyRemaining > 0 && effectiveCardCost > player.energyRemaining) {
     return { damage: 0, block: 0 };
   }
@@ -177,7 +180,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
     }
   }
 
-  if (card.type === "attack") next = { ...next, attacksPlayedThisTurn: next.attacksPlayedThisTurn + 1 };
+  // Attacks consume any pending nextAttackFree; then the card may set it for the following attack.
+  if (card.type === "attack") next = { ...next, attacksPlayedThisTurn: next.attacksPlayedThisTurn + 1, nextAttackFree: false };
+  if (card.nextAttackFree) next = { ...next, nextAttackFree: true };
 
   const { block } = cardEffectiveValues(card, state);
   if (block > 0) next = { ...next, currentBlock: next.currentBlock + block };

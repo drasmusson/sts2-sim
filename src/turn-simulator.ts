@@ -262,9 +262,11 @@ function dfs(
     if (tried.has(name)) continue;
     const card = db[name];
     if (!card) continue;
-    const effectiveCost = card.costReductionPerAttack > 0
-      ? Math.max(0, card.cost - state.player.attacksPlayedThisTurn * card.costReductionPerAttack)
-      : card.cost;
+    const effectiveCost = card.type === "attack" && state.player.nextAttackFree
+      ? 0
+      : card.costReductionPerAttack > 0
+        ? Math.max(0, card.cost - state.player.attacksPlayedThisTurn * card.costReductionPerAttack)
+        : card.cost;
     if (!card.xCost && effectiveCost > state.energy) continue;
     tried.add(name);
 

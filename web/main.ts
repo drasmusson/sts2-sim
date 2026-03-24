@@ -83,6 +83,7 @@ function readConfig(): WebConfig {
     energyRemaining:      0,
     selfDamageThisTurn:   0,
     attacksPlayedThisTurn: 0,
+    nextAttackFree:        false,
   };
 
   return {

@@ -7,6 +7,7 @@ export const basePlayer: PlayerState = {
   currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false, enemyStrength: 0,
   selfDamageThisTurn: 0,
   attacksPlayedThisTurn: 0,
+  nextAttackFree: false,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -16,6 +17,7 @@ export function makeCard(overrides: Partial<Card>): Card {
     xCost: false,
     selfExhaust: false,
     costReductionPerAttack: 0,
+    nextAttackFree: false,
     hasDiscardToDraw: false,
     hasUpgradeHand: false,
     effects: [] as CardEffect[],

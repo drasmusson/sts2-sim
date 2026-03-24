@@ -320,7 +320,7 @@
     "type": "attack",
     "cost": 2,
     "damage": 12,
-    "notes": "next attack played this turn is free; not modeled",
+    "nextAttackFree": true,
     "upgraded": {
       "damage": 18
     }
