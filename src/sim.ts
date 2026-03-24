@@ -43,7 +43,8 @@ function parseList(str: string | true | undefined): string[] {
 
 function parseIntArg(val: string | true | undefined, fallback: number): number {
   if (!val || val === true) return fallback;
-  return parseInt(val) || fallback;
+  const n = parseInt(val);
+  return Number.isNaN(n) ? fallback : n;
 }
 
 // ─── OUTPUT ──────────────────────────────────────────────────────────────────
@@ -78,6 +79,8 @@ function printResults(results: MCResult, config: Config): void {
     for (const c of pile) counts[c] = (counts[c] ?? 0) + 1;
     return Object.entries(counts).map(([c, n]) => n > 1 ? `${c} ×${n}` : c).join(", ");
   };
+  if (config.hand?.length)
+    console.log(`  Hand        : ${config.hand.length} cards — ${summarizePile(config.hand)}`);
   console.log(`  Draw pile   : ${config.drawPile.length} cards — ${summarizePile(config.drawPile)}`);
   console.log(`  Discard     : ${config.discardPile.length} cards — ${summarizePile(config.discardPile)}`);
   console.log(`  Drawing     : ${config.draws} cards  |  Energy: ${config.energy}`);
@@ -148,6 +151,7 @@ const drawPile    = parseList(args.draw).length
   ? parseList(args.draw)
   : character ? [...STARTING_DECKS[character as typeof CHARACTER_NAMES[number]]] : [];
 const discardPile = parseList(args.discard);
+const hand        = parseList(args.hand);
 const energy      = parseIntArg(args.energy, 3);
 const draws       = parseIntArg(args.draws, 5);
 const mode        = (args.mode === "block" ? "block" : "dmg") as Mode;
@@ -183,7 +187,7 @@ if (!drawPile.length) {
 const cardsJson = fs.readFileSync(JSON_PATH, "utf8");
 const db        = parseJsonDb(cardsJson);
 
-const unknown = [...drawPile, ...discardPile].filter(c => !db[c]);
+const unknown = [...drawPile, ...discardPile, ...hand].filter(c => !db[c]);
 if (unknown.length) {
   console.warn(`Warning: unknown cards (will be ignored): ${[...new Set(unknown)].join(", ")}`);
   const effectiveDraw    = drawPile.filter(c => db[c]);
@@ -192,7 +196,7 @@ if (unknown.length) {
   console.warn(`Effective discard pile : ${effectiveDiscard.join(", ") || "(empty)"}`);
 }
 
-const config: Config = { drawPile, discardPile, energy, draws, relics, db, mode, player };
+const config: Config = { drawPile, discardPile, ...(hand.length ? { hand } : {}), energy, draws, relics, db, mode, player };
 
 if (args.parallel) {
   const { runMCParallel } = await import("./mc-parallel.js");

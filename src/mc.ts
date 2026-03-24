@@ -12,6 +12,7 @@ export interface SimResult { hand: string[]; damage: number; block: number; play
 export interface Config {
   drawPile:    string[];
   discardPile: string[];
+  hand?:       string[];   // cards pre-dealt into hand before the normal draw
   energy:      number;
   draws:       number;
   relics:      string[];
@@ -55,8 +56,10 @@ export function runOneSim(config: Config): SimResult {
   const totalDraws  = draws + extraDraw;
   const totalEnergy = energy + extraEnergy;
 
-  const { hand, drawPile: remainingDraw, discardPile: remainingDiscard } =
-    drawCards(shuffle(drawPile), discardPile, totalDraws);
+  const preHand = config.hand ?? [];
+  const { hand: drawn, drawPile: remainingDraw, discardPile: remainingDiscard } =
+    drawCards(shuffle(drawPile), discardPile, totalDraws, preHand.length);
+  const hand = [...preHand, ...drawn];
 
   let patchedDb = db;
   if (randomizeCosts) {

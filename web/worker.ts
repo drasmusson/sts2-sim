@@ -6,6 +6,7 @@ import type { PlayerState, Mode } from "../src/optimizer";
 export interface WebConfig {
   drawPile:       string[];
   discardPile:    string[];
+  hand?:          string[];
   energy:         number;
   draws:          number;
   mode:           Mode;
@@ -29,7 +30,7 @@ self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
 
     // Detect cards in the deck whose exhaust effect is random (not player-chosen).
     // These are modeled as optimal choice in the DFS, which overestimates their average value.
-    const allCards = [...data.config.drawPile, ...data.config.discardPile];
+    const allCards = [...data.config.drawPile, ...data.config.discardPile, ...(data.config.hand ?? [])];
     const seen = new Set<string>();
     const approximations: string[] = [];
     for (const name of allCards) {

@@ -86,11 +86,13 @@ function readConfig(): WebConfig {
     nextAttackFree:        false,
   };
 
+  const rawDraws = parseInt(d.get("draws") as string ?? "");
   return {
     drawPile:    parseCardList(d.get("draw")    as string ?? ""),
     discardPile: parseCardList(d.get("discard") as string ?? ""),
+    hand:        parseCardList(d.get("hand")    as string ?? ""),
     energy:      parseInt(d.get("energy")  as string) || 3,
-    draws:       parseInt(d.get("draws")   as string) || 5,
+    draws:       Number.isNaN(rawDraws) ? 5 : rawDraws,
     mode:        (d.get("mode") as Mode) ?? "dmg",
     player,
   };
@@ -151,9 +153,12 @@ async function init(): Promise<void> {
   const drawAc       = document.getElementById("draw-ac")       as HTMLUListElement;
   const discardInput = document.getElementById("discard-input") as HTMLInputElement;
   const discardAc    = document.getElementById("discard-ac")    as HTMLUListElement;
+  const handInput    = document.getElementById("hand-input")    as HTMLInputElement;
+  const handAc       = document.getElementById("hand-ac")       as HTMLUListElement;
 
   setupAutocomplete(drawInput, drawAc);
   setupAutocomplete(discardInput, discardAc);
+  setupAutocomplete(handInput, handAc);
 
   const characterSelect = document.getElementById("character-select") as HTMLSelectElement;
 

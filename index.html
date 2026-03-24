@@ -48,6 +48,15 @@
               </div>
             </div>
 
+            <div class="field">
+              <label for="hand-input">Current hand</label>
+              <div class="autocomplete-wrap">
+                <input id="hand-input" type="text" name="hand"
+                  placeholder="(empty)" spellcheck="false" />
+                <ul class="ac-list" id="hand-ac" hidden></ul>
+              </div>
+            </div>
+
             <div class="field-row">
               <div class="field">
                 <label for="energy-input">Energy</label>
@@ -55,7 +64,7 @@
               </div>
               <div class="field">
                 <label for="draws-input">Draw</label>
-                <input id="draws-input" type="number" name="draws" value="5" min="1" max="30" />
+                <input id="draws-input" type="number" name="draws" value="5" min="0" max="30" />
               </div>
               <div class="field">
                 <label for="sims-input">Simulations</label>
