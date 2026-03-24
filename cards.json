@@ -1,5 +1,16 @@
 [
   {
+    "name": "Conflagration",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "damagePerAttackPlayed": 2,
+    "upgraded": {
+      "damage": 9,
+      "damagePerAttackPlayed": 3
+    }
+  },
+  {
     "name": "Colossus",
     "type": "skill",
     "cost": 1,

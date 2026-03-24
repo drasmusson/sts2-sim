@@ -282,6 +282,30 @@ test("damageReductionIfEnemyVuln: scales with enemyHits", () => {
   assert.equal(block, (7 - Math.floor(7 * 0.5)) * 3); // (7 - 3) * 3 = 12
 });
 
+// ─── damagePerAttackPlayed ────────────────────────────────────────────────────
+
+test("damagePerAttackPlayed: 0 prior attacks gives no bonus", () => {
+  const card = makeCard({ effects: [fx.damage(8), fx.damagePerAttackPlayed(2)] });
+  const { damage } = cardEffectiveValues(card, basePlayer);
+  assert.equal(damage, 8);
+});
+
+test("damagePerAttackPlayed: scales with prior attacks", () => {
+  const card = makeCard({ effects: [fx.damage(8), fx.damagePerAttackPlayed(2)] });
+  const { damage } = cardEffectiveValues(card, { ...basePlayer, attacksPlayedThisTurn: 3 });
+  assert.equal(damage, 14); // 8 + 2×3
+});
+
+test("damagePerAttackPlayed: DFS naturally plays attacks before Conflagration to maximise damage", () => {
+  const db: CardDb = {
+    strike:        makeCard({ effects: [fx.damage(6)], cost: 1 }),
+    conflagration: makeCard({ effects: [fx.damage(8), fx.damagePerAttackPlayed(2)], cost: 1 }),
+  };
+  const result = simulateTurn(["strike", "conflagration"], [], [], db, basePlayer, 2, "dmg");
+  assert.equal(result.totalDamage, 6 + (8 + 2)); // strike first: 6 + (8 + 2×1) = 16
+  assert.deepEqual(result.played, ["strike", "conflagration"]);
+});
+
 // ─── strGain ─────────────────────────────────────────────────────────────────
 
 const strDb = {

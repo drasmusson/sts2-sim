@@ -93,4 +93,6 @@ export const fx = {
     ({ type: "energy_if_exhausted_turn", amount }),
   damageReductionIfEnemyVuln: (fraction: number): CardEffect =>
     ({ type: "damage_reduction_if_enemy_vuln", fraction }),
+  damagePerAttackPlayed: (amount: number): CardEffect =>
+    ({ type: "damage_per_attack_played", amount }),
 };

@@ -33,7 +33,8 @@ export type CardEffect =
   | { type: "str_down";                 amount: number }   // reduce enemy strength by N (modelled as effective block)
   | { type: "energy_if_exhausted_turn"; amount: number }
   | { type: "cascade";                  bonus: number }   // play top (X + bonus) cards from draw pile (X = energy spent)  // gain N energy if any card was exhausted this turn
-  | { type: "damage_reduction_if_enemy_vuln"; fraction: number };  // take (fraction×100)% less damage when enemy is vulnerable (modelled as effective block)
+  | { type: "damage_reduction_if_enemy_vuln"; fraction: number }   // take (fraction×100)% less damage when enemy is vulnerable (modelled as effective block)
+  | { type: "damage_per_attack_played";      amount: number };     // +N damage per attack played this turn before this card
 
 export interface Card {
   type:        CardType;
@@ -101,6 +102,7 @@ export interface CardJson {
   energyIfExhaustedTurn?: number;
   cascade?: number;                 // play top (X + cascade) cards from draw pile; 0 for base, 1 for upgraded
   damageReductionIfEnemyVuln?: number;  // 0–1 fraction; take this fraction less damage when enemy is vulnerable
+  damagePerAttackPlayed?: number;       // +N damage per attack played this turn before this card
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -145,6 +147,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.energyIfExhaustedTurn) effects.push({ type: "energy_if_exhausted_turn", amount: c.energyIfExhaustedTurn });
   if (c.cascade !== undefined)  effects.push({ type: "cascade",                  bonus: c.cascade });
   if (c.damageReductionIfEnemyVuln) effects.push({ type: "damage_reduction_if_enemy_vuln", fraction: c.damageReductionIfEnemyVuln });
+  if (c.damagePerAttackPlayed)      effects.push({ type: "damage_per_attack_played",       amount: c.damagePerAttackPlayed });
 
   return {
     type:        c.type,
