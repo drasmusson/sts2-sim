@@ -39,6 +39,19 @@ function isBetter(candidate: TurnResult, best: TurnResult, mode: Mode): boolean 
         && secondary(mode, candidate) > secondary(mode, best));
 }
 
+// Draws cards triggered by Dark Embrace (drawPerExhaustEvent) after an exhaust event.
+// Respects noMoreDraws (Battle Trance) and the 10-card hand limit.
+function applyDarkEmbraceDraws(
+  hand:        string[],
+  drawPile:    string[],
+  discardPile: string[],
+  player:      PlayerState,
+): { hand: string[]; drawPile: string[]; discardPile: string[] } {
+  if (player.drawPerExhaustEvent <= 0 || player.noMoreDraws) return { hand, drawPile, discardPile };
+  const drawn = drawCards(drawPile, discardPile, player.drawPerExhaustEvent, hand.length);
+  return { hand: [...hand, ...drawn.hand], drawPile: drawn.drawPile, discardPile: drawn.discardPile };
+}
+
 // Called whenever a card enters the exhaust pile.
 // Updates exhaustPile, increments player.exhaust (for exhaustBonus), sets exhaustedThisTurn.
 // Returns the block gained from Feel No Pain passive (blockPerExhaustEvent).
@@ -114,6 +127,8 @@ function resolvePostExhaust(
     exhaustPile = er.exhaustPile;
     player      = er.player;
     block      += er.blockGained;
+    const de = applyDarkEmbraceDraws(hand, drawPile, discardPile, player);
+    hand = de.hand; drawPile = de.drawPile; discardPile = de.discardPile;
   }
 
   // 3. Add copy to discard (e.g. Anger) — before routing the played card itself
@@ -127,6 +142,8 @@ function resolvePostExhaust(
     exhaustPile = er.exhaustPile;
     player      = er.player;
     block      += er.blockGained;
+    const de = applyDarkEmbraceDraws(hand, drawPile, discardPile, player);
+    hand = de.hand; drawPile = de.drawPile; discardPile = de.discardPile;
   } else if (card.type === "power") {
     powersInPlay = [...powersInPlay, cardName];
   } else {
@@ -356,6 +373,8 @@ function dfs(
         nextPlayer      = er.player;
         runningBlock   += er.blockGained;
         exhaustCount++;
+        const de = applyDarkEmbraceDraws(nextHand, nextDrawPile, nextDiscardPile, nextPlayer);
+        nextHand = de.hand; nextDrawPile = de.drawPile; nextDiscardPile = de.discardPile;
       }
       runningDamage += exHandEff.damagePerCard * exhaustCount;
       runningBlock  += exHandEff.blockPerCard  * exhaustCount;
@@ -391,9 +410,13 @@ function dfs(
           let cExhaustPile = er.exhaustPile;
           let cPlayer      = er.player;
           let cBlock       = runningBlock + er.blockGained;
+          const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
+          cHand = de.hand;
+          let cDrawPile    = de.drawPile;
+          let cDiscardPile = de.discardPile;
 
           resolveDiscardToDraw(name, card, {
-            hand: cHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+            hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
             exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
           }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
         }

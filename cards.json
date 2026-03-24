@@ -581,6 +581,15 @@
     }
   },
   {
+    "name": "Dark Embrace",
+    "type": "power",
+    "cost": 2,
+    "drawPerExhaustEvent": 1,
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
     "name": "Cruelty",
     "type": "power",
     "cost": 1,

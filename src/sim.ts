@@ -170,6 +170,7 @@ const player: PlayerState = {
   enemyStrength:  parseIntArg(args["enemy-strength"], 0),
   exhaust:              parseIntArg(args.exhaust, 0),
   blockPerExhaustEvent: 0,
+  drawPerExhaustEvent:  0,
   exhaustedThisTurn:    false,
   currentBlock:         0,
   energyRemaining:      0,
