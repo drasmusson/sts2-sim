@@ -37,6 +37,7 @@ export interface Card {
   cost:        number;
   xCost:       boolean;
   selfExhaust: boolean;
+  costReductionPerAttack: number;   // cost reduced by N per attack played this turn (e.g. Stomp)
   effects:     CardEffect[];
   notes:       string;
 }
@@ -77,6 +78,7 @@ export interface CardJson {
   upgradeHand?:           number;       // 1 = one card, -1 = all
   fetchDiscard?:          number;
   copyToDiscard?:         boolean;
+  costReductionPerAttack?: number;
   selfDamage?:            number;
   damagePerSelfDamage?:   number;
   damageIfSelfDamaged?:   number;
@@ -131,6 +133,7 @@ function jsonToCard(c: CardJson): Card {
     cost:        c.cost,
     xCost:       c.xCost       ?? false,
     selfExhaust: c.selfExhaust ?? false,
+    costReductionPerAttack: c.costReductionPerAttack ?? 0,
     effects,
     notes:       c.notes       ?? "",
   };

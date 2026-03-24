@@ -205,3 +205,54 @@ test("regression: block mode prefers defend over strike", () => {
   assert.equal(simResult.totalBlock,  bpResult.totalBlock);
   assert.equal(simResult.totalDamage, bpResult.totalDamage);
 });
+
+// ─── Stomp dynamic cost ───────────────────────────────────────────────────────
+
+test("stomp costs 3 with no prior attacks", () => {
+  const db: CardDb = {
+    stomp: makeCard({ cost: 3, costReductionPerAttack: 1, effects: [fx.damage(12)] }),
+  };
+  const result = sim(["stomp"], [], db, 3);
+  assert.deepEqual(result.played, ["stomp"]);
+  assert.equal(result.totalDamage, 12);
+});
+
+test("stomp is unplayable at 2 energy with no prior attacks", () => {
+  const db: CardDb = {
+    stomp: makeCard({ cost: 3, costReductionPerAttack: 1, effects: [fx.damage(12)] }),
+  };
+  const result = sim(["stomp"], [], db, 2);
+  assert.deepEqual(result.played, []);
+});
+
+test("stomp costs 1 less per attack played: 2 strikes make it cost 1", () => {
+  const db: CardDb = {
+    strike: makeCard({ cost: 1, effects: [fx.damage(6)] }),
+    stomp:  makeCard({ cost: 3, costReductionPerAttack: 1, effects: [fx.damage(12)] }),
+  };
+  // 2 strikes cost 2, Stomp now costs 1 — total 3 energy
+  const result = sim(["strike", "strike", "stomp"], [], db, 3);
+  assert.ok(result.played.includes("stomp"));
+  assert.equal(result.totalDamage, 24); // 6+6+12
+});
+
+test("stomp is free after 3 attacks", () => {
+  const db: CardDb = {
+    strike: makeCard({ cost: 1, effects: [fx.damage(6)] }),
+    stomp:  makeCard({ cost: 3, costReductionPerAttack: 1, effects: [fx.damage(12)] }),
+  };
+  // 3 strikes cost 3, Stomp now costs 0 — all 4 playable
+  const result = sim(["strike", "strike", "strike", "stomp"], [], db, 3);
+  assert.ok(result.played.includes("stomp"));
+  assert.equal(result.totalDamage, 30); // 6+6+6+12
+});
+
+test("stomp is not playable when attacks don't free up enough energy", () => {
+  const db: CardDb = {
+    bash:  makeCard({ cost: 2, effects: [fx.damage(8)] }),
+    stomp: makeCard({ cost: 3, costReductionPerAttack: 1, effects: [fx.damage(12)] }),
+  };
+  // bash costs 2 → stomp now costs 2 → 0 energy left, can't play stomp
+  const result = sim(["bash", "stomp"], [], db, 2);
+  assert.deepEqual(result.played, ["bash"]);
+});

@@ -262,10 +262,13 @@ function dfs(
     if (tried.has(name)) continue;
     const card = db[name];
     if (!card) continue;
-    if (!card.xCost && card.cost > state.energy) continue;
+    const effectiveCost = card.costReductionPerAttack > 0
+      ? Math.max(0, card.cost - state.player.attacksPlayedThisTurn * card.costReductionPerAttack)
+      : card.cost;
+    if (!card.xCost && effectiveCost > state.energy) continue;
     tried.add(name);
 
-    const cardCost = card.xCost ? state.energy : card.cost;
+    const cardCost = card.xCost ? state.energy : effectiveCost;
 
     // Score this card with current player state (including live energyRemaining and exhaust count)
     const vals = cardEffectiveValues(card, { ...state.player, energyRemaining: state.energy });

@@ -19,6 +19,7 @@ export interface PlayerState {
   enemyWeak:      boolean;
   enemyStrength:   number;   // enemy's current strength (flat bonus to their attack damage per hit)
   selfDamageThisTurn: number;     // HP lost to self-damage cards played this turn
+  attacksPlayedThisTurn: number;  // attack cards played so far this turn (for Stomp cost reduction)
 }
 
 export interface ComboResult {
@@ -61,7 +62,10 @@ function effVal(card: Card | undefined, type: CardEffect["type"]): number {
 export function cardEffectiveValues(card: Card, player: PlayerState): CardValues {
   // Energy constraint: when tracking energy (energyRemaining > 0), an unaffordable
   // card contributes nothing. energyRemaining = 0 means not tracking (legacy / default).
-  if (player.energyRemaining > 0 && card.cost > player.energyRemaining) {
+  const effectiveCardCost = card.costReductionPerAttack > 0
+    ? Math.max(0, card.cost - player.attacksPlayedThisTurn * card.costReductionPerAttack)
+    : card.cost;
+  if (player.energyRemaining > 0 && effectiveCardCost > player.energyRemaining) {
     return { damage: 0, block: 0 };
   }
   const { strength, vulnerableStacks, weak, frail, focus, poisonTriggers, exhaust } = player;
@@ -172,6 +176,8 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
     }
   }
+
+  if (card.type === "attack") next = { ...next, attacksPlayedThisTurn: next.attacksPlayedThisTurn + 1 };
 
   const { block } = cardEffectiveValues(card, state);
   if (block > 0) next = { ...next, currentBlock: next.currentBlock + block };

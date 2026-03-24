@@ -169,6 +169,7 @@ const player: PlayerState = {
   currentBlock:         0,
   energyRemaining:      0,
   selfDamageThisTurn:   0,
+  attacksPlayedThisTurn: 0,
 };
 
 if (!drawPile.length) {
