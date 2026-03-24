@@ -22,6 +22,7 @@ export interface PlayerState {
   attacksPlayedThisTurn: number;  // attack cards played so far this turn (for Stomp cost reduction)
   nextAttackFree: boolean;        // true if the next attack played this turn costs 0 (e.g. Unrelenting)
   noMoreDraws: boolean;           // true after Battle Trance is played; all subsequent draw effects are skipped
+  corruptionActive: boolean;      // true after Corruption is played; skills cost 0 and exhaust
 }
 
 export interface ComboResult {
@@ -64,7 +65,7 @@ function effVal(card: Card | undefined, type: CardEffect["type"]): number {
 export function cardEffectiveValues(card: Card, player: PlayerState): CardValues {
   // Energy constraint: when tracking energy (energyRemaining > 0), an unaffordable
   // card contributes nothing. energyRemaining = 0 means not tracking (legacy / default).
-  const effectiveCardCost = card.type === "attack" && player.nextAttackFree
+  const effectiveCardCost = (card.type === "attack" && player.nextAttackFree) || (card.type === "skill" && player.corruptionActive)
     ? 0
     : card.costReductionPerAttack > 0
       ? Math.max(0, card.cost - player.attacksPlayedThisTurn * card.costReductionPerAttack)
@@ -197,7 +198,8 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
 
   // Attacks consume any pending nextAttackFree; then the card may set it for the following attack.
   if (card.type === "attack") next = { ...next, attacksPlayedThisTurn: next.attacksPlayedThisTurn + 1, nextAttackFree: false };
-  if (card.nextAttackFree) next = { ...next, nextAttackFree: true };
+  if (card.nextAttackFree)    next = { ...next, nextAttackFree: true };
+  if (card.skillsFreeExhaust) next = { ...next, corruptionActive: true };
 
   const { block } = cardEffectiveValues(card, state);
   if (block > 0) next = { ...next, currentBlock: next.currentBlock + block };

@@ -177,6 +177,7 @@ const player: PlayerState = {
   attacksPlayedThisTurn: 0,
   nextAttackFree: false,
   noMoreDraws: false,
+  corruptionActive: false,
 };
 
 if (!drawPile.length) {

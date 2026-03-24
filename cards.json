@@ -581,6 +581,15 @@
     }
   },
   {
+    "name": "Corruption",
+    "type": "power",
+    "cost": 3,
+    "skillsFreeExhaust": true,
+    "upgraded": {
+      "cost": 2
+    }
+  },
+  {
     "name": "Cascade",
     "type": "skill",
     "cost": 0,

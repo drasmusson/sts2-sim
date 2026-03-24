@@ -45,6 +45,7 @@ export interface Card {
   nextAttackFree: boolean;          // next attack played this turn costs 0 (e.g. Unrelenting)
   energyPerAttackInHand: boolean;   // gain 1 energy per attack in hand when played (e.g. Expect a Fight)
   blocksFutureDraws: boolean;       // after this card's own draw resolves, no more draws this turn (e.g. Battle Trance)
+  skillsFreeExhaust: boolean;       // when played: all skills cost 0 and exhaust for the rest of the turn (e.g. Corruption)
   hasDiscardToDraw: boolean;        // precomputed: has discard_to_draw effect (avoids find() in hot DFS path)
   hasUpgradeHand:   boolean;        // precomputed: has upgrade_hand effect (avoids find() in hot DFS path)
   hasCascade:       boolean;        // precomputed: has cascade effect (avoids find() in hot DFS path)
@@ -92,6 +93,7 @@ export interface CardJson {
   nextAttackFree?:        boolean;
   energyPerAttackInHand?: boolean;
   blocksFutureDraws?:     boolean;
+  skillsFreeExhaust?:     boolean;
   selfDamage?:            number;
   damagePerSelfDamage?:   number;
   damageIfSelfDamaged?:   number;
@@ -158,6 +160,7 @@ function jsonToCard(c: CardJson): Card {
     nextAttackFree: c.nextAttackFree ?? false,
     energyPerAttackInHand: c.energyPerAttackInHand ?? false,
     blocksFutureDraws: c.blocksFutureDraws ?? false,
+    skillsFreeExhaust: c.skillsFreeExhaust ?? false,
     hasDiscardToDraw: effects.some(e => e.type === "discard_to_draw"),
     hasUpgradeHand:   effects.some(e => e.type === "upgrade_hand"),
     hasCascade:       effects.some(e => e.type === "cascade"),

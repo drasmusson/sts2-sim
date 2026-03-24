@@ -122,7 +122,7 @@ function resolvePostExhaust(
   }
 
   // 4. Route played card to exhaust, powers-in-play, or discard
-  if (card.selfExhaust) {
+  if (card.selfExhaust || (card.type === "skill" && player.corruptionActive)) {
     const er = applyExhaustEvent(cardName, exhaustPile, player);
     exhaustPile = er.exhaustPile;
     player      = er.player;
@@ -268,7 +268,7 @@ function dfs(
     if (tried.has(name)) continue;
     const card = db[name];
     if (!card) continue;
-    const effectiveCost = card.type === "attack" && state.player.nextAttackFree
+    const effectiveCost = (card.type === "attack" && state.player.nextAttackFree) || (card.type === "skill" && state.player.corruptionActive)
       ? 0
       : card.costReductionPerAttack > 0
         ? Math.max(0, card.cost - state.player.attacksPlayedThisTurn * card.costReductionPerAttack)

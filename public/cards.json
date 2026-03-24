@@ -1,5 +1,26 @@
 [
   {
+    "name": "Conflagration",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "damagePerAttackPlayed": 2,
+    "upgraded": {
+      "damage": 9,
+      "damagePerAttackPlayed": 3
+    }
+  },
+  {
+    "name": "Colossus",
+    "type": "skill",
+    "cost": 1,
+    "block": 5,
+    "damageReductionIfEnemyVuln": 0.5,
+    "upgraded": {
+      "block": 8
+    }
+  },
+  {
     "name": "Strike",
     "type": "attack",
     "cost": 1,
@@ -69,10 +90,11 @@
     }
   },
   {
-    "name": "Feast",
+    "name": "Feed",
     "type": "attack",
     "cost": 1,
     "damage": 10,
+    "selfExhaust": true,
     "upgraded": {
       "damage": 12
     }
@@ -92,6 +114,7 @@
     "type": "skill",
     "cost": 2,
     "block": 30,
+    "selfExhaust": true,
     "upgraded": {
       "block": 40
     }
@@ -114,7 +137,6 @@
     "selfExhaust": true,
     "damage": 10,
     "doubleVulnStacks": true,
-    "notes": "doubles enemy vulnerable stacks; exhausts",
     "upgraded": {
       "damage": 14
     }
@@ -225,7 +247,6 @@
     "cost": 0,
     "damage": 6,
     "copyToDiscard": true,
-    "notes": "adds copy to discard",
     "upgraded": {
       "damage": 8
     }
@@ -236,7 +257,6 @@
     "cost": 2,
     "damage": 17,
     "exhaustDraw": 1,
-    "notes": "exhausts top card in draw pile",
     "upgraded": {
       "damage": 22
     }
@@ -270,7 +290,6 @@
     "cost": 1,
     "damage": 14,
     "damagePerSelfDamage": 2,
-    "notes": "deals 2 damage to self",
     "upgraded": {
       "damage": 19
     }
@@ -280,10 +299,10 @@
     "type": "attack",
     "cost": 3,
     "damage": 15,
-    "notes": "enemy loses 10 str; not modeled",
+    "strDown": 10,
     "upgraded": {
       "damage": 20,
-      "notes": "enemy loses 15 str; not modeled"
+      "strDown": 15
     }
   },
   {
@@ -302,7 +321,7 @@
     "type": "attack",
     "cost": 0,
     "damage": 6,
-    "notes": "draws a card if player took damage this turn; draw not modeled",
+    "drawIfSelfDamaged": 1,
     "upgraded": {
       "damage": 9
     }
@@ -312,7 +331,7 @@
     "type": "attack",
     "cost": 3,
     "damage": 12,
-    "notes": "costs 1 less per attack played this turn; dynamic cost not modeled",
+    "costReductionPerAttack": 1,
     "upgraded": {
       "damage": 15
     }
@@ -322,9 +341,18 @@
     "type": "attack",
     "cost": 2,
     "damage": 12,
-    "notes": "next attack played this turn is free; not modeled",
+    "nextAttackFree": true,
     "upgraded": {
       "damage": 18
+    }
+  },
+  {
+    "name": "Expect a Fight",
+    "type": "skill",
+    "cost": 2,
+    "energyPerAttackInHand": true,
+    "upgraded": {
+      "cost": 1
     }
   },
   {
@@ -342,10 +370,8 @@
     "cost": 0,
     "damage": 4,
     "damagePerVulnStack": 2,
-    "notes": "+2 dmg per enemy vulnerable stack",
     "upgraded": {
-      "damagePerVulnStack": 3,
-      "notes": "+3 dmg per enemy vulnerable stack"
+      "damagePerVulnStack": 3
     }
   },
   {
@@ -426,21 +452,12 @@
     }
   },
   {
-    "name": "Expect a Fight",
-    "type": "skill",
-    "cost": 2,
-    "notes": "gain 1 energy per attack in hand; not modeled — use --energy workaround",
-    "upgraded": {
-      "cost": 1
-    }
-  },
-  {
     "name": "Forgotten Ritual",
     "type": "skill",
     "cost": 1,
-    "notes": "if exhausted a card this turn gain 3 energy; not modeled — use --energy workaround",
+    "energyIfExhaustedTurn": 3,
     "upgraded": {
-      "notes": "if exhausted a card this turn gain 4 energy; not modeled — use --energy workaround"
+      "energyIfExhaustedTurn": 4
     }
   },
   {
@@ -450,6 +467,7 @@
     "draw": 3,
     "energyGain": 2,
     "damagePerSelfDamage": 6,
+    "selfExhaust": true,
     "notes": "lose 6 hp",
     "upgraded": {
       "draw": 5
@@ -560,6 +578,25 @@
     "upgraded": {
       "upgradeHand": -1,
       "notes": "upgrade ALL cards in hand"
+    }
+  },
+  {
+    "name": "Corruption",
+    "type": "power",
+    "cost": 3,
+    "skillsFreeExhaust": true,
+    "upgraded": {
+      "cost": 2
+    }
+  },
+  {
+    "name": "Cascade",
+    "type": "skill",
+    "cost": 0,
+    "xCost": true,
+    "cascade": 0,
+    "upgraded": {
+      "cascade": 1
     }
   }
 ]
