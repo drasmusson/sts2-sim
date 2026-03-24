@@ -75,7 +75,20 @@ export function percentile(sorted: number[], p: number): number {
   return sorted[Math.floor(sorted.length * p)] ?? 0;
 }
 
-export function runMC(config: Config, n: number, onProgress?: (done: number) => void): MCResult {
+// Raw accumulator returned by runMCRaw — used by workers before merging.
+export interface MCRawResult {
+  damages:  number[];
+  blocks:   number[];
+  drawFreq: Record<string, number>;
+  dmgDist:  Record<number, number>;
+  blkDist:  Record<number, number>;
+  playFreq: Record<string, { count: number; totalDamage: number; totalBlock: number; infinite: boolean }>;
+  peakPlay: { combo: string; damage: number; block: number; infinite: boolean };
+}
+
+// Inner accumulation loop. Returns raw data without computing stats.
+// Called directly by workers; runMC wraps this with computeMCResult.
+export function runMCRaw(config: Config, n: number, onProgress?: (done: number) => void): MCRawResult {
   const damages: number[] = [], blocks: number[] = [];
   const drawFreq: Record<string, number> = {};
   const dmgDist:  Record<number, number> = {};
@@ -105,6 +118,13 @@ export function runMC(config: Config, n: number, onProgress?: (done: number) => 
     if (onProgress && i % 100 === 99) onProgress(i + 1);
   }
 
+  return { damages, blocks, drawFreq, dmgDist, blkDist, playFreq, peakPlay };
+}
+
+// Compute the final MCResult from raw accumulator data.
+// Used by both runMC and the parallel aggregator in mc-parallel.ts.
+export function computeMCResult(raw: MCRawResult, n: number): MCResult {
+  const { damages, blocks, drawFreq, dmgDist, blkDist, playFreq, peakPlay } = raw;
   damages.sort((a, b) => a - b);
   blocks.sort((a, b) => a - b);
   const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
@@ -137,4 +157,8 @@ export function runMC(config: Config, n: number, onProgress?: (done: number) => 
         infinite,
       })),
   };
+}
+
+export function runMC(config: Config, n: number, onProgress?: (done: number) => void): MCResult {
+  return computeMCResult(runMCRaw(config, n, onProgress), n);
 }

@@ -7,8 +7,9 @@
 //                  --mode dmg
 
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
-import { loadCards } from "./cards.js";
+import { parseJsonDb } from "./cards.js";
 import { PlayerState, Mode } from "./optimizer.js";
 import { runMC, Config, MCResult } from "./mc.js";
 import { STARTING_DECKS, CHARACTER_NAMES } from "./characters.js";
@@ -177,7 +178,8 @@ if (!drawPile.length) {
   process.exit(1);
 }
 
-const db = loadCards(JSON_PATH);
+const cardsJson = fs.readFileSync(JSON_PATH, "utf8");
+const db        = parseJsonDb(cardsJson);
 
 const unknown = [...drawPile, ...discardPile].filter(c => !db[c]);
 if (unknown.length) {
@@ -189,5 +191,13 @@ if (unknown.length) {
 }
 
 const config: Config = { drawPile, discardPile, energy, draws, relics, db, mode, player };
-const results = runMC(config, N);
-printResults(results, config);
+
+if (args.parallel) {
+  const { runMCParallel } = await import("./mc-parallel.js");
+  const { result, workers } = await runMCParallel(config, N, cardsJson);
+  console.log(`  (parallel: ${workers} workers)`);
+  printResults(result, config);
+} else {
+  const results = runMC(config, N);
+  printResults(results, config);
+}
