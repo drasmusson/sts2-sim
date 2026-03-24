@@ -41,6 +41,7 @@ export interface Card {
   costReductionPerAttack: number;   // cost reduced by N per attack played this turn (e.g. Stomp)
   nextAttackFree: boolean;          // next attack played this turn costs 0 (e.g. Unrelenting)
   energyPerAttackInHand: boolean;   // gain 1 energy per attack in hand when played (e.g. Expect a Fight)
+  blocksFutureDraws: boolean;       // after this card's own draw resolves, no more draws this turn (e.g. Battle Trance)
   hasDiscardToDraw: boolean;        // precomputed: has discard_to_draw effect (avoids find() in hot DFS path)
   hasUpgradeHand:   boolean;        // precomputed: has upgrade_hand effect (avoids find() in hot DFS path)
   effects:     CardEffect[];
@@ -86,6 +87,7 @@ export interface CardJson {
   costReductionPerAttack?: number;
   nextAttackFree?:        boolean;
   energyPerAttackInHand?: boolean;
+  blocksFutureDraws?:     boolean;
   selfDamage?:            number;
   damagePerSelfDamage?:   number;
   damageIfSelfDamaged?:   number;
@@ -145,6 +147,7 @@ function jsonToCard(c: CardJson): Card {
     costReductionPerAttack: c.costReductionPerAttack ?? 0,
     nextAttackFree: c.nextAttackFree ?? false,
     energyPerAttackInHand: c.energyPerAttackInHand ?? false,
+    blocksFutureDraws: c.blocksFutureDraws ?? false,
     hasDiscardToDraw: effects.some(e => e.type === "discard_to_draw"),
     hasUpgradeHand:   effects.some(e => e.type === "upgrade_hand"),
     effects,

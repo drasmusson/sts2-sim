@@ -540,6 +540,17 @@
     }
   },
   {
+    "name": "Battle Trance",
+    "type": "skill",
+    "cost": 0,
+    "draw": 3,
+    "blocksFutureDraws": true,
+    "notes": "can't draw more cards this turn",
+    "upgraded": {
+      "draw": 4
+    }
+  },
+  {
     "name": "Armaments",
     "type": "skill",
     "cost": 1,

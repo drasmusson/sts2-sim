@@ -172,6 +172,7 @@ const player: PlayerState = {
   selfDamageThisTurn:   0,
   attacksPlayedThisTurn: 0,
   nextAttackFree: false,
+  noMoreDraws: false,
 };
 
 if (!drawPile.length) {

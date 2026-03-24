@@ -21,6 +21,7 @@ export interface PlayerState {
   selfDamageThisTurn: number;     // HP lost to self-damage cards played this turn
   attacksPlayedThisTurn: number;  // attack cards played so far this turn (for Stomp cost reduction)
   nextAttackFree: boolean;        // true if the next attack played this turn costs 0 (e.g. Unrelenting)
+  noMoreDraws: boolean;           // true after Battle Trance is played; all subsequent draw effects are skipped
 }
 
 export interface ComboResult {
