@@ -82,9 +82,23 @@ The DFS (`simulateTurn` in `src/turn-simulator.ts`) tracks energy, hand, draw pi
 
 ## Card database
 
-`cards.csv` is the card database. Upgraded cards are separate rows with a `+` suffix (e.g. `Strike+`). Not all cards are present — check before testing a specific card.
+`cards.json` is the canonical card database — sparse JSON where only non-default fields are required; upgrades are expressed as deltas under an `upgraded` key. `cards.csv` is a generated export kept for readability. Not all cards are present — check before testing a specific card.
 
-### Adding cards
+**Conversion scripts:**
+```bash
+node --import tsx/esm scripts/convert-cards.ts json-to-csv   # export JSON → CSV
+node --import tsx/esm scripts/convert-cards.ts csv-to-json   # import CSV → JSON
+```
+
+### Adding cards (JSON)
+
+Add an entry to `cards.json`. Only include non-default fields. See `src/cards-core.ts` → `CardJson` for the full schema.
+
+```json
+{ "name": "Strike", "type": "attack", "cost": 1, "damage": 6, "upgraded": { "damage": 9 } }
+```
+
+### CSV column reference
 
 Each row in `cards.csv` is one card. Columns (in order):
 
