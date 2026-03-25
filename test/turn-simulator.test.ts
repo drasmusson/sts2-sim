@@ -402,3 +402,25 @@ test("havoc + fiend fire: exhausts all 9 remaining hand cards", () => {
   assert.equal(result.exhaustPile.filter(c => c === "strike").length, 9);
   assert.ok(result.exhaustPile.includes("fiend fire"));
 });
+
+test("havoc + true grit+: branches on exhaust choice, picks optimal branch in dmg mode", () => {
+  // True Grit+ (choice=true, upgraded): block 9, exhaust 1 card of player's choice, selfExhaust=false
+  // hand = [havoc, strike, defend], pile = [true grit+], energy = 2
+  // Havoc (cost 1) plays true grit+ for free, then 1 energy remains:
+  //   Branch A: exhaust strike → play defend for 5 block → 0 dmg + 14 block total
+  //   Branch B: exhaust defend → play strike for 6 damage → 6 dmg + 9 block total
+  // In dmg mode the sim should pick Branch B (exhaust defend, play strike)
+  const db: CardDb = {
+    havoc:         makeCard({ type: "skill", cost: 1, hasPlayTopAndExhaust: true, effects: [{ type: "play_top_and_exhaust" }] }),
+    "true grit+":  makeCard({ type: "skill", cost: 1, effects: [fx.block(9), fx.exhaustHand(1, { choice: true })] }),
+    strike:        makeCard({ cost: 1, effects: [fx.damage(6)] }),
+    defend:        makeCard({ type: "skill", cost: 1, effects: [fx.block(5)] }),
+  };
+  const result = simulateTurn(["havoc", "strike", "defend"], ["true grit+"], [], db, basePlayer, 2, "dmg");
+  // Branch B wins: exhaust defend, play strike → 6 dmg + 9 block
+  assert.equal(result.totalDamage, 6);
+  assert.equal(result.totalBlock, 9);
+  assert.ok(result.exhaustPile.includes("true grit+"));
+  assert.ok(result.exhaustPile.includes("defend"));    // Branch B exhausted defend
+  assert.ok(!result.exhaustPile.includes("strike"));   // strike was played, not exhausted
+});

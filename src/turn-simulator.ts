@@ -361,6 +361,9 @@ function dfs(
     }
 
     // ── Havoc: play and exhaust the top card of the draw pile ────────────────
+    // This block is self-contained: all sub-cases call resolveDiscardToDraw via
+    // finishBranch and exit via `continue`, skipping the exHandEff routing below.
+    // Future branching effects (discard_hand, etc.) should slot in before finishBranch.
     if (card.hasPlayTopAndExhaust && nextDrawPile.length > 0) {
       const havocName = nextDrawPile[nextDrawPile.length - 1]!;
       const havocCard = db[havocName];
@@ -370,13 +373,34 @@ function dfs(
         nextPlayer    = applyCardState(nextPlayer, havocCard);
         runningDamage += havocVals.damage + (havocVals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
         runningBlock  += havocVals.block;
+        effectivePlaysCount++;
 
-        // Handle exhaust_hand on the havoc-played card (e.g. Fiend Fire exhausts all hand cards).
-        // Only the deterministic "exhaust all" case (count === -1) is handled here; branching
-        // exhaust-N cards played via Havoc are not modelled.
+        // finishBranch: route the havoc-played card to exhaust (selfExhaust: true forces
+        // exhaust regardless of the card's own flag; resolvePostExhaust only uses selfExhaust
+        // for routing, not passives), then route Havoc itself to discard and recurse.
+        const finishBranch = (
+          bHand: string[], bDrawPile: string[], bDiscardPile: string[],
+          bExhaustPile: string[], bPlayer: PlayerState, bBlock: number, bDamage: number,
+        ) => {
+          const havocPost = resolvePostExhaust(havocName, { ...havocCard, selfExhaust: true }, {
+            hand: bHand, drawPile: bDrawPile, discardPile: bDiscardPile,
+            exhaustPile: bExhaustPile, powersInPlay: nextPowersInPlay, player: bPlayer, block: bBlock,
+          });
+          resolveDiscardToDraw(
+            name, card, havocPost, nextEnergy, effectivePlaysCount,
+            db, mode, [...played, name], bDamage, initialEnergy, best, threshold,
+          );
+        };
+
         const havocExHandEff = havocCard.effects.find(e => e.type === "exhaust_hand") as
           Extract<CardEffect, { type: "exhaust_hand" }> | undefined;
-        if (havocExHandEff && havocExHandEff.count === -1) {
+
+        if (!havocExHandEff || havocExHandEff.count === 0) {
+          // No exhaust_hand — single path
+          finishBranch(nextHand, nextDrawPile, nextDiscardPile, nextExhaustPile, nextPlayer, runningBlock, runningDamage);
+
+        } else if (havocExHandEff.count === -1) {
+          // Exhaust ALL matching cards — deterministic
           const candidates = nextHand.filter(n =>
             havocExHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
           );
@@ -395,23 +419,49 @@ function dfs(
           }
           runningDamage += havocExHandEff.damagePerCard * exhaustCount;
           runningBlock  += havocExHandEff.blockPerCard  * exhaustCount;
+          finishBranch(nextHand, nextDrawPile, nextDiscardPile, nextExhaustPile, nextPlayer, runningBlock, runningDamage);
+
+        } else {
+          // Exhaust N cards — DFS branches on each unique choice.
+          // Each iteration reads from pre-loop next* snapshots; c* vars are fresh per iteration.
+          const candidates = nextHand.filter(n =>
+            havocExHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
+          );
+          if (candidates.length === 0) {
+            finishBranch(nextHand, nextDrawPile, nextDiscardPile, nextExhaustPile, nextPlayer, runningBlock, runningDamage);
+          } else {
+            const triedExhaust = new Set<string>();
+            for (const candidate of candidates) {
+              if (triedExhaust.has(candidate)) continue;
+              triedExhaust.add(candidate);
+
+              const ci         = nextHand.indexOf(candidate);
+              let cHand        = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
+              const er         = applyExhaustEvent(candidate, nextExhaustPile, nextPlayer);
+              let cExhaustPile = er.exhaustPile;
+              let cPlayer      = er.player;
+              let cBlock       = runningBlock + er.blockGained;
+              let cDamage      = runningDamage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
+              cDamage += havocExHandEff.damagePerCard;
+              cBlock  += havocExHandEff.blockPerCard;
+              const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
+              cHand = de.hand;
+              let cDrawPile    = de.drawPile;
+              let cDiscardPile = de.discardPile;
+
+              finishBranch(cHand, cDrawPile, cDiscardPile, cExhaustPile, cPlayer, cBlock, cDamage);
+            }
+          }
         }
 
-        // Force the played card to exhaust regardless of its type
-        const havocPost = resolvePostExhaust(havocName, { ...havocCard, selfExhaust: true }, {
+      } else {
+        // havocCard not in db — route Havoc normally (no card was played)
+        resolveDiscardToDraw(name, card, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
-          exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay,
-          player: nextPlayer, block: runningBlock,
-        });
-        nextHand         = havocPost.hand;
-        nextDrawPile     = havocPost.drawPile;
-        nextDiscardPile  = havocPost.discardPile;
-        nextExhaustPile  = havocPost.exhaustPile;
-        nextPowersInPlay = havocPost.powersInPlay;
-        nextPlayer       = havocPost.player;
-        runningBlock     = havocPost.block;
-        effectivePlaysCount++;
+          exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
+        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       }
+      continue; // All sub-cases have called resolveDiscardToDraw; skip exHandEff routing below
     }
 
     if (exHandEff && exHandEff.count === -1) {
