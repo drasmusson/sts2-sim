@@ -11,7 +11,5 @@ export default defineConfig({
   worker: {
     format: "es",
   },
-  esbuild: {
-    tsconfig: "tsconfig.web.json",
-  },
+
 });
