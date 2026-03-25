@@ -181,6 +181,7 @@ const player: PlayerState = {
   noMoreDraws: false,
   corruptionActive: false,
   vulnMultBonus: 0,
+  hellraiserActive: false,
 };
 
 if (!drawPile.length) {

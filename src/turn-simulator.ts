@@ -71,15 +71,42 @@ function applyExhaustEvent(
   };
 }
 
+// Called after each draw event when Hellraiser is active.
+// For every newly-drawn card whose name contains "strike", removes it from hand,
+// scores and applies its effects (free play), and routes it to the discard pile.
+function applyHellraiserToDraw(
+  drawn:       string[],     // names of cards just added to hand
+  hand:        string[],
+  discardPile: string[],
+  player:      PlayerState,
+  db:          CardDb,
+): { hand: string[]; discardPile: string[]; player: PlayerState; damage: number } {
+  if (!player.hellraiserActive || drawn.length === 0) return { hand, discardPile, player, damage: 0 };
+  let totalDamage = 0;
+  for (const name of drawn) {
+    if (!name.toLowerCase().includes("strike")) continue;
+    const card = db[name];
+    if (!card) continue;
+    const idx = hand.indexOf(name);
+    if (idx !== -1) hand = [...hand.slice(0, idx), ...hand.slice(idx + 1)];
+    const vals = cardEffectiveValues(card, player);
+    totalDamage += vals.damage;
+    player      = applyCardState(player, card);
+    discardPile = [...discardPile, name];
+  }
+  return { hand, discardPile, player, damage: totalDamage };
+}
+
 // Bundles the mutable pile/player/block state that resolvePostExhaust operates on.
 interface PostExhaustState {
-  hand:         string[];
-  drawPile:     string[];
-  discardPile:  string[];
-  exhaustPile:  string[];
-  powersInPlay: string[];
-  player:       PlayerState;
-  block:        number;
+  hand:            string[];
+  drawPile:        string[];
+  discardPile:     string[];
+  exhaustPile:     string[];
+  powersInPlay:    string[];
+  player:          PlayerState;
+  block:           number;
+  hellraiserDamage: number;  // damage accumulated from Hellraiser auto-plays this call
 }
 
 // The sequence draw → exhaust-from-draw → route-played-card is identical across
@@ -89,8 +116,10 @@ function resolvePostExhaust(
   cardName: string,
   card:     Card,
   s:        PostExhaustState,
+  db:       CardDb,
 ): PostExhaustState {
   let { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block } = s;
+  let hellraiserDamage = 0;
 
   const drawEff        = card.effects.find(e => e.type === "draw")         as Extract<CardEffect, { type: "draw" }>         | undefined;
   const exhaustDrawEff = card.effects.find(e => e.type === "exhaust_draw") as Extract<CardEffect, { type: "exhaust_draw" }> | undefined;
@@ -103,16 +132,24 @@ function resolvePostExhaust(
   // size for the limit check: playing a card frees one slot before the draw resolves.
   // noMoreDraws blocks all draw effects (set by Battle Trance after its own draws resolve).
   if (!player.noMoreDraws && drawEff && drawEff.amount > 0) {
-    const drawn = drawCards(drawPile, discardPile, drawEff.amount, hand.length);
+    const before = hand.length;
+    const drawn  = drawCards(drawPile, discardPile, drawEff.amount, hand.length);
     hand        = [...hand, ...drawn.hand];
     drawPile    = drawn.drawPile;
     discardPile = drawn.discardPile;
+    const hr = applyHellraiserToDraw(hand.slice(before), hand, discardPile, player, db);
+    hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+    hellraiserDamage += hr.damage;
   }
   if (!player.noMoreDraws && drawIfSelfDamagedEff && drawIfSelfDamagedEff.amount > 0 && player.selfDamageThisTurn > 0) {
-    const drawn = drawCards(drawPile, discardPile, drawIfSelfDamagedEff.amount, hand.length);
+    const before = hand.length;
+    const drawn  = drawCards(drawPile, discardPile, drawIfSelfDamagedEff.amount, hand.length);
     hand        = [...hand, ...drawn.hand];
     drawPile    = drawn.drawPile;
     discardPile = drawn.discardPile;
+    const hr = applyHellraiserToDraw(hand.slice(before), hand, discardPile, player, db);
+    hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+    hellraiserDamage += hr.damage;
   }
   if (card.blocksFutureDraws) {
     player = { ...player, noMoreDraws: true };
@@ -127,8 +164,12 @@ function resolvePostExhaust(
     exhaustPile = er.exhaustPile;
     player      = er.player;
     block      += er.blockGained;
+    const before = hand.length;
     const de = applyDarkEmbraceDraws(hand, drawPile, discardPile, player);
     hand = de.hand; drawPile = de.drawPile; discardPile = de.discardPile;
+    const hr = applyHellraiserToDraw(hand.slice(before), hand, discardPile, player, db);
+    hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+    hellraiserDamage += hr.damage;
   }
 
   // 3. Add copy to discard (e.g. Anger) — before routing the played card itself
@@ -142,15 +183,19 @@ function resolvePostExhaust(
     exhaustPile = er.exhaustPile;
     player      = er.player;
     block      += er.blockGained;
+    const before = hand.length;
     const de = applyDarkEmbraceDraws(hand, drawPile, discardPile, player);
     hand = de.hand; drawPile = de.drawPile; discardPile = de.discardPile;
+    const hr = applyHellraiserToDraw(hand.slice(before), hand, discardPile, player, db);
+    hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+    hellraiserDamage += hr.damage;
   } else if (card.type === "power") {
     powersInPlay = [...powersInPlay, cardName];
   } else {
     discardPile = [...discardPile, cardName];
   }
 
-  return { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block };
+  return { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block, hellraiserDamage };
 }
 
 // Applies discard_to_draw effect (if any): branches on each unique card in discard,
@@ -171,12 +216,12 @@ function resolveDiscardToDraw(
   threshold:     number,
 ): void {
   if (!card.hasDiscardToDraw || s.discardPile.length === 0) {
-    const post = resolvePostExhaust(name, card, s);
+    const post = resolvePostExhaust(name, card, s, db);
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
         discardPile: post.discardPile, exhaustPile: post.exhaustPile,
         powersInPlay: post.powersInPlay, player: post.player, playsCount },
-      card, db, mode, played, damage, post.block, initialEnergy, best, threshold,
+      card, db, mode, played, damage + post.hellraiserDamage, post.block, initialEnergy, best, threshold,
     );
     return;
   }
@@ -190,12 +235,12 @@ function resolveDiscardToDraw(
       ...s,
       discardPile: [...s.discardPile.slice(0, fi), ...s.discardPile.slice(fi + 1)],
       drawPile:    [...s.drawPile, target],  // end of array = top of draw pile
-    });
+    }, db);
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
         discardPile: post.discardPile, exhaustPile: post.exhaustPile,
         powersInPlay: post.powersInPlay, player: post.player, playsCount },
-      card, db, mode, played, damage, post.block, initialEnergy, best, threshold,
+      card, db, mode, played, damage + post.hellraiserDamage, post.block, initialEnergy, best, threshold,
     );
   }
 }
@@ -347,8 +392,8 @@ function dfs(
         const cascadePost = resolvePostExhaust(cascadeName, cascadeCard, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay,
-          player: nextPlayer, block: runningBlock,
-        });
+          player: nextPlayer, block: runningBlock, hellraiserDamage: 0,
+        }, db);
         nextHand         = cascadePost.hand;
         nextDrawPile     = cascadePost.drawPile;
         nextDiscardPile  = cascadePost.discardPile;
@@ -356,6 +401,7 @@ function dfs(
         nextPowersInPlay = cascadePost.powersInPlay;
         nextPlayer       = cascadePost.player;
         runningBlock     = cascadePost.block;
+        runningDamage   += cascadePost.hellraiserDamage;
         effectivePlaysCount++;
       }
     }
@@ -385,10 +431,11 @@ function dfs(
           const havocPost = resolvePostExhaust(havocName, { ...havocCard, selfExhaust: true }, {
             hand: bHand, drawPile: bDrawPile, discardPile: bDiscardPile,
             exhaustPile: bExhaustPile, powersInPlay: nextPowersInPlay, player: bPlayer, block: bBlock,
-          });
+            hellraiserDamage: 0,
+          }, db);
           resolveDiscardToDraw(
             name, card, havocPost, nextEnergy, effectivePlaysCount,
-            db, mode, [...played, name], bDamage, initialEnergy, best, threshold,
+            db, mode, [...played, name], bDamage + havocPost.hellraiserDamage, initialEnergy, best, threshold,
           );
         };
 
@@ -414,8 +461,11 @@ function dfs(
             runningBlock   += er.blockGained;
             if (er.blockGained > 0) runningDamage += nextPlayer.damagePerBlockGain;
             exhaustCount++;
+            const deBefore = nextHand.length;
             const de = applyDarkEmbraceDraws(nextHand, nextDrawPile, nextDiscardPile, nextPlayer);
             nextHand = de.hand; nextDrawPile = de.drawPile; nextDiscardPile = de.discardPile;
+            const hr = applyHellraiserToDraw(nextHand.slice(deBefore), nextHand, nextDiscardPile, nextPlayer, db);
+            nextHand = hr.hand; nextDiscardPile = hr.discardPile; nextPlayer = hr.player; runningDamage += hr.damage;
           }
           runningDamage += havocExHandEff.damagePerCard * exhaustCount;
           runningBlock  += havocExHandEff.blockPerCard  * exhaustCount;
@@ -444,10 +494,13 @@ function dfs(
               let cDamage      = runningDamage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
               cDamage += havocExHandEff.damagePerCard;
               cBlock  += havocExHandEff.blockPerCard;
+              const deBefore = cHand.length;
               const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
               cHand = de.hand;
               let cDrawPile    = de.drawPile;
               let cDiscardPile = de.discardPile;
+              const hr = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
+              cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
 
               finishBranch(cHand, cDrawPile, cDiscardPile, cExhaustPile, cPlayer, cBlock, cDamage);
             }
@@ -459,6 +512,7 @@ function dfs(
         resolveDiscardToDraw(name, card, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
+          hellraiserDamage: 0,
         }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       }
       continue; // All sub-cases have called resolveDiscardToDraw; skip exHandEff routing below
@@ -479,8 +533,11 @@ function dfs(
         runningBlock   += er.blockGained;
         if (er.blockGained > 0) runningDamage += nextPlayer.damagePerBlockGain;
         exhaustCount++;
+        const deBefore = nextHand.length;
         const de = applyDarkEmbraceDraws(nextHand, nextDrawPile, nextDiscardPile, nextPlayer);
         nextHand = de.hand; nextDrawPile = de.drawPile; nextDiscardPile = de.discardPile;
+        const hr = applyHellraiserToDraw(nextHand.slice(deBefore), nextHand, nextDiscardPile, nextPlayer, db);
+        nextHand = hr.hand; nextDiscardPile = hr.discardPile; nextPlayer = hr.player; runningDamage += hr.damage;
       }
       runningDamage += exHandEff.damagePerCard * exhaustCount;
       runningBlock  += exHandEff.blockPerCard  * exhaustCount;
@@ -488,6 +545,7 @@ function dfs(
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
+        hellraiserDamage: 0,
       }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
 
     } else if (exHandEff && exHandEff.count > 0) {
@@ -502,6 +560,7 @@ function dfs(
         resolveDiscardToDraw(name, card, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
+          hellraiserDamage: 0,
         }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       } else {
         // Branch on each unique exhaust choice
@@ -517,14 +576,18 @@ function dfs(
           let cPlayer      = er.player;
           let cBlock       = runningBlock + er.blockGained;
           let cDamage      = runningDamage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
+          const deBefore = cHand.length;
           const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
           cHand = de.hand;
           let cDrawPile    = de.drawPile;
           let cDiscardPile = de.discardPile;
+          const hr = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
+          cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
 
           resolveDiscardToDraw(name, card, {
             hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
             exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
+            hellraiserDamage: 0,
           }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
         }
       }
@@ -534,6 +597,7 @@ function dfs(
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
+        hellraiserDamage: 0,
       }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
     }
   }
@@ -550,20 +614,38 @@ export function simulateTurn(
   initialExhaustPile:  string[] = [],
   initialPowersInPlay: string[] = [],
 ): TurnResult {
-  const deckSize  = hand.length + drawPile.length + discardPile.length;
+  // If Hellraiser is already in play (previous turn), auto-play any Strikes in the initial hand.
+  // In STS, these would have fired during the draw phase before the turn begins.
+  let startHand    = [...hand];
+  let startDiscard = [...discardPile];
+  let startPlayer  = { ...player, energyRemaining: energy };
+  let startDamage  = 0;
+
+  const hellraiserPreExisting = player.hellraiserActive ||
+    initialPowersInPlay.some(p => p === "hellraiser" || p === "hellraiser+");
+  if (hellraiserPreExisting) {
+    startPlayer = { ...startPlayer, hellraiserActive: true };
+    const hr = applyHellraiserToDraw(startHand, startHand, startDiscard, startPlayer, db);
+    startHand    = hr.hand;
+    startDiscard = hr.discardPile;
+    startPlayer  = hr.player;
+    startDamage  = hr.damage;
+  }
+
+  const deckSize  = startHand.length + drawPile.length + startDiscard.length;
   const threshold = Math.max(deckSize * 3, 20);
 
   const emptyResult: TurnResult = {
-    played: [], totalDamage: 0, totalBlock: 0, energySpent: 0,
+    played: [], totalDamage: startDamage, totalBlock: 0, energySpent: 0,
     infinite: false, exhaustPile: initialExhaustPile, powersInPlay: initialPowersInPlay,
   };
   const best = { result: emptyResult, foundInfinite: false };
 
   dfs(
-    { energy, hand: [...hand], drawPile: [...drawPile], discardPile: [...discardPile],
+    { energy, hand: startHand, drawPile: [...drawPile], discardPile: startDiscard,
       exhaustPile: [...initialExhaustPile], powersInPlay: [...initialPowersInPlay],
-      player: { ...player, energyRemaining: energy }, playsCount: 0 },
-    db, mode, [], 0, 0, energy, best, threshold,
+      player: startPlayer, playsCount: 0 },
+    db, mode, [], startDamage, 0, energy, best, threshold,
   );
 
   return best.result;

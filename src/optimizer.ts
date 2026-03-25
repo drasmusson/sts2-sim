@@ -26,6 +26,7 @@ export interface PlayerState {
   noMoreDraws: boolean;           // true after Battle Trance is played; all subsequent draw effects are skipped
   corruptionActive: boolean;      // true after Corruption is played; skills cost 0 and exhaust
   vulnMultBonus: number;          // added to base 1.5× vulnerable multiplier (e.g. Cruelty: +0.25 / +0.5)
+  hellraiserActive: boolean;      // true after Hellraiser is played; drawn Strike cards auto-play for free
 }
 
 export interface ComboResult {
@@ -219,7 +220,8 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
   // Attacks consume any pending nextAttackFree; then the card may set it for the following attack.
   if (card.type === "attack") next = { ...next, attacksPlayedThisTurn: next.attacksPlayedThisTurn + 1, nextAttackFree: false };
   if (card.nextAttackFree)    next = { ...next, nextAttackFree: true };
-  if (card.skillsFreeExhaust) next = { ...next, corruptionActive: true };
+  if (card.skillsFreeExhaust)   next = { ...next, corruptionActive:   true };
+  if (card.strikeDrawTrigger)   next = { ...next, hellraiserActive:   true };
 
   const { block } = cardEffectiveValues(card, state);
   if (block > 0) next = { ...next, currentBlock: next.currentBlock + block };

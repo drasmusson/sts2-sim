@@ -659,6 +659,15 @@
     }
   },
   {
+    "name": "Hellraiser",
+    "type": "power",
+    "cost": 2,
+    "strikeDrawTrigger": true,
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
     "name": "Drum of Battle",
     "type": "power",
     "cost": 0,

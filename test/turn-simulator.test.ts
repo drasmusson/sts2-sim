@@ -424,3 +424,75 @@ test("havoc + true grit+: branches on exhaust choice, picks optimal branch in dm
   assert.ok(result.exhaustPile.includes("defend"));    // Branch B exhausted defend
   assert.ok(!result.exhaustPile.includes("strike"));   // strike was played, not exhausted
 });
+
+// ─── Hellraiser ───────────────────────────────────────────────────────────────
+
+test("hellraiser: drawn Strike auto-plays for free mid-turn", () => {
+  // Hellraiser (cost 2) played this turn. A draw card then draws a Strike from the pile.
+  // The Strike should auto-play (deal its damage) and land in the discard pile, not the hand.
+  const db: CardDb = {
+    hellraiser: makeCard({ type: "power", cost: 2, strikeDrawTrigger: true, effects: [] }),
+    draw1:      makeCard({ type: "skill", cost: 1, effects: [fx.draw(1)] }),
+    strike:     makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // Hand: hellraiser + draw1. Draw pile: [strike]. Energy 3.
+  // Play hellraiser(2) → hellraiserActive. Play draw1(1) → draws strike → Hellraiser fires → 6 dmg.
+  const result = simulateTurn(["hellraiser", "draw1"], ["strike"], [], db, basePlayer, 3, "dmg");
+  assert.ok(result.played.includes("hellraiser"));
+  assert.ok(result.played.includes("draw1"));
+  assert.equal(result.totalDamage, 6);
+});
+
+test("hellraiser: non-Strike drawn normally, stays in hand for manual play", () => {
+  const db: CardDb = {
+    hellraiser: makeCard({ type: "power", cost: 2, strikeDrawTrigger: true, effects: [] }),
+    draw1:      makeCard({ type: "skill", cost: 1, effects: [fx.draw(1)] }),
+    defend:     makeCard({ type: "skill", cost: 1, effects: [fx.block(5)] }),
+  };
+  // Draw pile has Defend (not a Strike) — should be drawn normally and optionally played
+  const result = simulateTurn(["hellraiser", "draw1"], ["defend"], [], db, basePlayer, 3, "block");
+  assert.ok(result.played.includes("defend"));   // DFS plays defend for block
+  assert.equal(result.totalDamage, 0);
+  assert.equal(result.totalBlock, 5);
+});
+
+test("hellraiser: Twin Strike (contains 'strike') also triggers auto-play", () => {
+  const db: CardDb = {
+    hellraiser:    makeCard({ type: "power", cost: 2, strikeDrawTrigger: true, effects: [] }),
+    draw1:         makeCard({ type: "skill", cost: 1, effects: [fx.draw(1)] }),
+    "twin strike": makeCard({ cost: 1, effects: [fx.damage(5, 2)] }),  // 2 hits × 5 = 10 dmg
+  };
+  const result = simulateTurn(["hellraiser", "draw1"], ["twin strike"], [], db, basePlayer, 3, "dmg");
+  assert.ok(result.played.includes("hellraiser"));
+  assert.equal(result.totalDamage, 10);
+});
+
+test("hellraiser: pre-existing (initialPowersInPlay) auto-plays Strikes in initial hand", () => {
+  // Hellraiser was played last turn; now in initialPowersInPlay.
+  // Initial hand has 1 Strike + 1 Defend. Strike auto-plays on draw-phase; only Defend remains.
+  const db: CardDb = {
+    strike: makeCard({ cost: 1, effects: [fx.damage(6)] }),
+    defend: makeCard({ type: "skill", cost: 1, effects: [fx.block(5)] }),
+  };
+  const result = simulateTurn(
+    ["strike", "defend"], [], [], db, basePlayer, 3, "dmg",
+    [], ["hellraiser"],
+  );
+  // Strike was auto-played (6 dmg), Defend stays in hand and can be played for block
+  assert.equal(result.totalDamage, 6);
+  // Defend is still playable (it wasn't auto-played — not a Strike)
+  assert.ok(result.played.includes("defend") || result.totalBlock === 5);
+});
+
+test("hellraiser: pre-existing, all Strikes in initial hand auto-play, none left to play manually", () => {
+  const db: CardDb = {
+    strike: makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // 3 Strikes in hand, all auto-play via pre-existing Hellraiser → 18 dmg, nothing left
+  const result = simulateTurn(
+    ["strike", "strike", "strike"], [], [], db, basePlayer, 3, "dmg",
+    [], ["hellraiser"],
+  );
+  assert.equal(result.totalDamage, 18);
+  assert.deepEqual(result.played, []);
+});

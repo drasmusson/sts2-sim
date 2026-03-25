@@ -11,6 +11,7 @@ export const basePlayer: PlayerState = {
   noMoreDraws: false,
   corruptionActive: false,
   vulnMultBonus: 0,
+  hellraiserActive: false,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -28,6 +29,7 @@ export function makeCard(overrides: Partial<Card>): Card {
     hasUpgradeHand:       false,
     hasCascade:           false,
     hasPlayTopAndExhaust: false,
+    strikeDrawTrigger:    false,
     effects: [] as CardEffect[],
     notes: "",
     ...overrides,

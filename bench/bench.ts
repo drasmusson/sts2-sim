@@ -27,6 +27,8 @@ const BASE_PLAYER: PlayerState = {
   exhaust: 0, blockPerExhaustEvent: 0, exhaustedThisTurn: false,
   currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false, enemyStrength: 0,
   selfDamageThisTurn: 0, attacksPlayedThisTurn: 0, nextAttackFree: false, noMoreDraws: false,
+  corruptionActive: false, vulnMultBonus: 0, hellraiserActive: false,
+  drawPerExhaustEvent: 0, damagePerBlockGain: 0,
 };
 
 // ─── SCENARIO DEFINITIONS ────────────────────────────────────────────────────

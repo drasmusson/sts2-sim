@@ -56,6 +56,7 @@ export interface Card {
   hasUpgradeHand:   boolean;        // precomputed: has upgrade_hand effect (avoids find() in hot DFS path)
   hasCascade:           boolean;        // precomputed: has cascade effect (avoids find() in hot DFS path)
   hasPlayTopAndExhaust: boolean;        // precomputed: has play_top_and_exhaust effect (Havoc)
+  strikeDrawTrigger:    boolean;        // Hellraiser: drawn Strike cards auto-play for free
   effects:     CardEffect[];
   notes:       string;
 }
@@ -119,6 +120,7 @@ export interface CardJson {
   thorns?: number;                      // deal N damage back per enemy hit (e.g. Flame Barrier)
   damagePerBlockGain?: number;          // flat damage per block gain event this turn (e.g. Grapple)
   playTopAndExhaust?: boolean;          // play and exhaust the top card of draw pile (e.g. Havoc)
+  strikeDrawTrigger?: boolean;          // Hellraiser: drawn Strike cards auto-play for free
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -186,6 +188,7 @@ function jsonToCard(c: CardJson): Card {
     hasUpgradeHand:   effects.some(e => e.type === "upgrade_hand"),
     hasCascade:           effects.some(e => e.type === "cascade"),
     hasPlayTopAndExhaust: effects.some(e => e.type === "play_top_and_exhaust"),
+    strikeDrawTrigger:    c.strikeDrawTrigger ?? false,
     effects,
     notes:       c.notes       ?? "",
   };
