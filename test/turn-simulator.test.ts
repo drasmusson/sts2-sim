@@ -372,3 +372,33 @@ test("expect a fight: counts all attacks in hand after card is removed", () => {
   assert.ok(result.played.includes("bludgeon"));
   assert.equal(result.totalDamage, 32);
 });
+
+// ─── Havoc ────────────────────────────────────────────────────────────────────
+
+test("havoc: plays and exhausts top card from draw pile", () => {
+  const db: CardDb = {
+    havoc:  makeCard({ type: "skill", cost: 1, hasPlayTopAndExhaust: true, effects: [{ type: "play_top_and_exhaust" }] }),
+    strike: makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // Havoc in hand, Strike on top of draw pile — plays Strike for free
+  const result = simulateTurn(["havoc"], ["strike"], [], db, basePlayer, 1, "dmg");
+  assert.deepEqual(result.played, ["havoc"]);
+  assert.equal(result.totalDamage, 6);
+  assert.ok(result.exhaustPile.includes("strike"));
+});
+
+test("havoc + fiend fire: exhausts all 9 remaining hand cards", () => {
+  const db: CardDb = {
+    havoc:      makeCard({ type: "skill", cost: 1, hasPlayTopAndExhaust: true, effects: [{ type: "play_top_and_exhaust" }] }),
+    "fiend fire": makeCard({ type: "attack", cost: 1, selfExhaust: true, effects: [fx.exhaustHand(-1, { damagePerCard: 7 })] }),
+    strike:     makeCard({ cost: 1, effects: [fx.damage(6)] }),
+  };
+  // 10-card hand: Havoc + 9 Strikes. Fiend Fire on top of draw pile.
+  // Play Havoc (1 energy) → Fiend Fire exhausts the 9 remaining Strikes → 9×7=63 damage.
+  const hand = ["havoc", "strike", "strike", "strike", "strike", "strike", "strike", "strike", "strike", "strike"];
+  const result = simulateTurn(hand, ["fiend fire"], [], db, basePlayer, 1, "dmg");
+  assert.deepEqual(result.played, ["havoc"]);
+  assert.equal(result.totalDamage, 63);
+  assert.equal(result.exhaustPile.filter(c => c === "strike").length, 9);
+  assert.ok(result.exhaustPile.includes("fiend fire"));
+});

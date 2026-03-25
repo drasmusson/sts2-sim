@@ -370,6 +370,33 @@ function dfs(
         nextPlayer    = applyCardState(nextPlayer, havocCard);
         runningDamage += havocVals.damage + (havocVals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
         runningBlock  += havocVals.block;
+
+        // Handle exhaust_hand on the havoc-played card (e.g. Fiend Fire exhausts all hand cards).
+        // Only the deterministic "exhaust all" case (count === -1) is handled here; branching
+        // exhaust-N cards played via Havoc are not modelled.
+        const havocExHandEff = havocCard.effects.find(e => e.type === "exhaust_hand") as
+          Extract<CardEffect, { type: "exhaust_hand" }> | undefined;
+        if (havocExHandEff && havocExHandEff.count === -1) {
+          const candidates = nextHand.filter(n =>
+            havocExHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
+          );
+          let exhaustCount = 0;
+          for (const c of candidates) {
+            const ci = nextHand.indexOf(c);
+            nextHand = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
+            const er = applyExhaustEvent(c, nextExhaustPile, nextPlayer);
+            nextExhaustPile = er.exhaustPile;
+            nextPlayer      = er.player;
+            runningBlock   += er.blockGained;
+            if (er.blockGained > 0) runningDamage += nextPlayer.damagePerBlockGain;
+            exhaustCount++;
+            const de = applyDarkEmbraceDraws(nextHand, nextDrawPile, nextDiscardPile, nextPlayer);
+            nextHand = de.hand; nextDrawPile = de.drawPile; nextDiscardPile = de.discardPile;
+          }
+          runningDamage += havocExHandEff.damagePerCard * exhaustCount;
+          runningBlock  += havocExHandEff.blockPerCard  * exhaustCount;
+        }
+
         // Force the played card to exhaust regardless of its type
         const havocPost = resolvePostExhaust(havocName, { ...havocCard, selfExhaust: true }, {
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
