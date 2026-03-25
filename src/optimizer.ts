@@ -142,6 +142,10 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
           block += (player.enemyAttack - Math.floor(player.enemyAttack * (1 - eff.fraction))) * player.enemyHits;
         }
         break;
+      case "thorns":
+        // Retaliation damage per enemy hit; only scored when --enemy-attack is set.
+        if (player.enemyAttack > 0) damage += eff.amount * player.enemyHits;
+        break;
       case "damage_per_vuln_stack":
         damage += eff.amount * player.vulnerableStacks;
         break;

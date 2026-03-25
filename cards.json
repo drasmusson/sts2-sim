@@ -628,6 +628,17 @@
     }
   },
   {
+    "name": "Flame Barrier",
+    "type": "skill",
+    "cost": 2,
+    "block": 12,
+    "thorns": 4,
+    "upgraded": {
+      "block": 16,
+      "thorns": 6
+    }
+  },
+  {
     "name": "Drum of Battle",
     "type": "power",
     "cost": 0,
