@@ -24,16 +24,20 @@ export function makeCard(overrides: Partial<Card>): Card {
     energyPerAttackInHand: false,
     blocksFutureDraws: false,
     skillsFreeExhaust: false,
-    hasDiscardToDraw: false,
-    hasUpgradeHand: false,
+    hasDiscardToDraw:     false,
+    hasUpgradeHand:       false,
+    hasCascade:           false,
+    hasPlayTopAndExhaust: false,
     effects: [] as CardEffect[],
     notes: "",
     ...overrides,
   };
   // Ensure flags are always consistent with the effects array, even when only
   // effects are overridden (e.g. makeCard({ effects: [fx.discardToDraw(1)] }))
-  card.hasDiscardToDraw = card.effects.some(e => e.type === "discard_to_draw");
-  card.hasUpgradeHand   = card.effects.some(e => e.type === "upgrade_hand");
+  card.hasDiscardToDraw     = card.effects.some(e => e.type === "discard_to_draw");
+  card.hasUpgradeHand       = card.effects.some(e => e.type === "upgrade_hand");
+  card.hasCascade           = card.effects.some(e => e.type === "cascade");
+  card.hasPlayTopAndExhaust = card.effects.some(e => e.type === "play_top_and_exhaust");
   return card;
 }
 

@@ -39,7 +39,8 @@ export type CardEffect =
   | { type: "damage_per_attack_played";      amount: number }      // +N damage per attack played this turn before this card
   | { type: "vuln_mult_bonus";              amount: number }      // increase vulnerable damage multiplier by amount (e.g. Cruelty)
   | { type: "thorns";                       amount: number }      // deal N damage back per enemy hit; requires --enemy-attack to score
-  | { type: "damage_per_block_gain";        amount: number };    // Grapple passive: deal N flat damage per block gain event this turn
+  | { type: "damage_per_block_gain";        amount: number }     // Grapple passive: deal N flat damage per block gain event this turn
+  | { type: "play_top_and_exhaust" };                           // Havoc: play and exhaust the top card of the draw pile
 
 export interface Card {
   type:        CardType;
@@ -53,7 +54,8 @@ export interface Card {
   skillsFreeExhaust: boolean;       // when played: all skills cost 0 and exhaust for the rest of the turn (e.g. Corruption)
   hasDiscardToDraw: boolean;        // precomputed: has discard_to_draw effect (avoids find() in hot DFS path)
   hasUpgradeHand:   boolean;        // precomputed: has upgrade_hand effect (avoids find() in hot DFS path)
-  hasCascade:       boolean;        // precomputed: has cascade effect (avoids find() in hot DFS path)
+  hasCascade:           boolean;        // precomputed: has cascade effect (avoids find() in hot DFS path)
+  hasPlayTopAndExhaust: boolean;        // precomputed: has play_top_and_exhaust effect (Havoc)
   effects:     CardEffect[];
   notes:       string;
 }
@@ -116,6 +118,7 @@ export interface CardJson {
   vulnMultBonus?: number;               // increase vulnerable damage multiplier by this amount (e.g. Cruelty base: 0.25, upgraded: 0.5)
   thorns?: number;                      // deal N damage back per enemy hit (e.g. Flame Barrier)
   damagePerBlockGain?: number;          // flat damage per block gain event this turn (e.g. Grapple)
+  playTopAndExhaust?: boolean;          // play and exhaust the top card of draw pile (e.g. Havoc)
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -167,6 +170,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.vulnMultBonus)              effects.push({ type: "vuln_mult_bonus",                amount: c.vulnMultBonus });
   if (c.thorns)                     effects.push({ type: "thorns",                         amount: c.thorns });
   if (c.damagePerBlockGain)         effects.push({ type: "damage_per_block_gain",           amount: c.damagePerBlockGain });
+  if (c.playTopAndExhaust)          effects.push({ type: "play_top_and_exhaust" });
 
   return {
     type:        c.type,
@@ -180,7 +184,8 @@ function jsonToCard(c: CardJson): Card {
     skillsFreeExhaust: c.skillsFreeExhaust ?? false,
     hasDiscardToDraw: effects.some(e => e.type === "discard_to_draw"),
     hasUpgradeHand:   effects.some(e => e.type === "upgrade_hand"),
-    hasCascade:       effects.some(e => e.type === "cascade"),
+    hasCascade:           effects.some(e => e.type === "cascade"),
+    hasPlayTopAndExhaust: effects.some(e => e.type === "play_top_and_exhaust"),
     effects,
     notes:       c.notes       ?? "",
   };

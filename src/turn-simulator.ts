@@ -360,6 +360,33 @@ function dfs(
       }
     }
 
+    // ── Havoc: play and exhaust the top card of the draw pile ────────────────
+    if (card.hasPlayTopAndExhaust && nextDrawPile.length > 0) {
+      const havocName = nextDrawPile[nextDrawPile.length - 1]!;
+      const havocCard = db[havocName];
+      nextDrawPile = nextDrawPile.slice(0, -1);
+      if (havocCard) {
+        const havocVals = cardEffectiveValues(havocCard, { ...nextPlayer, energyRemaining: 0 });
+        nextPlayer    = applyCardState(nextPlayer, havocCard);
+        runningDamage += havocVals.damage + (havocVals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
+        runningBlock  += havocVals.block;
+        // Force the played card to exhaust regardless of its type
+        const havocPost = resolvePostExhaust(havocName, { ...havocCard, selfExhaust: true }, {
+          hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay,
+          player: nextPlayer, block: runningBlock,
+        });
+        nextHand         = havocPost.hand;
+        nextDrawPile     = havocPost.drawPile;
+        nextDiscardPile  = havocPost.discardPile;
+        nextExhaustPile  = havocPost.exhaustPile;
+        nextPowersInPlay = havocPost.powersInPlay;
+        nextPlayer       = havocPost.player;
+        runningBlock     = havocPost.block;
+        effectivePlaysCount++;
+      }
+    }
+
     if (exHandEff && exHandEff.count === -1) {
       // Case B: exhaust ALL matching cards from hand (Fiend Fire, Second Wind) — deterministic
       const candidates = nextHand.filter(n =>

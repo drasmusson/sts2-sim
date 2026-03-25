@@ -628,6 +628,15 @@
     }
   },
   {
+    "name": "Havoc",
+    "type": "skill",
+    "cost": 1,
+    "playTopAndExhaust": true,
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
     "name": "Grapple",
     "type": "attack",
     "cost": 1,
