@@ -98,4 +98,6 @@ export const fx = {
     ({ type: "damage_reduction_if_enemy_vuln", fraction }),
   damagePerAttackPlayed: (amount: number): CardEffect =>
     ({ type: "damage_per_attack_played", amount }),
+  strGainPerVulnStack: (amount: number): CardEffect =>
+    ({ type: "str_gain_per_vuln_stack", amount }),
 };

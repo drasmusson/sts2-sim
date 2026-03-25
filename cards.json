@@ -626,5 +626,15 @@
     "upgraded": {
       "damage": 10
     }
+  },
+  {
+    "name": "Dominate",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "strGainPerVulnStack": 1,
+    "upgraded": {
+      "selfExhaust": false
+    }
   }
 ]

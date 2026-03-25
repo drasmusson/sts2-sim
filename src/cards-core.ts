@@ -31,6 +31,7 @@ export type CardEffect =
   | { type: "block_if_exhausted_turn";  amount: number }   // Evil Eye conditional
   | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
   | { type: "damage_per_vuln_stack";    amount: number }   // Bully: +N dmg per enemy vulnerable stack
+  | { type: "str_gain_per_vuln_stack"; amount: number }   // Dominate: gain N strength per enemy vulnerable stack
   | { type: "str_down";                 amount: number }   // reduce enemy strength by N (modelled as effective block)
   | { type: "energy_if_exhausted_turn"; amount: number }
   | { type: "cascade";                  bonus: number }   // play top (X + bonus) cards from draw pile (X = energy spent)  // gain N energy if any card was exhausted this turn
@@ -104,6 +105,7 @@ export interface CardJson {
   drawIfSelfDamaged?:     number;
   doubleVulnStacks?:      boolean;
   damagePerVulnStack?:    number;
+  strGainPerVulnStack?:   number;   // gain N strength per enemy vulnerable stack (e.g. Dominate)
   strDown?:               number;
   energyIfExhaustedTurn?: number;
   cascade?: number;                 // play top (X + cascade) cards from draw pile; 0 for base, 1 for upgraded
@@ -152,6 +154,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.drawIfSelfDamaged)      effects.push({ type: "draw_if_self_damaged",     amount: c.drawIfSelfDamaged });
   if (c.doubleVulnStacks)       effects.push({ type: "double_vuln_stacks" });
   if (c.damagePerVulnStack)     effects.push({ type: "damage_per_vuln_stack",    amount: c.damagePerVulnStack });
+  if (c.strGainPerVulnStack)    effects.push({ type: "str_gain_per_vuln_stack",  amount: c.strGainPerVulnStack });
   if (c.strDown)                effects.push({ type: "str_down",                 amount: c.strDown });
   if (c.energyIfExhaustedTurn) effects.push({ type: "energy_if_exhausted_turn", amount: c.energyIfExhaustedTurn });
   if (c.cascade !== undefined)  effects.push({ type: "cascade",                  bonus: c.cascade });

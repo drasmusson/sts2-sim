@@ -205,6 +205,31 @@ test("sim plays double_vuln_stacks before damage_per_vuln_stack card", () => {
   assert.equal(result.totalDamage, 29);
 });
 
+test("str_gain_per_vuln_stack: no strength gain when enemy has 0 stacks", () => {
+  const card = makeCard({ type: "skill", effects: [fx.strGainPerVulnStack(1)], selfExhaust: true });
+  const stateAfter = applyCardState(basePlayer, card);
+  assert.equal(stateAfter.strength, 0);
+});
+
+test("str_gain_per_vuln_stack: gains N strength per vulnerable stack", () => {
+  const card = makeCard({ type: "skill", effects: [fx.strGainPerVulnStack(1)], selfExhaust: true });
+  const stateAfter = applyCardState({ ...basePlayer, vulnerableStacks: 3 }, card);
+  assert.equal(stateAfter.strength, 3);
+});
+
+test("sim plays str_gain_per_vuln_stack card before attacks to maximise damage", () => {
+  // Dominate-like (cost 1, exhausts) with 2 vuln stacks → +2 strength → Strike: floor((6+2)*1.5)=12
+  // reverse: Strike first → floor(6*1.5)=9, then Dominate gives no further attack
+  const db: CardDb = {
+    dominate: makeCard({ type: "skill", effects: [fx.strGainPerVulnStack(1)], cost: 1, selfExhaust: true }),
+    strike:   makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  };
+  const result = simulateTurn(["dominate", "strike"], [], [], db, { ...basePlayer, vulnerableStacks: 2 }, 2, "dmg");
+  assert.equal(result.played[0], "dominate");
+  assert.equal(result.played[1], "strike");
+  assert.equal(result.totalDamage, 12);  // floor((6+2)*1.5) = 12
+});
+
 test("card with damage and block: both values returned", () => {
   const card = makeCard({ effects: [fx.damage(5), fx.block(5)] });
   const { damage, block } = cardEffectiveValues(card, basePlayer);

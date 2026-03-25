@@ -169,6 +169,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
       case "str_gain":
         next = { ...next, strength: next.strength + eff.amount };
         break;
+      case "str_gain_per_vuln_stack":
+        next = { ...next, strength: next.strength + eff.amount * next.vulnerableStacks };
+        break;
       case "vuln":
         next = { ...next, vulnerableStacks: next.vulnerableStacks + eff.amount };
         break;
