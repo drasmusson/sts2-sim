@@ -13,14 +13,18 @@
 - ✅ Step-by-step turn simulator — DFS over live TurnState replaces subset enumeration + bonus pool pre-sampling; correctly handles deep draw chains, energy feedback loops, and infinite combos
 - ✅ Infinite combo detection — play-count threshold with early exit; `[INFINITE COMBO]` shown in best play and top plays output
 - ✅ Interactive web app — Vite + Web Worker, hosted on GitHub Pages; card autocomplete, SVG charts, full player state controls
+- ✅ Starting decks — presets for Ironclad, Silent, Defect; `--character` CLI flag + web UI dropdown
+- ✅ Add powers played to a separate pile "powers in play", separate from both discard and exhaust.
 
 ### Up Next
-- ✅ Starting decks — presets for Ironclad, Silent, Defect; `--character` CLI flag + web UI dropdown
-- ⬜ Add powers played to a separate pile "powers in play", separate from both discard and exhaust.
 - ⬜ Multi-copy input — easier way to add multiple of the same card (e.g. `Strike ×3`) in the web UI
 - ⬜ UI improvements — general polish, layout, usability
 - ⬜ Config file — save deck setups and run with `--config deck.json`
 - ⬜ Custom cards — define cards inline via CLI or config with arbitrary stat overrides; workaround for specific card instances (enchanted cards, Genetic Algorithm, etc.) without needing a full instance model
+
+### Bugs to fix
+- ⬜ 0 damage in block mode is displayed as "NaN" under Most Common Optimal Plays in the GUI.
+- ⬜ Cards added recently is not shown in the autocomplete in the GUI. Example: Infernal Blade.
 
 ### Per-character support
 - ⬜ **Ironclad** — full card coverage in `cards.csv`; exhaust support and synergy; vulnerable stacking synergy;
