@@ -628,6 +628,16 @@
     }
   },
   {
+    "name": "Drum of Battle",
+    "type": "power",
+    "cost": 0,
+    "draw": 2,
+    "notes": "not modelled: exhausts top card of draw pile at start of each turn",
+    "upgraded": {
+      "draw": 3
+    }
+  },
+  {
     "name": "Dominate",
     "type": "skill",
     "cost": 1,
