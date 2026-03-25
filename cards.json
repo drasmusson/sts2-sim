@@ -686,5 +686,15 @@
     "upgraded": {
       "selfExhaust": false
     }
+  },
+  {
+    "name": "Infernal Blade",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "generateRandomAttack": true,
+    "upgraded": {
+      "cost": 0
+    }
   }
 ]

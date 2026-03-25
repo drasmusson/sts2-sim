@@ -26,6 +26,8 @@ interface TurnState {
   powersInPlay: string[];
   player:       PlayerState;
   playsCount:   number;    // cards played so far in this branch
+  generatedAttacks:   string[];  // pre-sampled attack pool for Infernal Blade plays this sim
+  generatedAttackIdx: number;    // next index into generatedAttacks
 }
 
 function primary(mode: Mode, r: TurnResult)   { return mode === "dmg" ? r.totalDamage : r.totalBlock; }
@@ -107,6 +109,8 @@ interface PostExhaustState {
   player:          PlayerState;
   block:           number;
   hellraiserDamage: number;  // damage accumulated from Hellraiser auto-plays this call
+  generatedAttacks:   string[];  // pre-sampled attack pool (passed through, not modified here except idx)
+  generatedAttackIdx: number;    // next index into generatedAttacks
 }
 
 // The sequence draw → exhaust-from-draw → route-played-card is identical across
@@ -177,6 +181,19 @@ function resolvePostExhaust(
     discardPile = [...discardPile, cardName];
   }
 
+  // 3.5. Generate random attack (Infernal Blade): add pre-sampled attack to hand, mark it free.
+  // Randomness is resolved before the DFS (pre-sampled in runOneSim); no branching here.
+  let generatedAttackIdx = s.generatedAttackIdx;
+  if (card.generatesRandomAttack && s.generatedAttacks.length > 0) {
+    const HAND_LIMIT = 10;
+    if (hand.length < HAND_LIMIT) {
+      const generated = s.generatedAttacks[generatedAttackIdx % s.generatedAttacks.length]!;
+      hand   = [...hand, generated];
+      player = { ...player, freeGeneratedCard: generated };
+    }
+    generatedAttackIdx++;
+  }
+
   // 4. Route played card to exhaust, powers-in-play, or discard
   if (card.selfExhaust || (card.type === "skill" && player.corruptionActive)) {
     const er = applyExhaustEvent(cardName, exhaustPile, player);
@@ -195,7 +212,8 @@ function resolvePostExhaust(
     discardPile = [...discardPile, cardName];
   }
 
-  return { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block, hellraiserDamage };
+  return { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block, hellraiserDamage,
+           generatedAttacks: s.generatedAttacks, generatedAttackIdx };
 }
 
 // Applies discard_to_draw effect (if any): branches on each unique card in discard,
@@ -220,7 +238,8 @@ function resolveDiscardToDraw(
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
         discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-        powersInPlay: post.powersInPlay, player: post.player, playsCount },
+        powersInPlay: post.powersInPlay, player: post.player, playsCount,
+        generatedAttacks: post.generatedAttacks, generatedAttackIdx: post.generatedAttackIdx },
       card, db, mode, played, damage + post.hellraiserDamage, post.block, initialEnergy, best, threshold,
     );
     return;
@@ -239,7 +258,8 @@ function resolveDiscardToDraw(
     dfsWithUpgrade(
       { energy: nextEnergy, hand: post.hand, drawPile: post.drawPile,
         discardPile: post.discardPile, exhaustPile: post.exhaustPile,
-        powersInPlay: post.powersInPlay, player: post.player, playsCount },
+        powersInPlay: post.powersInPlay, player: post.player, playsCount,
+        generatedAttacks: post.generatedAttacks, generatedAttackIdx: post.generatedAttackIdx },
       card, db, mode, played, damage + post.hellraiserDamage, post.block, initialEnergy, best, threshold,
     );
   }
@@ -330,8 +350,9 @@ function dfs(
     if (tried.has(name)) continue;
     const card = db[name];
     if (!card) continue;
-    const effectiveCost = (card.type === "attack" && state.player.nextAttackFree) || (card.type === "skill" && state.player.corruptionActive)
-      ? 0
+    const effectiveCost =
+      name === state.player.freeGeneratedCard ? 0  // generated card is always free (Infernal Blade)
+      : (card.type === "attack" && state.player.nextAttackFree) || (card.type === "skill" && state.player.corruptionActive) ? 0
       : card.costReductionPerAttack > 0
         ? Math.max(0, card.cost - state.player.attacksPlayedThisTurn * card.costReductionPerAttack)
         : card.cost;
@@ -351,6 +372,8 @@ function dfs(
     // Update player state (strength, vulnerable, block, energy gain, Feel No Pain, etc.)
     // applyCardState adds card.energyGain to energyRemaining — deduct cost afterwards
     let nextPlayer = applyCardState({ ...state.player, energyRemaining: state.energy }, card);
+    // Consume freeGeneratedCard when the matching card is played
+    if (name === state.player.freeGeneratedCard) nextPlayer = { ...nextPlayer, freeGeneratedCard: null };
     const attackBonus = card.energyPerAttackInHand
       ? nextHand.filter(n => db[n]?.type === "attack").length
       : 0;
@@ -361,6 +384,7 @@ function dfs(
     let nextExhaustPile  = state.exhaustPile;
     let nextPowersInPlay = state.powersInPlay;
     let runningBlock    = block + vals.block;
+    let runningGeneratedIdx = state.generatedAttackIdx;
     let runningDamage   = damage + vals.damage
                         + (vals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
 
@@ -393,15 +417,17 @@ function dfs(
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay,
           player: nextPlayer, block: runningBlock, hellraiserDamage: 0,
+          generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
         }, db);
-        nextHand         = cascadePost.hand;
-        nextDrawPile     = cascadePost.drawPile;
-        nextDiscardPile  = cascadePost.discardPile;
-        nextExhaustPile  = cascadePost.exhaustPile;
-        nextPowersInPlay = cascadePost.powersInPlay;
-        nextPlayer       = cascadePost.player;
-        runningBlock     = cascadePost.block;
-        runningDamage   += cascadePost.hellraiserDamage;
+        nextHand            = cascadePost.hand;
+        nextDrawPile        = cascadePost.drawPile;
+        nextDiscardPile     = cascadePost.discardPile;
+        nextExhaustPile     = cascadePost.exhaustPile;
+        nextPowersInPlay    = cascadePost.powersInPlay;
+        nextPlayer          = cascadePost.player;
+        runningBlock        = cascadePost.block;
+        runningDamage      += cascadePost.hellraiserDamage;
+        runningGeneratedIdx = cascadePost.generatedAttackIdx;
         effectivePlaysCount++;
       }
     }
@@ -432,6 +458,7 @@ function dfs(
             hand: bHand, drawPile: bDrawPile, discardPile: bDiscardPile,
             exhaustPile: bExhaustPile, powersInPlay: nextPowersInPlay, player: bPlayer, block: bBlock,
             hellraiserDamage: 0,
+            generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
           }, db);
           resolveDiscardToDraw(
             name, card, havocPost, nextEnergy, effectivePlaysCount,
@@ -513,6 +540,7 @@ function dfs(
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
           hellraiserDamage: 0,
+          generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
         }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       }
       continue; // All sub-cases have called resolveDiscardToDraw; skip exHandEff routing below
@@ -546,6 +574,7 @@ function dfs(
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
         hellraiserDamage: 0,
+        generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
       }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
 
     } else if (exHandEff && exHandEff.count > 0) {
@@ -561,6 +590,7 @@ function dfs(
           hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
           hellraiserDamage: 0,
+          generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
         }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       } else {
         // Branch on each unique exhaust choice
@@ -588,6 +618,7 @@ function dfs(
             hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
             exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
             hellraiserDamage: 0,
+            generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
           }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
         }
       }
@@ -598,6 +629,7 @@ function dfs(
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
         hellraiserDamage: 0,
+        generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
       }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
     }
   }
@@ -613,6 +645,7 @@ export function simulateTurn(
   mode:                Mode,
   initialExhaustPile:  string[] = [],
   initialPowersInPlay: string[] = [],
+  generatedAttacks:    string[] = [],  // pre-sampled pool for Infernal Blade plays this sim
 ): TurnResult {
   // If Hellraiser is already in play (previous turn), auto-play any Strikes in the initial hand.
   // In STS, these would have fired during the draw phase before the turn begins.
@@ -644,7 +677,8 @@ export function simulateTurn(
   dfs(
     { energy, hand: startHand, drawPile: [...drawPile], discardPile: startDiscard,
       exhaustPile: [...initialExhaustPile], powersInPlay: [...initialPowersInPlay],
-      player: startPlayer, playsCount: 0 },
+      player: startPlayer, playsCount: 0,
+      generatedAttacks, generatedAttackIdx: 0 },
     db, mode, [], startDamage, 0, energy, best, threshold,
   );
 

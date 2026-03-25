@@ -182,6 +182,7 @@ const player: PlayerState = {
   corruptionActive: false,
   vulnMultBonus: 0,
   hellraiserActive: false,
+  freeGeneratedCard: null,
 };
 
 if (!drawPile.length) {

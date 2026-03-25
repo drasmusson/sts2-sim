@@ -12,6 +12,7 @@ export const basePlayer: PlayerState = {
   corruptionActive: false,
   vulnMultBonus: 0,
   hellraiserActive: false,
+  freeGeneratedCard: null,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -30,6 +31,7 @@ export function makeCard(overrides: Partial<Card>): Card {
     hasCascade:           false,
     hasPlayTopAndExhaust: false,
     strikeDrawTrigger:    false,
+    generatesRandomAttack: false,
     effects: [] as CardEffect[],
     notes: "",
     ...overrides,

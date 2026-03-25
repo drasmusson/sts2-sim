@@ -69,7 +69,17 @@ export function runOneSim(config: Config): SimResult {
     }
   }
 
-  const play = simulateTurn(hand, remainingDraw, remainingDiscard, patchedDb, player, totalEnergy, mode);
+  // Pre-sample generated attacks for Infernal Blade plays this sim.
+  // Randomness is resolved here (Monte Carlo layer) so the DFS never branches on it.
+  const attackPool = Object.keys(patchedDb).filter(
+    n => patchedDb[n]!.type === "attack" && !n.endsWith("+"));
+  const ibCount = [...hand, ...remainingDraw].filter(n => patchedDb[n]?.generatesRandomAttack).length;
+  const generatedAttacks = attackPool.length > 0
+    ? Array.from({ length: Math.max(ibCount, 1) + 5 }, () =>
+        attackPool[Math.floor(Math.random() * attackPool.length)]!)
+    : [];
+
+  const play = simulateTurn(hand, remainingDraw, remainingDiscard, patchedDb, player, totalEnergy, mode, [], [], generatedAttacks);
   return { hand, damage: play.totalDamage, block: play.totalBlock, play };
 }
 

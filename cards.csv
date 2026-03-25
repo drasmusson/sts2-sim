@@ -1,4 +1,4 @@
-Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Block As Damage,X Cost,Self Exhaust,Exhaust Hand Count,Exhaust Hand Type,Exhaust Hand Choice,Exhaust Draw Count,Block Per Exhaust Event,Block If Exhausted Turn,Damage Per Exhausted Hand,Block Per Exhausted Hand,Upgrade Hand Count,Fetch Discard Count,Copy To Discard,Self Damage,Damage Per Self Damage,Damage If Self Damaged,Double Vuln Stacks,Damage Per Vuln Stack,Notes
+Card Name,Type,Cost,Damage,Block,Draw,Energy Gain,Str Gain,Vuln Applied,Weak Applied,Poison,Doom,Orb Type,Orb Count,Hits,Exhaust Bonus,Block As Damage,X Cost,Self Exhaust,Exhaust Hand Count,Exhaust Hand Type,Exhaust Hand Choice,Exhaust Draw Count,Block Per Exhaust Event,Block If Exhausted Turn,Damage Per Exhausted Hand,Block Per Exhausted Hand,Upgrade Hand Count,Fetch Discard Count,Copy To Discard,Self Damage,Damage Per Self Damage,Damage If Self Damaged,Double Vuln Stacks,Damage Per Vuln Stack,Notes,Generate Random Attack
 Strike,Attack,1,6,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 Strike+,Attack,1,9,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 Defend,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -100,4 +100,6 @@ Evil Eye+,Skill,1,0,11,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,11,0,0,0,0,0,0,0,0,0,
 Feel No Pain,Power,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,3,0,0,0,0,0,0,0,0,0,0,0,
 Feel No Pain+,Power,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,4,0,0,0,0,0,0,0,0,0,0,0,
 Armaments,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,1,0,0,0,0,0,0,0,upgrade 1 card in hand
-Armaments+,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,upgrade ALL cards in hand
+Armaments+,Skill,1,0,5,0,0,0,0,0,0,0,,0,1,0,0,0,0,0,,0,0,0,0,0,0,-1,0,0,0,0,0,0,0,upgrade ALL cards in hand,
+Infernal Blade,Skill,1,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,1,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,,1
+Infernal Blade+,Skill,0,0,0,0,0,0,0,0,0,0,,0,1,0,0,0,1,0,,0,0,0,0,0,0,0,0,0,0,0,0,0,0,,1

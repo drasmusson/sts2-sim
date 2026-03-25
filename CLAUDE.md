@@ -96,6 +96,15 @@ Applying Weak to the enemy reduces their incoming damage by 25%, but the sim has
 ### Card instances vs card types
 Currently the sim uses type-based card lookup (one row in CSV = one card type). The plan is to move to an instance-based model where each copy of a card in the deck can have its own stat overrides (cost, damage, block, play twice, etc.). This is required to support enchantments and variable-stat cards like Genetic Algorithm.
 
+### Infernal Blade: random card generation
+Infernal Blade (skill, cost 1 / 0 upgraded, self-exhaust) adds a random attack to hand that is free to play this turn. Two design decisions:
+
+**Randomness:** The generated attack is pre-sampled *before* the DFS, in `runOneSim` in `mc.ts`. The DFS sees a fixed card — no branching on the random outcome. Across 10,000 sims, the distribution of generated cards is naturally captured. This mirrors how shuffling works: randomness in the Monte Carlo layer, determinism in the DFS layer. The pre-sampled pool is stored in `TurnState.generatedAttacks` and consumed via `generatedAttackIdx`.
+
+**"Free this turn":** The generated card is tracked by name in `PlayerState.freeGeneratedCard`. The DFS cost check gives it 0 cost regardless of when it's played in the sequence (IB → other cards → generated card still free). The flag is cleared when that card name is played.
+
+Known approximation: if the generated card has the same name as an existing card in hand (e.g., IB generates Strike and Strike is already there), the DFS cannot distinguish which instance is the free one. The first card of that name played takes the free — which may not be the generated copy. Acceptable until instance-based card tracking is implemented.
+
 ### DFS branching: exhaust vs discard from hand
 The DFS has three branches for `exhaust_hand`: count === -1 (exhaust all), count > 0 (exhaust N), and no exhaust. When Silent discard-from-hand cards are added, the same three-branch pattern will appear for `discard_hand`. At that point, generalize both into a single "remove cards from hand" effect with a `destination: "exhaust" | "discard"` field so the DFS handles both with one code path. Don't do this before the first discard card exists — the right shape will be clearer once there's a real case to design against.
 
