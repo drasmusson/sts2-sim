@@ -3,7 +3,7 @@ import { PlayerState } from "../src/optimizer.js";
 
 export const basePlayer: PlayerState = {
   strength: 0, vulnerableStacks: 0, weak: false, frail: false, focus: 0, poisonTriggers: 1,
-  exhaust: 0, blockPerExhaustEvent: 0, drawPerExhaustEvent: 0, exhaustedThisTurn: false,
+  exhaust: 0, blockPerExhaustEvent: 0, drawPerExhaustEvent: 0, damagePerBlockGain: 0, exhaustedThisTurn: false,
   currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false, enemyStrength: 0,
   selfDamageThisTurn: 0,
   attacksPlayedThisTurn: 0,

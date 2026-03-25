@@ -171,6 +171,7 @@ const player: PlayerState = {
   exhaust:              parseIntArg(args.exhaust, 0),
   blockPerExhaustEvent: 0,
   drawPerExhaustEvent:  0,
+  damagePerBlockGain:   0,
   exhaustedThisTurn:    false,
   currentBlock:         0,
   energyRemaining:      0,

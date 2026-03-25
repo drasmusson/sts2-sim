@@ -316,7 +316,8 @@ function dfs(
     let nextExhaustPile  = state.exhaustPile;
     let nextPowersInPlay = state.powersInPlay;
     let runningBlock    = block + vals.block;
-    let runningDamage   = damage + vals.damage;
+    let runningDamage   = damage + vals.damage
+                        + (vals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
 
     // ── Exhaust from hand ─────────────────────────────────────────────────────
     const exHandEff = card.effects.find(e => e.type === "exhaust_hand") as
@@ -340,7 +341,7 @@ function dfs(
         // Score and apply state (energyRemaining=0 means "not tracking" — card is free)
         const cascadeVals = cardEffectiveValues(cascadeCard, { ...nextPlayer, energyRemaining: 0 });
         nextPlayer     = applyCardState(nextPlayer, cascadeCard);
-        runningDamage += cascadeVals.damage;
+        runningDamage += cascadeVals.damage + (cascadeVals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
         runningBlock  += cascadeVals.block;
         // Resolve draw, exhaust-from-draw, and route cascaded card to discard/exhaust/powers
         const cascadePost = resolvePostExhaust(cascadeName, cascadeCard, {
@@ -372,6 +373,7 @@ function dfs(
         nextExhaustPile = er.exhaustPile;
         nextPlayer      = er.player;
         runningBlock   += er.blockGained;
+        if (er.blockGained > 0) runningDamage += nextPlayer.damagePerBlockGain;
         exhaustCount++;
         const de = applyDarkEmbraceDraws(nextHand, nextDrawPile, nextDiscardPile, nextPlayer);
         nextHand = de.hand; nextDrawPile = de.drawPile; nextDiscardPile = de.discardPile;
@@ -410,6 +412,7 @@ function dfs(
           let cExhaustPile = er.exhaustPile;
           let cPlayer      = er.player;
           let cBlock       = runningBlock + er.blockGained;
+          let cDamage      = runningDamage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
           const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
           cHand = de.hand;
           let cDrawPile    = de.drawPile;
@@ -418,7 +421,7 @@ function dfs(
           resolveDiscardToDraw(name, card, {
             hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
             exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
-          }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
+          }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
         }
       }
 

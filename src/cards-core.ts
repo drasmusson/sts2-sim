@@ -38,7 +38,8 @@ export type CardEffect =
   | { type: "damage_reduction_if_enemy_vuln"; fraction: number }   // take (fraction×100)% less damage when enemy is vulnerable (modelled as effective block)
   | { type: "damage_per_attack_played";      amount: number }      // +N damage per attack played this turn before this card
   | { type: "vuln_mult_bonus";              amount: number }      // increase vulnerable damage multiplier by amount (e.g. Cruelty)
-  | { type: "thorns";                       amount: number };     // deal N damage back per enemy hit; requires --enemy-attack to score
+  | { type: "thorns";                       amount: number }      // deal N damage back per enemy hit; requires --enemy-attack to score
+  | { type: "damage_per_block_gain";        amount: number };    // Grapple passive: deal N flat damage per block gain event this turn
 
 export interface Card {
   type:        CardType;
@@ -114,6 +115,7 @@ export interface CardJson {
   damagePerAttackPlayed?: number;       // +N damage per attack played this turn before this card
   vulnMultBonus?: number;               // increase vulnerable damage multiplier by this amount (e.g. Cruelty base: 0.25, upgraded: 0.5)
   thorns?: number;                      // deal N damage back per enemy hit (e.g. Flame Barrier)
+  damagePerBlockGain?: number;          // flat damage per block gain event this turn (e.g. Grapple)
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -164,6 +166,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.damagePerAttackPlayed)      effects.push({ type: "damage_per_attack_played",       amount: c.damagePerAttackPlayed });
   if (c.vulnMultBonus)              effects.push({ type: "vuln_mult_bonus",                amount: c.vulnMultBonus });
   if (c.thorns)                     effects.push({ type: "thorns",                         amount: c.thorns });
+  if (c.damagePerBlockGain)         effects.push({ type: "damage_per_block_gain",           amount: c.damagePerBlockGain });
 
   return {
     type:        c.type,

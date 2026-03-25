@@ -628,6 +628,17 @@
     }
   },
   {
+    "name": "Grapple",
+    "type": "attack",
+    "cost": 1,
+    "damage": 7,
+    "damagePerBlockGain": 5,
+    "upgraded": {
+      "damage": 9,
+      "damagePerBlockGain": 7
+    }
+  },
+  {
     "name": "Flame Barrier",
     "type": "skill",
     "cost": 2,
