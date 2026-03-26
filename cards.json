@@ -243,6 +243,15 @@
     }
   },
   {
+    "name": "Pyre",
+    "type": "power",
+    "cost": 2,
+    "notes": "Gain 1 energy at the start of each turn",
+    "upgraded": {
+      "notes": "Gain 2 energy at the start of each turn"
+    }
+  },
+  {
     "name": "Inflame",
     "type": "power",
     "cost": 1,
