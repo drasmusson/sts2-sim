@@ -7,6 +7,7 @@ export interface WebConfig {
   drawPile:       string[];
   discardPile:    string[];
   hand?:          string[];
+  powersInPlay?:  string[];
   energy:         number;
   draws:          number;
   mode:           Mode;

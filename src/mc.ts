@@ -2,7 +2,7 @@
 
 import { shuffle, drawCards } from "./draw.js";
 import { CardDb } from "./cards-core.js";
-import { PlayerState, Mode } from "./optimizer.js";
+import { PlayerState, Mode, applyCardState } from "./optimizer.js";
 import { simulateTurn, TurnResult } from "./turn-simulator.js";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -10,15 +10,16 @@ export interface Relic { extraDraw?: number; extraEnergy?: number; randomizeCost
 export interface SimResult { hand: string[]; damage: number; block: number; play: TurnResult; }
 
 export interface Config {
-  drawPile:    string[];
-  discardPile: string[];
-  hand?:       string[];   // cards pre-dealt into hand before the normal draw
-  energy:      number;
-  draws:       number;
-  relics:      string[];
-  db:          CardDb;
-  mode:        Mode;
-  player:      PlayerState;
+  drawPile:     string[];
+  discardPile:  string[];
+  hand?:        string[];          // cards pre-dealt into hand before the normal draw
+  powersInPlay?: string[];         // power cards already in play at turn start
+  energy:       number;
+  draws:        number;
+  relics:       string[];
+  db:           CardDb;
+  mode:         Mode;
+  player:       PlayerState;
 }
 
 export interface Stats { avg: string; p25: number; p50: number; p75: number; min: number; max: number; }
@@ -42,7 +43,13 @@ export const RELICS: Record<string, Relic> = {
 
 // ─── SINGLE SIMULATION ───────────────────────────────────────────────────────
 export function runOneSim(config: Config): SimResult {
-  const { drawPile, discardPile, energy, draws, relics, db, mode, player } = config;
+  const { drawPile, discardPile, energy, draws, relics, db, mode } = config;
+  const powersInPlay = config.powersInPlay ?? [];
+  let player = config.player;
+  for (const name of powersInPlay) {
+    const card = db[name];
+    if (card) player = applyCardState(player, card);
+  }
 
   let extraDraw = 0, extraEnergy = 0, randomizeCosts = false;
   for (const relic of relics) {
@@ -79,7 +86,7 @@ export function runOneSim(config: Config): SimResult {
         attackPool[Math.floor(Math.random() * attackPool.length)]!)
     : [];
 
-  const play = simulateTurn(hand, remainingDraw, remainingDiscard, patchedDb, player, totalEnergy, mode, [], [], generatedAttacks);
+  const play = simulateTurn(hand, remainingDraw, remainingDiscard, patchedDb, player, totalEnergy, mode, [], powersInPlay, generatedAttacks);
   return { hand, damage: play.totalDamage, block: play.totalBlock, play };
 }
 

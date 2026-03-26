@@ -7,6 +7,7 @@ import { STARTING_DECKS, CHARACTER_NAMES } from "../src/characters";
 // ─── STATE ────────────────────────────────────────────────────────────────────
 let cardsJson = "";
 let cardNames: string[] = [];
+let powerCardNames: string[] = [];
 let worker: Worker | null = null;
 
 // ─── LOAD CSV ─────────────────────────────────────────────────────────────────
@@ -16,10 +17,11 @@ async function loadCsv(): Promise<void> {
   cardsJson = await res.text();
   const db = parseJsonDb(cardsJson);
   cardNames = Object.keys(db).sort();
+  powerCardNames = Object.keys(db).filter(n => db[n]!.type === "power").sort();
 }
 
 // ─── AUTOCOMPLETE ─────────────────────────────────────────────────────────────
-function setupAutocomplete(inputEl: HTMLInputElement, listEl: HTMLUListElement): void {
+function setupAutocomplete(inputEl: HTMLInputElement, listEl: HTMLUListElement, names: string[] = cardNames): void {
   inputEl.addEventListener("input", () => {
     const raw = inputEl.value;
     // find the last token (after the last comma)
@@ -28,7 +30,7 @@ function setupAutocomplete(inputEl: HTMLInputElement, listEl: HTMLUListElement):
 
     if (token.length < 1) { listEl.hidden = true; return; }
 
-    const matches = cardNames.filter(n => n.includes(token)).slice(0, 8);
+    const matches = names.filter(n => n.includes(token)).slice(0, 8);
     if (!matches.length) { listEl.hidden = true; return; }
 
     listEl.innerHTML = matches
@@ -99,6 +101,7 @@ function readConfig(): WebConfig {
     drawPile:    parseCardList(d.get("draw")    as string ?? ""),
     discardPile: parseCardList(d.get("discard") as string ?? ""),
     hand:        parseCardList(d.get("hand")    as string ?? ""),
+    powersInPlay: parseCardList(d.get("powers") as string ?? ""),
     energy:      parseInt(d.get("energy")  as string) || 3,
     draws:       Number.isNaN(rawDraws) ? 5 : rawDraws,
     mode:        (d.get("mode") as Mode) ?? "dmg",
@@ -163,10 +166,13 @@ async function init(): Promise<void> {
   const discardAc    = document.getElementById("discard-ac")    as HTMLUListElement;
   const handInput    = document.getElementById("hand-input")    as HTMLInputElement;
   const handAc       = document.getElementById("hand-ac")       as HTMLUListElement;
+  const powersInput  = document.getElementById("powers-input")  as HTMLInputElement;
+  const powersAc     = document.getElementById("powers-ac")     as HTMLUListElement;
 
   setupAutocomplete(drawInput, drawAc);
   setupAutocomplete(discardInput, discardAc);
   setupAutocomplete(handInput, handAc);
+  setupAutocomplete(powersInput, powersAc, powerCardNames);
 
   const characterSelect = document.getElementById("character-select") as HTMLSelectElement;
 

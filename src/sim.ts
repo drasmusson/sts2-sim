@@ -84,7 +84,8 @@ function printResults(results: MCResult, config: Config): void {
   console.log(`  Draw pile   : ${config.drawPile.length} cards — ${summarizePile(config.drawPile)}`);
   console.log(`  Discard     : ${config.discardPile.length} cards — ${summarizePile(config.discardPile)}`);
   console.log(`  Drawing     : ${config.draws} cards  |  Energy: ${config.energy}`);
-  if (config.relics.length) console.log(`  Relics      : ${config.relics.join(", ")}`);
+  if (config.relics.length)      console.log(`  Relics      : ${config.relics.join(", ")}`);
+  if (config.powersInPlay?.length) console.log(`  Powers      : ${config.powersInPlay.join(", ")}`);
   console.log(`  Mode        : ${config.mode === "dmg" ? "Maximize Damage" : "Maximize Block"}`);
 
   const p = config.player;
@@ -156,6 +157,7 @@ const energy      = parseIntArg(args.energy, 3);
 const draws       = parseIntArg(args.draws, 5);
 const mode        = (args.mode === "block" ? "block" : "dmg") as Mode;
 const relics      = parseList(args.relics);
+const powersInPlay = parseList(args.powers);
 
 const player: PlayerState = {
   strength:       parseIntArg(args.strength, 0),
@@ -203,7 +205,11 @@ if (unknown.length) {
   console.warn(`Effective discard pile : ${effectiveDiscard.join(", ") || "(empty)"}`);
 }
 
-const config: Config = { drawPile, discardPile, ...(hand.length ? { hand } : {}), energy, draws, relics, db, mode, player };
+const unknownPowers = powersInPlay.filter(p => !db[p]);
+if (unknownPowers.length)
+  console.warn(`Warning: unknown powers (will be ignored): ${[...new Set(unknownPowers)].join(", ")}`);
+
+const config: Config = { drawPile, discardPile, ...(hand.length ? { hand } : {}), ...(powersInPlay.length ? { powersInPlay } : {}), energy, draws, relics, db, mode, player };
 
 if (args.parallel) {
   const { runMCParallel } = await import("./mc-parallel.js");
