@@ -55,7 +55,7 @@ A played card's effects (including draw) resolve fully before entering the disca
 
 Touch these files in order:
 1. `cards-core.ts` — add to `CardEffect` union + `CardJson` field + `jsonToCard` mapping
-2. `optimizer.ts` — add field to `PlayerState`, handle in `cardEffectiveValues` (fold into base damage like `exhaustBonus`, not as a post-multiplier)
+2. `optimizer.ts` — add field to `PlayerState`, handle in `cardEffectiveValues` — for damage effects, fold into base (like `exhaustBonus`); for block/buff effects, update the relevant output field the same way
 3. `turn-simulator.ts` — compute `nextHand` *before* calling `cardEffectiveValues`; set the new `PlayerState` field inline at that call site
 4. `sim.ts` — initialize the new field to `0` in default PlayerState
 5. `cards.json` — add the card entry
