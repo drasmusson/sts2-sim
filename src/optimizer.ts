@@ -34,6 +34,7 @@ export interface PlayerState {
   blockPerAttackPlayed: number;   // Rage passive: block gained each time an attack is played this turn
   rampageDamageBonus: number;     // Rampage: accumulated +damage from all Rampage plays so far this combat
   strengthPerHpLoss: number;      // Rupture passive: gain this much strength each time you lose HP
+  stampedeCount: number;          // Stampede: number of end-of-turn attack triggers (0 = inactive)
   totalCardsAnywhere: number;     // total cards across all zones (hand+draw+discard+exhaust+powers); set by DFS for Perfected Strike
 }
 
@@ -250,6 +251,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "rupture":
         next = { ...next, strengthPerHpLoss: next.strengthPerHpLoss + eff.amount };
+        break;
+      case "stampede":
+        next = { ...next, stampedeCount: next.stampedeCount + 1 };
         break;
       case "self_damage":
         next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + 1,

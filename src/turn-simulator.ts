@@ -352,6 +352,17 @@ function dfsWithUpgrade(
   }
 }
 
+// Expected damage from Stampede end-of-turn trigger: average damage of one random attack
+// in hand, scored at the current player state. Multiple Stampede copies multiply linearly.
+function stampedeEndOfTurnDamage(hand: string[], energy: number, player: PlayerState, db: CardDb): number {
+  if (player.stampedeCount <= 0) return 0;
+  const attacks = hand.filter(n => db[n]?.type === "attack");
+  if (attacks.length === 0) return 0;
+  const scoredPlayer = { ...player, energyRemaining: energy };
+  const total = attacks.reduce((sum, n) => sum + cardEffectiveValues(db[n]!, scoredPlayer).damage, 0);
+  return Math.floor(total / attacks.length) * player.stampedeCount;
+}
+
 function dfs(
   state:        TurnState,
   db:           CardDb,
@@ -376,9 +387,11 @@ function dfs(
     return;
   }
 
-  // Current state (playing no more cards) is always a valid candidate
+  // Current state (playing no more cards) is always a valid candidate.
+  // Stampede fires at end of turn: expected damage from 1 random remaining attack × copies.
+  const stampedeDmg = stampedeEndOfTurnDamage(state.hand, state.energy, state.player, db);
   const candidate: TurnResult = {
-    played, totalDamage: damage, totalBlock: block, energySpent,
+    played, totalDamage: damage + stampedeDmg, totalBlock: block, energySpent,
     infinite: false, exhaustPile: state.exhaustPile, powersInPlay: state.powersInPlay,
   };
   if (isBetter(candidate, best.result, mode)) best.result = candidate;

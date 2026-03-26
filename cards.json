@@ -167,6 +167,7 @@
     "type": "skill",
     "cost": 1,
     "block": 8,
+    "draw": 1,
     "upgraded": {
       "block": 11
     }
@@ -798,6 +799,15 @@
     "rupture": 1,
     "upgraded": {
       "rupture": 2
+    }
+  },
+  {
+    "name": "Stampede",
+    "type": "power",
+    "cost": 2,
+    "stampede": true,
+    "upgraded": {
+      "cost": 1
     }
   },
   {

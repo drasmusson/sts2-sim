@@ -19,6 +19,7 @@ export const basePlayer: PlayerState = {
   rampageDamageBonus: 0,
   totalCardsAnywhere: 0,
   strengthPerHpLoss: 0,
+  stampedeCount: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -124,4 +125,6 @@ export const fx = {
     ({ type: "draw_until_non_attack" }),
   rampageBonus: (amount: number): CardEffect =>
     ({ type: "rampage_bonus", amount }),
+  stampede: (): CardEffect =>
+    ({ type: "stampede" }),
 };
