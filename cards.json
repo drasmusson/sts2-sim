@@ -727,6 +727,16 @@
     "notes": "upgrade: innate (not modelled — add to hand manually)"
   },
   {
+    "name": "Pact's End",
+    "type": "attack",
+    "cost": 0,
+    "damage": 17,
+    "minExhaustToPlay": 3,
+    "upgraded": {
+      "damage": 23
+    }
+  },
+  {
     "name": "One-Two Punch",
     "type": "skill",
     "cost": 1,

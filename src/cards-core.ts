@@ -61,6 +61,7 @@ export interface Card {
   generatesRandomAttack: boolean;       // Infernal Blade: add a random attack to hand, free this turn
   copyAttackOnN:        number;         // Juggling: 0 = inactive; N = copy the Nth attack to hand
   doubleNextAttacks:    number;         // One-Two Punch: N next attacks played this turn trigger twice
+  minExhaustToPlay:     number;         // Pact's End: 0 = no requirement; N = exhaust pile must have ≥N cards
   effects:     CardEffect[];
   notes:       string;
 }
@@ -129,6 +130,7 @@ export interface CardJson {
   generateRandomAttack?: boolean;       // Infernal Blade: add a random attack to hand, free this turn
   copyAttackOnN?: number;               // Juggling: add a copy of the Nth attack played to hand
   doubleNextAttacks?: number;           // One-Two Punch: next N attacks play twice
+  minExhaustToPlay?:  number;           // Pact's End: minimum exhaust pile size required to play
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -201,6 +203,7 @@ function jsonToCard(c: CardJson): Card {
     generatesRandomAttack: c.generateRandomAttack ?? false,
     copyAttackOnN:        c.copyAttackOnN ?? 0,
     doubleNextAttacks:    c.doubleNextAttacks ?? 0,
+    minExhaustToPlay:     c.minExhaustToPlay ?? 0,
     effects,
     notes:       c.notes       ?? "",
   };

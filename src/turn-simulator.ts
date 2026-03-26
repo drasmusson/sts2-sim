@@ -376,6 +376,7 @@ function dfs(
         ? Math.max(0, card.cost - state.player.attacksPlayedThisTurn * card.costReductionPerAttack)
         : card.cost;
     if (!card.xCost && effectiveCost > state.energy) continue;
+    if (card.minExhaustToPlay > 0 && state.player.exhaust < card.minExhaustToPlay) continue;
     tried.add(name);
 
     const cardCost = card.xCost ? state.energy : effectiveCost;

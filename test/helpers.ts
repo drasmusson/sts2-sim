@@ -36,6 +36,7 @@ export function makeCard(overrides: Partial<Card>): Card {
     generatesRandomAttack: false,
     copyAttackOnN:        0,
     doubleNextAttacks:    0,
+    minExhaustToPlay:     0,
     effects: [] as CardEffect[],
     notes: "",
     ...overrides,
