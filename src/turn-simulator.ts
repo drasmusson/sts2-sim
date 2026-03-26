@@ -408,6 +408,12 @@ function dfs(
     const idx = state.hand.indexOf(name);
     let nextHand         = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
 
+    // Primal Force: replace all attack cards in hand with the target card
+    if (card.transformAttacksToCard) {
+      const target = card.transformAttacksToCard;
+      nextHand = nextHand.map(n => (db[n]?.type === "attack" ? target : n));
+    }
+
     // Score this card with current player state (including live energyRemaining and exhaust count)
     const vals = cardEffectiveValues(card, {
       ...state.player,

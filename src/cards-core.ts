@@ -61,6 +61,7 @@ export interface Card {
   hasPlayTopAndExhaust: boolean;        // precomputed: has play_top_and_exhaust effect (Havoc)
   strikeDrawTrigger:    boolean;        // Hellraiser: drawn Strike cards auto-play for free
   generatesRandomAttack: boolean;       // Infernal Blade: add a random attack to hand, free this turn
+  transformAttacksToCard: string;       // Primal Force: "" = inactive; otherwise replace all attacks in hand with this card name
   copyAttackOnN:        number;         // Juggling: 0 = inactive; N = copy the Nth attack to hand
   doubleNextAttacks:    number;         // One-Two Punch: N next attacks played this turn trigger twice
   minExhaustToPlay:     number;         // Pact's End: 0 = no requirement; N = exhaust pile must have ≥N cards
@@ -130,6 +131,7 @@ export interface CardJson {
   playTopAndExhaust?: boolean;          // play and exhaust the top card of draw pile (e.g. Havoc)
   strikeDrawTrigger?: boolean;          // Hellraiser: drawn Strike cards auto-play for free
   generateRandomAttack?: boolean;       // Infernal Blade: add a random attack to hand, free this turn
+  transformAttacksToCard?: string;      // Primal Force: replace all attacks in hand with this card name
   copyAttackOnN?: number;               // Juggling: add a copy of the Nth attack played to hand
   doubleNextAttacks?: number;           // One-Two Punch: next N attacks play twice
   damagePerCardAnywhere?: number;       // +N dmg per card in any zone (Perfected Strike)
@@ -207,6 +209,7 @@ function jsonToCard(c: CardJson): Card {
     hasPlayTopAndExhaust: effects.some(e => e.type === "play_top_and_exhaust"),
     strikeDrawTrigger:    c.strikeDrawTrigger ?? false,
     generatesRandomAttack: c.generateRandomAttack ?? false,
+    transformAttacksToCard: c.transformAttacksToCard?.toLowerCase() ?? "",
     copyAttackOnN:        c.copyAttackOnN ?? 0,
     doubleNextAttacks:    c.doubleNextAttacks ?? 0,
     minExhaustToPlay:     c.minExhaustToPlay ?? 0,

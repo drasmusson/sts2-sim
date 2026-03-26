@@ -764,5 +764,24 @@
     "upgraded": {
       "doubleNextAttacks": 2
     }
+  },
+  {
+    "name": "Giant Rock",
+    "type": "attack",
+    "cost": 1,
+    "damage": 16,
+    "notes": "generated card (created by Primal Force)",
+    "upgraded": {
+      "damage": 20
+    }
+  },
+  {
+    "name": "Primal Force",
+    "type": "skill",
+    "cost": 0,
+    "transformAttacksToCard": "Giant Rock",
+    "upgraded": {
+      "transformAttacksToCard": "Giant Rock+"
+    }
   }
 ]
