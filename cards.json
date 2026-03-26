@@ -718,5 +718,12 @@
     "upgraded": {
       "damagePerBlockGain": 7
     }
+  },
+  {
+    "name": "Juggling",
+    "type": "power",
+    "cost": 1,
+    "copyAttackOnN": 3,
+    "notes": "upgrade: innate (not modelled — add to hand manually)"
   }
 ]

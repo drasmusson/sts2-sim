@@ -186,6 +186,7 @@ const player: PlayerState = {
   vulnMultBonus: 0,
   hellraiserActive: false,
   freeGeneratedCard: null,
+  copyAttackOnN: 0,
 };
 
 if (!drawPile.length) {

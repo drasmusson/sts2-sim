@@ -212,6 +212,12 @@ function resolvePostExhaust(
     discardPile = [...discardPile, cardName];
   }
 
+  // 5. Juggling: on the Nth attack, add a copy of it to hand
+  if (player.copyAttackOnN > 0 && player.attacksPlayedThisTurn === player.copyAttackOnN
+      && card.type === "attack" && hand.length < 10) {
+    hand = [...hand, cardName];
+  }
+
   return { hand, drawPile, discardPile, exhaustPile, powersInPlay, player, block, hellraiserDamage,
            generatedAttacks: s.generatedAttacks, generatedAttackIdx };
 }

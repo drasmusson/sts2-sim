@@ -59,6 +59,7 @@ export interface Card {
   hasPlayTopAndExhaust: boolean;        // precomputed: has play_top_and_exhaust effect (Havoc)
   strikeDrawTrigger:    boolean;        // Hellraiser: drawn Strike cards auto-play for free
   generatesRandomAttack: boolean;       // Infernal Blade: add a random attack to hand, free this turn
+  copyAttackOnN:        number;         // Juggling: 0 = inactive; N = copy the Nth attack to hand
   effects:     CardEffect[];
   notes:       string;
 }
@@ -125,6 +126,7 @@ export interface CardJson {
   playTopAndExhaust?: boolean;          // play and exhaust the top card of draw pile (e.g. Havoc)
   strikeDrawTrigger?: boolean;          // Hellraiser: drawn Strike cards auto-play for free
   generateRandomAttack?: boolean;       // Infernal Blade: add a random attack to hand, free this turn
+  copyAttackOnN?: number;               // Juggling: add a copy of the Nth attack played to hand
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -195,6 +197,7 @@ function jsonToCard(c: CardJson): Card {
     hasPlayTopAndExhaust: effects.some(e => e.type === "play_top_and_exhaust"),
     strikeDrawTrigger:    c.strikeDrawTrigger ?? false,
     generatesRandomAttack: c.generateRandomAttack ?? false,
+    copyAttackOnN:        c.copyAttackOnN ?? 0,
     effects,
     notes:       c.notes       ?? "",
   };

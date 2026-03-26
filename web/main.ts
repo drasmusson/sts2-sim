@@ -94,6 +94,7 @@ function readConfig(): WebConfig {
     vulnMultBonus:        0,
     hellraiserActive:     false,
     freeGeneratedCard:    null,
+    copyAttackOnN:        0,
   };
 
   const rawDraws = parseInt(d.get("draws") as string ?? "");
