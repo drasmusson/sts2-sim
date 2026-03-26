@@ -33,6 +33,7 @@ export interface PlayerState {
   doubleNextAttacks: number;      // remaining attacks that trigger twice this turn (0 = inactive)
   blockPerAttackPlayed: number;   // Rage passive: block gained each time an attack is played this turn
   rampageDamageBonus: number;     // Rampage: accumulated +damage from all Rampage plays so far this combat
+  strengthPerHpLoss: number;      // Rupture passive: gain this much strength each time you lose HP
   totalCardsAnywhere: number;     // total cards across all zones (hand+draw+discard+exhaust+powers); set by DFS for Perfected Strike
 }
 
@@ -247,8 +248,12 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
       case "rampage_bonus":
         next = { ...next, rampageDamageBonus: next.rampageDamageBonus + eff.amount };
         break;
+      case "rupture":
+        next = { ...next, strengthPerHpLoss: next.strengthPerHpLoss + eff.amount };
+        break;
       case "self_damage":
-        next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + 1 };
+        next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + 1,
+          strength: next.strength + next.strengthPerHpLoss };
         break;
     }
   }

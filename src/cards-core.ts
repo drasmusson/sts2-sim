@@ -45,7 +45,8 @@ export type CardEffect =
   | { type: "draw_until_non_attack" }                           // Pillage: draw 1 card at a time until a non-attack is drawn; stops at hand limit or no cards remain
   | { type: "play_top_and_exhaust" }                            // Havoc: play and exhaust the top card of the draw pile
   | { type: "rage";                         amount: number }    // Rage: gain N block each time an attack is played this turn
-  | { type: "rampage_bonus";               amount: number };   // Rampage: +amount to this card's damage each time it is played this combat
+  | { type: "rampage_bonus";               amount: number }    // Rampage: +amount to this card's damage each time it is played this combat
+  | { type: "rupture";                      amount: number };   // Rupture: gain amount strength each time you lose HP
 
 export interface Card {
   type:        CardType;
@@ -141,6 +142,7 @@ export interface CardJson {
   minExhaustToPlay?:  number;           // Pact's End: minimum exhaust pile size required to play
   rage?: number;                        // Rage: gain N block each time an attack is played this turn
   rampageBonus?: number;                // Rampage: damage increases by N each time this card is played this combat
+  rupture?: number;                     // Rupture: gain N strength each time you lose HP
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -198,6 +200,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.playTopAndExhaust)          effects.push({ type: "play_top_and_exhaust" });
   if (c.rage)                       effects.push({ type: "rage",                            amount: c.rage });
   if (c.rampageBonus)               effects.push({ type: "rampage_bonus",                   amount: c.rampageBonus });
+  if (c.rupture)                    effects.push({ type: "rupture",                          amount: c.rupture });
 
   return {
     type:        c.type,

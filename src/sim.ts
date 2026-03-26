@@ -191,6 +191,7 @@ const player: PlayerState = {
   doubleNextAttacks: 0,
   blockPerAttackPlayed: 0,
   rampageDamageBonus: parseIntArg(args["rampage-bonus"], 0),
+  strengthPerHpLoss: 0,
   totalCardsAnywhere: 0,
 };
 

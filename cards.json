@@ -792,6 +792,15 @@
     }
   },
   {
+    "name": "Rupture",
+    "type": "power",
+    "cost": 1,
+    "rupture": 1,
+    "upgraded": {
+      "rupture": 2
+    }
+  },
+  {
     "name": "Giant Rock",
     "type": "attack",
     "cost": 1,

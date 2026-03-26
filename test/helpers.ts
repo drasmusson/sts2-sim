@@ -18,6 +18,7 @@ export const basePlayer: PlayerState = {
   blockPerAttackPlayed: 0,
   rampageDamageBonus: 0,
   totalCardsAnywhere: 0,
+  strengthPerHpLoss: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
