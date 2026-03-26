@@ -381,13 +381,18 @@ function dfs(
 
     const cardCost = card.xCost ? state.energy : effectiveCost;
 
-    // Score this card with current player state (including live energyRemaining and exhaust count)
-    const vals = cardEffectiveValues(card, { ...state.player, energyRemaining: state.energy });
-
     // Remove first occurrence of this card from hand (before energy calc so
     // energyPerAttackInHand can count attacks in the post-play hand)
     const idx = state.hand.indexOf(name);
     let nextHand         = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
+
+    // Score this card with current player state (including live energyRemaining and exhaust count)
+    const vals = cardEffectiveValues(card, {
+      ...state.player,
+      energyRemaining:    state.energy,
+      totalCardsAnywhere: nextHand.length + state.drawPile.length + state.discardPile.length
+                        + state.exhaustPile.length + state.powersInPlay.length,
+    });
 
     // One-Two Punch: attack triggers twice if doubleNextAttacks was active before playing it
     const wasDoubledAttack = card.type === "attack" && state.player.doubleNextAttacks > 0;

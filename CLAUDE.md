@@ -51,6 +51,19 @@ A played card's effects (including draw) resolve fully before entering the disca
 - **Lightning orb** — `(base 3 + focus) × orb_count` → damage
 - **Frost orb** — `(base 2 + focus) × orb_count` → block
 
+### Adding a new effect type
+
+Touch these files in order:
+1. `cards-core.ts` — add to `CardEffect` union + `CardJson` field + `jsonToCard` mapping
+2. `optimizer.ts` — add field to `PlayerState`, handle in `cardEffectiveValues` (fold into base damage like `exhaustBonus`, not as a post-multiplier)
+3. `turn-simulator.ts` — compute `nextHand` *before* calling `cardEffectiveValues`; set the new `PlayerState` field inline at that call site
+4. `sim.ts` — initialize the new field to `0` in default PlayerState
+5. `cards.json` — add the card entry
+
+Skip steps 2–4 if the effect doesn't depend on live game state. `simulateTurn` calls `cardEffectiveValues` from `optimizer.ts` — new effects must be handled there, not only in `optimizer.ts`'s `bestPlay`.
+
+Existing pattern: `exhaustedThisTurn` → `exhaust_bonus`, `totalCardsAnywhere` → `damage_per_card_anywhere`.
+
 ### Weak as effective block
 Weak's damage reduction is modelled as effective block: `(enemyAttack - floor(enemyAttack × 0.75)) × enemyHits`. Requires `--enemy-attack` to be set; without it Weak contributes 0.
 

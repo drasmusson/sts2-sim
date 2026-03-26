@@ -306,6 +306,16 @@
     }
   },
   {
+    "name": "Perfected Strike",
+    "type": "attack",
+    "cost": 2,
+    "damage": 6,
+    "damagePerCardAnywhere": 2,
+    "upgraded": {
+      "damagePerCardAnywhere": 3
+    }
+  },
+  {
     "name": "Setup Strike",
     "type": "attack",
     "cost": 1,
