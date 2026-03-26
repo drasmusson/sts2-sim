@@ -187,6 +187,7 @@ const player: PlayerState = {
   hellraiserActive: false,
   freeGeneratedCard: null,
   copyAttackOnN: 0,
+  doubleNextAttacks: 0,
 };
 
 if (!drawPile.length) {

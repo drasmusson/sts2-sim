@@ -725,5 +725,14 @@
     "cost": 1,
     "copyAttackOnN": 3,
     "notes": "upgrade: innate (not modelled — add to hand manually)"
+  },
+  {
+    "name": "One-Two Punch",
+    "type": "skill",
+    "cost": 1,
+    "doubleNextAttacks": 1,
+    "upgraded": {
+      "doubleNextAttacks": 2
+    }
   }
 ]

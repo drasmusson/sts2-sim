@@ -60,6 +60,7 @@ export interface Card {
   strikeDrawTrigger:    boolean;        // Hellraiser: drawn Strike cards auto-play for free
   generatesRandomAttack: boolean;       // Infernal Blade: add a random attack to hand, free this turn
   copyAttackOnN:        number;         // Juggling: 0 = inactive; N = copy the Nth attack to hand
+  doubleNextAttacks:    number;         // One-Two Punch: N next attacks played this turn trigger twice
   effects:     CardEffect[];
   notes:       string;
 }
@@ -127,6 +128,7 @@ export interface CardJson {
   strikeDrawTrigger?: boolean;          // Hellraiser: drawn Strike cards auto-play for free
   generateRandomAttack?: boolean;       // Infernal Blade: add a random attack to hand, free this turn
   copyAttackOnN?: number;               // Juggling: add a copy of the Nth attack played to hand
+  doubleNextAttacks?: number;           // One-Two Punch: next N attacks play twice
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -198,6 +200,7 @@ function jsonToCard(c: CardJson): Card {
     strikeDrawTrigger:    c.strikeDrawTrigger ?? false,
     generatesRandomAttack: c.generateRandomAttack ?? false,
     copyAttackOnN:        c.copyAttackOnN ?? 0,
+    doubleNextAttacks:    c.doubleNextAttacks ?? 0,
     effects,
     notes:       c.notes       ?? "",
   };

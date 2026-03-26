@@ -111,6 +111,7 @@ interface PostExhaustState {
   hellraiserDamage: number;  // damage accumulated from Hellraiser auto-plays this call
   generatedAttacks:   string[];  // pre-sampled attack pool (passed through, not modified here except idx)
   generatedAttackIdx: number;    // next index into generatedAttacks
+  wasDoubledAttack?: boolean;    // One-Two Punch: apply draw effects a second time
 }
 
 // The sequence draw → exhaust-from-draw → route-played-card is identical across
@@ -155,6 +156,18 @@ function resolvePostExhaust(
     hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
     hellraiserDamage += hr.damage;
   }
+  // 1b. One-Two Punch: doubled attack replays draw effects a second time
+  if (s.wasDoubledAttack && !player.noMoreDraws && drawEff && drawEff.amount > 0) {
+    const before = hand.length;
+    const drawn  = drawCards(drawPile, discardPile, drawEff.amount, hand.length);
+    hand        = [...hand, ...drawn.hand];
+    drawPile    = drawn.drawPile;
+    discardPile = drawn.discardPile;
+    const hr = applyHellraiserToDraw(hand.slice(before), hand, discardPile, player, db);
+    hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+    hellraiserDamage += hr.damage;
+  }
+
   if (card.blocksFutureDraws) {
     player = { ...player, noMoreDraws: true };
   }
@@ -375,6 +388,9 @@ function dfs(
     const idx = state.hand.indexOf(name);
     let nextHand         = [...state.hand.slice(0, idx), ...state.hand.slice(idx + 1)];
 
+    // One-Two Punch: attack triggers twice if doubleNextAttacks was active before playing it
+    const wasDoubledAttack = card.type === "attack" && state.player.doubleNextAttacks > 0;
+
     // Update player state (strength, vulnerable, block, energy gain, Feel No Pain, etc.)
     // applyCardState adds card.energyGain to energyRemaining — deduct cost afterwards
     let nextPlayer = applyCardState({ ...state.player, energyRemaining: state.energy }, card);
@@ -584,6 +600,7 @@ function dfs(
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
         hellraiserDamage: 0,
         generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
+        wasDoubledAttack,
       }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
 
     } else if (exHandEff && exHandEff.count > 0) {
@@ -600,6 +617,7 @@ function dfs(
           exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
           hellraiserDamage: 0,
           generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
+          wasDoubledAttack,
         }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
       } else {
         // Branch on each unique exhaust choice
@@ -628,6 +646,7 @@ function dfs(
             exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
             hellraiserDamage: 0,
             generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
+            wasDoubledAttack,
           }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
         }
       }
@@ -639,6 +658,7 @@ function dfs(
         exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
         hellraiserDamage: 0,
         generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
+        wasDoubledAttack,
       }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
     }
   }
