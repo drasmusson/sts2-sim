@@ -172,6 +172,7 @@ const player: PlayerState = {
   blockPerExhaustEvent: 0,
   drawPerExhaustEvent:  0,
   damagePerBlockGain:   0,
+  damagePerHpLoss:      0,
   exhaustedThisTurn:    false,
   currentBlock:         0,
   energyRemaining:      0,

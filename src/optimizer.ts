@@ -13,6 +13,7 @@ export interface PlayerState {
   blockPerExhaustEvent: number;   // Feel No Pain passive: block gained per exhaust event
   drawPerExhaustEvent:  number;   // Dark Embrace passive: cards drawn per exhaust event
   damagePerBlockGain:   number;   // Grapple passive: flat damage dealt per block gain event this turn
+  damagePerHpLoss:      number;   // Inferno passive: flat damage dealt per HP loss event this turn
   exhaustedThisTurn:    boolean;  // true if any card was exhausted this turn (for Evil Eye)
   currentBlock:         number;
   energyRemaining: number;
@@ -208,6 +209,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "damage_per_block_gain":
         next = { ...next, damagePerBlockGain: next.damagePerBlockGain + eff.amount };
+        break;
+      case "damage_per_hp_loss":
+        next = { ...next, damagePerHpLoss: next.damagePerHpLoss + eff.amount };
         break;
       case "draw_per_exhaust_event":
         next = { ...next, drawPerExhaustEvent: next.drawPerExhaustEvent + eff.amount };

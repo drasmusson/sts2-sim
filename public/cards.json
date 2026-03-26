@@ -696,5 +696,15 @@
     "upgraded": {
       "cost": 0
     }
+  },
+  {
+    "name": "Inferno",
+    "type": "power",
+    "cost": 1,
+    "damagePerHpLoss": 6,
+    "notes": "start-of-turn HP loss not modelled",
+    "upgraded": {
+      "damagePerHpLoss": 9
+    }
   }
 ]

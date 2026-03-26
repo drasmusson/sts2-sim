@@ -40,6 +40,7 @@ export type CardEffect =
   | { type: "vuln_mult_bonus";              amount: number }      // increase vulnerable damage multiplier by amount (e.g. Cruelty)
   | { type: "thorns";                       amount: number }      // deal N damage back per enemy hit; requires --enemy-attack to score
   | { type: "damage_per_block_gain";        amount: number }     // Grapple passive: deal N flat damage per block gain event this turn
+  | { type: "damage_per_hp_loss";           amount: number }     // Inferno passive: deal N flat damage per HP loss event this turn
   | { type: "play_top_and_exhaust" };                           // Havoc: play and exhaust the top card of the draw pile
 
 export interface Card {
@@ -120,6 +121,7 @@ export interface CardJson {
   vulnMultBonus?: number;               // increase vulnerable damage multiplier by this amount (e.g. Cruelty base: 0.25, upgraded: 0.5)
   thorns?: number;                      // deal N damage back per enemy hit (e.g. Flame Barrier)
   damagePerBlockGain?: number;          // flat damage per block gain event this turn (e.g. Grapple)
+  damagePerHpLoss?: number;             // flat damage per HP loss event this turn (e.g. Inferno)
   playTopAndExhaust?: boolean;          // play and exhaust the top card of draw pile (e.g. Havoc)
   strikeDrawTrigger?: boolean;          // Hellraiser: drawn Strike cards auto-play for free
   generateRandomAttack?: boolean;       // Infernal Blade: add a random attack to hand, free this turn
@@ -174,6 +176,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.vulnMultBonus)              effects.push({ type: "vuln_mult_bonus",                amount: c.vulnMultBonus });
   if (c.thorns)                     effects.push({ type: "thorns",                         amount: c.thorns });
   if (c.damagePerBlockGain)         effects.push({ type: "damage_per_block_gain",           amount: c.damagePerBlockGain });
+  if (c.damagePerHpLoss)            effects.push({ type: "damage_per_hp_loss",              amount: c.damagePerHpLoss });
   if (c.playTopAndExhaust)          effects.push({ type: "play_top_and_exhaust" });
 
   return {

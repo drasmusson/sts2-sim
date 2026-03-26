@@ -175,3 +175,72 @@ test("damage_per_self_damage stacks with multiple self-damage instances", () => 
   assert.equal(result.totalDamage, 10);  // 2 instances × 5 = 10
   assert.equal(result.totalBlock, 24);
 });
+
+// ─── damage_per_hp_loss (Inferno passive) ─────────────────────────────────────
+
+test("inferno: self-damage card after inferno deals base + 6 bonus", () => {
+  // inferno(power) → blood wall(self-damage) = 0 + 6 bonus = 6 damage, 12 block
+  const db: CardDb = {
+    inferno:      makeCard({ effects: [fx.damagePerHpLoss(6)], cost: 1, type: "power" }),
+    "blood wall": makeCard({ effects: [fx.block(12), fx.selfDamage(3)], cost: 2, type: "skill" }),
+  };
+
+  const result = simulateTurn(["inferno", "blood wall"], [], [], db, basePlayer, 3, "dmg");
+
+  assert.ok(result.played.includes("inferno"));
+  assert.ok(result.played.includes("blood wall"));
+  assert.equal(result.totalDamage, 6);
+  assert.equal(result.totalBlock, 12);
+});
+
+test("inferno: no bonus without self-damage card", () => {
+  const db: CardDb = {
+    inferno: makeCard({ effects: [fx.damagePerHpLoss(6)], cost: 1, type: "power" }),
+    strike:  makeCard({ effects: [fx.damage(6)], cost: 1 }),
+  };
+
+  const result = simulateTurn(["inferno", "strike"], [], [], db, basePlayer, 2, "dmg");
+
+  assert.equal(result.totalDamage, 6);  // only strike damage, no hp loss
+});
+
+test("inferno+: upgraded deals 9 bonus per hp loss", () => {
+  const db: CardDb = {
+    "inferno+":   makeCard({ effects: [fx.damagePerHpLoss(9)], cost: 1, type: "power" }),
+    "blood wall": makeCard({ effects: [fx.block(12), fx.selfDamage(3)], cost: 2, type: "skill" }),
+  };
+
+  const result = simulateTurn(["inferno+", "blood wall"], [], [], db, basePlayer, 3, "dmg");
+
+  assert.equal(result.totalDamage, 9);
+  assert.equal(result.totalBlock, 12);
+});
+
+test("inferno: each self-damage instance triggers separately", () => {
+  // two blood walls = 2 hp loss events → 6 × 2 = 12 bonus damage
+  const db: CardDb = {
+    inferno:      makeCard({ effects: [fx.damagePerHpLoss(6)], cost: 1, type: "power" }),
+    "blood wall": makeCard({ effects: [fx.block(12), fx.selfDamage(3)], cost: 2, type: "skill" }),
+  };
+
+  const result = simulateTurn(["inferno", "blood wall", "blood wall"], [], [], db, basePlayer, 5, "dmg");
+
+  assert.equal(result.totalDamage, 12);  // 2 instances × 6 = 12
+  assert.equal(result.totalBlock, 24);
+});
+
+test("inferno: self-damage card played before inferno gives no bonus", () => {
+  // blood wall played first — Inferno not in play yet, so no trigger
+  // DFS will try both orders and pick best; blood wall first = 0 bonus, inferno first = 6 bonus
+  const db: CardDb = {
+    inferno:      makeCard({ effects: [fx.damagePerHpLoss(6)], cost: 1, type: "power" }),
+    "blood wall": makeCard({ effects: [fx.block(12), fx.selfDamage(3)], cost: 2, type: "skill" }),
+  };
+
+  const result = simulateTurn(["inferno", "blood wall"], [], [], db, basePlayer, 3, "dmg");
+
+  // DFS picks inferno → blood wall (6 dmg) over blood wall → inferno (0 dmg)
+  assert.equal(result.played[0], "inferno");
+  assert.equal(result.played[1], "blood wall");
+  assert.equal(result.totalDamage, 6);
+});

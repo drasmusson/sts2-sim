@@ -386,7 +386,8 @@ function dfs(
     let runningBlock    = block + vals.block;
     let runningGeneratedIdx = state.generatedAttackIdx;
     let runningDamage   = damage + vals.damage
-                        + (vals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
+                        + (vals.block > 0 ? nextPlayer.damagePerBlockGain : 0)
+                        + (card.effects.some(e => e.type === "self_damage") ? nextPlayer.damagePerHpLoss : 0);
 
     // ── Exhaust from hand ─────────────────────────────────────────────────────
     const exHandEff = card.effects.find(e => e.type === "exhaust_hand") as
@@ -410,7 +411,8 @@ function dfs(
         // Score and apply state (energyRemaining=0 means "not tracking" — card is free)
         const cascadeVals = cardEffectiveValues(cascadeCard, { ...nextPlayer, energyRemaining: 0 });
         nextPlayer     = applyCardState(nextPlayer, cascadeCard);
-        runningDamage += cascadeVals.damage + (cascadeVals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
+        runningDamage += cascadeVals.damage + (cascadeVals.block > 0 ? nextPlayer.damagePerBlockGain : 0)
+                      + (cascadeCard.effects.some(e => e.type === "self_damage") ? nextPlayer.damagePerHpLoss : 0);
         runningBlock  += cascadeVals.block;
         // Resolve draw, exhaust-from-draw, and route cascaded card to discard/exhaust/powers
         const cascadePost = resolvePostExhaust(cascadeName, cascadeCard, {
@@ -443,7 +445,8 @@ function dfs(
       if (havocCard) {
         const havocVals = cardEffectiveValues(havocCard, { ...nextPlayer, energyRemaining: 0 });
         nextPlayer    = applyCardState(nextPlayer, havocCard);
-        runningDamage += havocVals.damage + (havocVals.block > 0 ? nextPlayer.damagePerBlockGain : 0);
+        runningDamage += havocVals.damage + (havocVals.block > 0 ? nextPlayer.damagePerBlockGain : 0)
+                      + (havocCard.effects.some(e => e.type === "self_damage") ? nextPlayer.damagePerHpLoss : 0);
         runningBlock  += havocVals.block;
         effectivePlaysCount++;
 
