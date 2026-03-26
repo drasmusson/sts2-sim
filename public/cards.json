@@ -390,6 +390,7 @@
     "type": "skill",
     "cost": 2,
     "block": 16,
+    "selfDamage": 2,
     "damagePerSelfDamage": 2,
     "notes": "lose 2 hp",
     "upgraded": {
@@ -445,6 +446,7 @@
     "type": "skill",
     "cost": 0,
     "energyGain": 2,
+    "selfDamage": 3,
     "damagePerSelfDamage": 3,
     "notes": "lose 3 hp",
     "upgraded": {
@@ -466,6 +468,7 @@
     "cost": 0,
     "draw": 3,
     "energyGain": 2,
+    "selfDamage": 6,
     "damagePerSelfDamage": 6,
     "selfExhaust": true,
     "notes": "lose 6 hp",
