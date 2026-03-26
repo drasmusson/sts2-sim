@@ -709,5 +709,14 @@
     "upgraded": {
       "damagePerHpLoss": 9
     }
+  },
+  {
+    "name": "Juggernaut",
+    "type": "power",
+    "cost": 2,
+    "damagePerBlockGain": 5,
+    "upgraded": {
+      "damagePerBlockGain": 7
+    }
   }
 ]
