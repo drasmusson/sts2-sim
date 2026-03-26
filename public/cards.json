@@ -616,5 +616,85 @@
     "upgraded": {
       "cascade": 1
     }
+  },
+  {
+    "name": "Dismantle",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "bonusHitsIfVulnerable": 1,
+    "upgraded": {
+      "damage": 10
+    }
+  },
+  {
+    "name": "Havoc",
+    "type": "skill",
+    "cost": 1,
+    "playTopAndExhaust": true,
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Grapple",
+    "type": "attack",
+    "cost": 1,
+    "damage": 7,
+    "damagePerBlockGain": 5,
+    "upgraded": {
+      "damage": 9,
+      "damagePerBlockGain": 7
+    }
+  },
+  {
+    "name": "Flame Barrier",
+    "type": "skill",
+    "cost": 2,
+    "block": 12,
+    "thorns": 4,
+    "upgraded": {
+      "block": 16,
+      "thorns": 6
+    }
+  },
+  {
+    "name": "Hellraiser",
+    "type": "power",
+    "cost": 2,
+    "strikeDrawTrigger": true,
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
+    "name": "Drum of Battle",
+    "type": "power",
+    "cost": 0,
+    "draw": 2,
+    "notes": "not modelled: exhausts top card of draw pile at start of each turn",
+    "upgraded": {
+      "draw": 3
+    }
+  },
+  {
+    "name": "Dominate",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "strGainPerVulnStack": 1,
+    "upgraded": {
+      "selfExhaust": false
+    }
+  },
+  {
+    "name": "Infernal Blade",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "generateRandomAttack": true,
+    "upgraded": {
+      "cost": 0
+    }
   }
 ]

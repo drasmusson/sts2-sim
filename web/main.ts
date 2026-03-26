@@ -78,12 +78,19 @@ function readConfig(): WebConfig {
     enemyStrength:  parseInt(d.get("enemy-strength") as string) || 0,
     exhaust:              parseInt(d.get("exhaust") as string)         || 0,
     blockPerExhaustEvent: 0,
+    drawPerExhaustEvent:  0,
+    damagePerBlockGain:   0,
     exhaustedThisTurn:    false,
     currentBlock:         0,
     energyRemaining:      0,
     selfDamageThisTurn:   0,
     attacksPlayedThisTurn: 0,
     nextAttackFree:        false,
+    noMoreDraws:          false,
+    corruptionActive:     false,
+    vulnMultBonus:        0,
+    hellraiserActive:     false,
+    freeGeneratedCard:    null,
   };
 
   const rawDraws = parseInt(d.get("draws") as string ?? "");

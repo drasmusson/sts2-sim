@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "node --import tsx/esm --test test/*.ts",
-    "prebuild": "cp cards.csv public/cards.csv",
+    "prebuild": "cp cards.csv public/cards.csv && cp cards.json public/cards.json",
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview"
