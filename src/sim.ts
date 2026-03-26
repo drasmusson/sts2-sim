@@ -188,6 +188,7 @@ const player: PlayerState = {
   freeGeneratedCard: null,
   copyAttackOnN: 0,
   doubleNextAttacks: 0,
+  blockPerAttackPlayed: 0,
   totalCardsAnywhere: 0,
 };
 

@@ -775,6 +775,15 @@
     }
   },
   {
+    "name": "Rage",
+    "type": "skill",
+    "cost": 0,
+    "rage": 3,
+    "upgraded": {
+      "rage": 5
+    }
+  },
+  {
     "name": "Giant Rock",
     "type": "attack",
     "cost": 1,
