@@ -98,6 +98,7 @@ function printResults(results: MCResult, config: Config): void {
   if (p.poisonTriggers !== 1) parts.push(`Poison triggers ×${p.poisonTriggers}`);
   if (p.enemyAttack)          parts.push(`Enemy attack ${p.enemyAttack}×${p.enemyHits}`);
   if (p.enemyStrength)        parts.push(`Enemy strength ${p.enemyStrength}`);
+  if (p.rampageDamageBonus)   parts.push(`Rampage bonus +${p.rampageDamageBonus}`);
   if (parts.length)           console.log(`  Player state: ${parts.join(", ")}`);
   console.log(line);
 
@@ -189,6 +190,7 @@ const player: PlayerState = {
   copyAttackOnN: 0,
   doubleNextAttacks: 0,
   blockPerAttackPlayed: 0,
+  rampageDamageBonus: parseIntArg(args["rampage-bonus"], 0),
   totalCardsAnywhere: 0,
 };
 

@@ -32,6 +32,7 @@ export interface PlayerState {
   copyAttackOnN: number;          // Juggling passive: copy the Nth attack played to hand (0 = inactive)
   doubleNextAttacks: number;      // remaining attacks that trigger twice this turn (0 = inactive)
   blockPerAttackPlayed: number;   // Rage passive: block gained each time an attack is played this turn
+  rampageDamageBonus: number;     // Rampage: accumulated +damage from all Rampage plays so far this combat
   totalCardsAnywhere: number;     // total cards across all zones (hand+draw+discard+exhaust+powers); set by DFS for Perfected Strike
 }
 
@@ -98,6 +99,11 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
     Extract<CardEffect, { type: "damage_per_card_anywhere" }> | undefined;
   const perCardBonus = perCardEff ? perCardEff.amount * player.totalCardsAnywhere : 0;
 
+  // Pre-compute Rampage bonus — accumulated +damage from prior plays this combat
+  const rampageBonusEff = card.effects.find(e => e.type === "rampage_bonus") as
+    Extract<CardEffect, { type: "rampage_bonus" }> | undefined;
+  const rampageBonus = rampageBonusEff ? player.rampageDamageBonus : 0;
+
   let damage = 0;
   let block  = 0;
 
@@ -105,7 +111,7 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
     switch (eff.type) {
       case "damage": {
         const base = (eff.useCurrentBlock ? player.currentBlock : eff.amount)
-                   + strength + exhaustBonus + perCardBonus;
+                   + strength + exhaustBonus + perCardBonus + rampageBonus;
         const bonusHits = (eff.bonusHitsIfVulnerable && vulnerableStacks > 0) ? eff.bonusHitsIfVulnerable : 0;
         const hits = (card.xCost ? player.energyRemaining : eff.hits) + bonusHits;
         damage += Math.floor(base * vulnMult * weakMult * hits);
@@ -237,6 +243,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "rage":
         next = { ...next, blockPerAttackPlayed: next.blockPerAttackPlayed + eff.amount };
+        break;
+      case "rampage_bonus":
+        next = { ...next, rampageDamageBonus: next.rampageDamageBonus + eff.amount };
         break;
       case "self_damage":
         next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + 1 };

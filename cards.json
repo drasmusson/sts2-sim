@@ -775,6 +775,14 @@
     }
   },
   {
+    "name": "Rampage",
+    "type": "attack",
+    "cost": 1,
+    "damage": 9,
+    "rampageBonus": 5,
+    "upgraded": {}
+  },
+  {
     "name": "Rage",
     "type": "skill",
     "cost": 0,

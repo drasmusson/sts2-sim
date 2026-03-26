@@ -44,7 +44,8 @@ export type CardEffect =
   | { type: "damage_per_card_anywhere";  amount: number }       // +N dmg per card in any zone (hand/draw/discard/exhaust/powers); bonus folds into base (1 hit total)
   | { type: "draw_until_non_attack" }                           // Pillage: draw 1 card at a time until a non-attack is drawn; stops at hand limit or no cards remain
   | { type: "play_top_and_exhaust" }                            // Havoc: play and exhaust the top card of the draw pile
-  | { type: "rage";                         amount: number };   // Rage: gain N block each time an attack is played this turn
+  | { type: "rage";                         amount: number }    // Rage: gain N block each time an attack is played this turn
+  | { type: "rampage_bonus";               amount: number };   // Rampage: +amount to this card's damage each time it is played this combat
 
 export interface Card {
   type:        CardType;
@@ -139,6 +140,7 @@ export interface CardJson {
   drawUntilNonAttack?: boolean;         // Pillage: draw cards until a non-attack is drawn
   minExhaustToPlay?:  number;           // Pact's End: minimum exhaust pile size required to play
   rage?: number;                        // Rage: gain N block each time an attack is played this turn
+  rampageBonus?: number;                // Rampage: damage increases by N each time this card is played this combat
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -195,6 +197,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.damagePerHpLoss)            effects.push({ type: "damage_per_hp_loss",              amount: c.damagePerHpLoss });
   if (c.playTopAndExhaust)          effects.push({ type: "play_top_and_exhaust" });
   if (c.rage)                       effects.push({ type: "rage",                            amount: c.rage });
+  if (c.rampageBonus)               effects.push({ type: "rampage_bonus",                   amount: c.rampageBonus });
 
   return {
     type:        c.type,

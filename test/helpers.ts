@@ -15,6 +15,8 @@ export const basePlayer: PlayerState = {
   freeGeneratedCard: null,
   copyAttackOnN: 0,
   doubleNextAttacks: 0,
+  blockPerAttackPlayed: 0,
+  rampageDamageBonus: 0,
   totalCardsAnywhere: 0,
 };
 
@@ -35,6 +37,7 @@ export function makeCard(overrides: Partial<Card>): Card {
     hasPlayTopAndExhaust: false,
     strikeDrawTrigger:    false,
     generatesRandomAttack: false,
+    transformAttacksToCard: "",
     copyAttackOnN:        0,
     doubleNextAttacks:    0,
     minExhaustToPlay:     0,
@@ -118,4 +121,6 @@ export const fx = {
     ({ type: "damage_per_hp_loss", amount }),
   drawUntilNonAttack: (): CardEffect =>
     ({ type: "draw_until_non_attack" }),
+  rampageBonus: (amount: number): CardEffect =>
+    ({ type: "rampage_bonus", amount }),
 };
