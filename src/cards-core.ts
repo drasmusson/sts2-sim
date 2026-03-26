@@ -42,6 +42,7 @@ export type CardEffect =
   | { type: "damage_per_block_gain";        amount: number }     // Grapple passive: deal N flat damage per block gain event this turn
   | { type: "damage_per_hp_loss";           amount: number }     // Inferno passive: deal N flat damage per HP loss event this turn
   | { type: "damage_per_card_anywhere";  amount: number }       // +N dmg per card in any zone (hand/draw/discard/exhaust/powers); bonus folds into base (1 hit total)
+  | { type: "draw_until_non_attack" }                           // Pillage: draw 1 card at a time until a non-attack is drawn; stops at hand limit or no cards remain
   | { type: "play_top_and_exhaust" };                           // Havoc: play and exhaust the top card of the draw pile
 
 export interface Card {
@@ -132,6 +133,7 @@ export interface CardJson {
   copyAttackOnN?: number;               // Juggling: add a copy of the Nth attack played to hand
   doubleNextAttacks?: number;           // One-Two Punch: next N attacks play twice
   damagePerCardAnywhere?: number;       // +N dmg per card in any zone (Perfected Strike)
+  drawUntilNonAttack?: boolean;         // Pillage: draw cards until a non-attack is drawn
   minExhaustToPlay?:  number;           // Pact's End: minimum exhaust pile size required to play
   exhaustHand?: {
     count:          number;             // -1 = all
@@ -182,6 +184,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.damageReductionIfEnemyVuln) effects.push({ type: "damage_reduction_if_enemy_vuln", fraction: c.damageReductionIfEnemyVuln });
   if (c.damagePerAttackPlayed)      effects.push({ type: "damage_per_attack_played",       amount: c.damagePerAttackPlayed });
   if (c.damagePerCardAnywhere)      effects.push({ type: "damage_per_card_anywhere",        amount: c.damagePerCardAnywhere });
+  if (c.drawUntilNonAttack)         effects.push({ type: "draw_until_non_attack" });
   if (c.vulnMultBonus)              effects.push({ type: "vuln_mult_bonus",                amount: c.vulnMultBonus });
   if (c.thorns)                     effects.push({ type: "thorns",                         amount: c.thorns });
   if (c.damagePerBlockGain)         effects.push({ type: "damage_per_block_gain",           amount: c.damagePerBlockGain });

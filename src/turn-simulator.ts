@@ -168,6 +168,28 @@ function resolvePostExhaust(
     hellraiserDamage += hr.damage;
   }
 
+  // 1c. Draw until non-attack (Pillage): draw one card at a time until a non-attack lands in hand.
+  // Cap = draw+discard at the start of the effect to prevent infinite loops in all-attack decks
+  // (including Hellraiser routing attacks back to discard and causing reshuffles).
+  if (!player.noMoreDraws && card.effects.some(e => e.type === "draw_until_non_attack")) {
+    const HAND_LIMIT = 10;
+    const cap = drawPile.length + discardPile.length;
+    for (let i = 0; i < cap; i++) {
+      if (drawPile.length === 0 && discardPile.length === 0) break;
+      if (hand.length >= HAND_LIMIT) break;
+      const drawn = drawCards(drawPile, discardPile, 1, hand.length);
+      if (drawn.hand.length === 0) break;
+      const drawnName = drawn.hand[0]!;
+      hand        = [...hand, drawnName];
+      drawPile    = drawn.drawPile;
+      discardPile = drawn.discardPile;
+      const hr = applyHellraiserToDraw([drawnName], hand, discardPile, player, db);
+      hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+      hellraiserDamage += hr.damage;
+      if (db[drawnName]?.type !== "attack") break;
+    }
+  }
+
   if (card.blocksFutureDraws) {
     player = { ...player, noMoreDraws: true };
   }

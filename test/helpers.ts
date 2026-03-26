@@ -15,6 +15,7 @@ export const basePlayer: PlayerState = {
   freeGeneratedCard: null,
   copyAttackOnN: 0,
   doubleNextAttacks: 0,
+  totalCardsAnywhere: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -115,4 +116,6 @@ export const fx = {
     ({ type: "str_gain_per_vuln_stack", amount }),
   damagePerHpLoss: (amount: number): CardEffect =>
     ({ type: "damage_per_hp_loss", amount }),
+  drawUntilNonAttack: (): CardEffect =>
+    ({ type: "draw_until_non_attack" }),
 };
