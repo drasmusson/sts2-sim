@@ -641,6 +641,15 @@ function dfs(
       }
       runningDamage += exHandEff.damagePerCard * exhaustCount;
       runningBlock  += exHandEff.blockPerCard  * exhaustCount;
+      if (exHandEff.drawPerCard > 0 && exhaustCount > 0 && !nextPlayer.noMoreDraws) {
+        const drawn = drawCards(nextDrawPile, nextDiscardPile, exHandEff.drawPerCard * exhaustCount, nextHand.length);
+        const deBefore = nextHand.length;
+        nextHand        = [...nextHand, ...drawn.hand];
+        nextDrawPile    = drawn.drawPile;
+        nextDiscardPile = drawn.discardPile;
+        const hr = applyHellraiserToDraw(nextHand.slice(deBefore), nextHand, nextDiscardPile, nextPlayer, db);
+        nextHand = hr.hand; nextDiscardPile = hr.discardPile; nextPlayer = hr.player; runningDamage += hr.damage;
+      }
 
       resolveDiscardToDraw(name, card, {
         hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,

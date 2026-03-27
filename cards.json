@@ -554,6 +554,20 @@
     }
   },
   {
+    "name": "Stoke",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "exhaustHand": {
+      "count": -1,
+      "drawPerCard": 1
+    },
+    "notes": "exhaust all cards in hand, draw 1 per card exhausted",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
     "name": "Second Wind",
     "type": "skill",
     "cost": 1,
