@@ -19,6 +19,7 @@
 - ✅ Cards added recently is not shown in the autocomplete in the GUI. Example: Infernal Blade.
 
 ### Up Next
+- ⬜ Reflect all inputs in the CLI.
 - ⬜ Add class on cards (relevant for cards like Infernal Blade)
 - ⬜ Multi-copy input — easier way to add multiple of the same card (e.g. `Strike ×3`) in the web UI
 - ⬜ UI improvements — general polish, layout, usability
