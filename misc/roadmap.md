@@ -26,6 +26,14 @@
 - ⬜ Config file — save deck setups and run with `--config deck.json`
 - ⬜ Custom cards — define cards inline via CLI or config with arbitrary stat overrides; workaround for specific card instances (enchanted cards, Genetic Algorithm, etc.) without needing a full instance model
 
+#### Cards to implement
+- ⬜ Stone armor. power. cost 1. Gain 4 plating. Upgrade: gain 6 plating.
+The plating mechanic: end of turn you gain block euqal to your number of plating then plating is reduced by 1 (meaning you will get 1 less block next turn). If you play two Stone Armor you would get 8 plating (and 8 block end of turn) and it would still only reduced by 1. Block gained from plating triggers block effects like normal (juggernaut for example).
+- ⬜ Tear asunder. attack. cost 2. dmg 5. Hits an additional time for each time you lost HP this combat. Upgrade: dmg 7. Question if support for adding how many times you've taken damage this combat should be implemented.
+- ⬜ Thrash. attack. cost 1. dmg 4. hits 2. exhaust a random card in your hand and add its damage to this card (gets added after Thrash has dealt damage). Upgrade: dmg 6.
+- ⬜ Unmovable. power. cost 2. the first time you gain block FROM A CARD each turn, double the amount gained. Upgrade: cost 1.
+- ⬜ Vicious. power. cost 1. whenever you apply vulnerable, draw 1 card. Upgrade: whenever you apply vulnerable, draw 2 cards.
+
 ### Bugs to fix
 
 ### Per-character support
