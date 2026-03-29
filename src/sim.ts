@@ -197,6 +197,7 @@ const player: PlayerState = {
   plating: 0,
   hpLossCount: parseIntArg(args["hp-loss-count"], 0),
   totalCardsAnywhere: 0,
+  thrashDamageBonus: 0,
 };
 
 if (!drawPile.length) {

@@ -38,6 +38,7 @@ export interface PlayerState {
   plating: number;                // Plating stacks: end of turn gain this much block, then stacks -1
   hpLossCount: number;           // HP loss events this combat (from enemies + self-damage); set via --hp-loss-count
   totalCardsAnywhere: number;     // total cards across all zones (hand+draw+discard+exhaust+powers); set by DFS for Perfected Strike
+  thrashDamageBonus: number;      // Thrash: accumulated base-damage bonus from prior Thrash exhausts this turn
 }
 
 export interface ComboResult {
@@ -108,6 +109,9 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
     Extract<CardEffect, { type: "rampage_bonus" }> | undefined;
   const rampageBonus = rampageBonusEff ? player.rampageDamageBonus : 0;
 
+  // Pre-compute Thrash bonus — accumulated base-damage bonus from prior Thrash exhausts this turn
+  const thrashBonus = card.hasExhaustForDamageBonus ? player.thrashDamageBonus : 0;
+
   let damage = 0;
   let block  = 0;
 
@@ -115,7 +119,7 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
     switch (eff.type) {
       case "damage": {
         const base = (eff.useCurrentBlock ? player.currentBlock : eff.amount)
-                   + strength + exhaustBonus + perCardBonus + rampageBonus;
+                   + strength + exhaustBonus + perCardBonus + rampageBonus + thrashBonus;
         const bonusHits = (eff.bonusHitsIfVulnerable && vulnerableStacks > 0) ? eff.bonusHitsIfVulnerable : 0;
         const hpLossBonus = (eff.hitsPerHpLoss ?? 0) * player.hpLossCount;
         const hits = (card.xCost ? player.energyRemaining : eff.hits) + bonusHits + hpLossBonus;

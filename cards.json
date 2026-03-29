@@ -834,6 +834,17 @@
     }
   },
   {
+    "name": "Thrash",
+    "type": "attack",
+    "cost": 1,
+    "damage": 4,
+    "hits": 2,
+    "exhaustForDamageBonus": true,
+    "upgraded": {
+      "damage": 6
+    }
+  },
+  {
     "name": "Tear Asunder",
     "type": "attack",
     "cost": 2,

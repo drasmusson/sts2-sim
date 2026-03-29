@@ -22,6 +22,7 @@ export const basePlayer: PlayerState = {
   stampedeCount: 0,
   plating: 0,
   hpLossCount: 0,
+  thrashDamageBonus: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -45,13 +46,15 @@ export function makeCard(overrides: Partial<Card>): Card {
     copyAttackOnN:        0,
     doubleNextAttacks:    0,
     minExhaustToPlay:     0,
+    hasExhaustForDamageBonus: false,
     effects: [] as CardEffect[],
     notes: "",
     ...overrides,
   };
   // Ensure flags are always consistent with the effects array, even when only
   // effects are overridden (e.g. makeCard({ effects: [fx.discardToDraw(1)] }))
-  card.hasDiscardToDraw     = card.effects.some(e => e.type === "discard_to_draw");
+  card.hasDiscardToDraw           = card.effects.some(e => e.type === "discard_to_draw");
+  card.hasExhaustForDamageBonus   = card.effects.some(e => e.type === "exhaust_for_damage_bonus");
   card.hasUpgradeHand       = card.effects.some(e => e.type === "upgrade_hand");
   card.hasCascade           = card.effects.some(e => e.type === "cascade");
   card.hasPlayTopAndExhaust = card.effects.some(e => e.type === "play_top_and_exhaust");
@@ -129,4 +132,6 @@ export const fx = {
     ({ type: "rampage_bonus", amount }),
   stampede: (): CardEffect =>
     ({ type: "stampede" }),
+  exhaustForDamageBonus: (): CardEffect =>
+    ({ type: "exhaust_for_damage_bonus" }),
 };

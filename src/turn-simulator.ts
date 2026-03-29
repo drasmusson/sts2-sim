@@ -621,6 +621,50 @@ function dfs(
       continue; // All sub-cases have called resolveDiscardToDraw; skip exHandEff routing below
     }
 
+    // ── Exhaust from hand for damage bonus (Thrash) ──────────────────────────
+    // Random in-game; modelled here as optimal choice (overestimates vs. true average),
+    // matching the True Grit precedent. The exhausted card's base damage is added to
+    // thrashDamageBonus in PlayerState so subsequent Thrash plays use the updated base.
+    if (card.hasExhaustForDamageBonus && nextHand.length > 0) {
+      const triedExhaust = new Set<string>();
+      for (const candidate of nextHand) {
+        if (triedExhaust.has(candidate)) continue;
+        triedExhaust.add(candidate);
+
+        const ci = nextHand.indexOf(candidate);
+        let cHand = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
+        const er = applyExhaustEvent(candidate, nextExhaustPile, nextPlayer);
+        let cExhaustPile = er.exhaustPile;
+        let cBlock       = runningBlock + er.blockGained;
+        let cDamage      = runningDamage + (er.blockGained > 0 ? er.player.damagePerBlockGain : 0);
+
+        // Add exhausted card's base damage to thrashDamageBonus for subsequent Thrash plays
+        const exhaustedDmgEff = db[candidate]?.effects.find(e => e.type === "damage") as
+          Extract<CardEffect, { type: "damage" }> | undefined;
+        let cPlayer = {
+          ...er.player,
+          thrashDamageBonus: nextPlayer.thrashDamageBonus + (exhaustedDmgEff?.amount ?? 0),
+        };
+
+        const deBefore = cHand.length;
+        const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
+        cHand = de.hand;
+        let cDrawPile    = de.drawPile;
+        let cDiscardPile = de.discardPile;
+        const hr = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
+        cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
+
+        resolveDiscardToDraw(name, card, {
+          hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
+          exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
+          hellraiserDamage: 0,
+          generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
+          wasDoubledAttack,
+        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
+      }
+      continue; // All branches handled; skip exHandEff routing
+    }
+
     if (exHandEff && exHandEff.count === -1) {
       // Case B: exhaust ALL matching cards from hand (Fiend Fire, Second Wind) — deterministic
       const candidates = nextHand.filter(n =>

@@ -48,7 +48,8 @@ export type CardEffect =
   | { type: "rampage_bonus";               amount: number }    // Rampage: +amount to this card's damage each time it is played this combat
   | { type: "rupture";                      amount: number }    // Rupture: gain amount strength each time you lose HP
   | { type: "stampede" }                                        // Stampede: at end of turn, play 1 random attack from hand
-  | { type: "plating";                      amount: number };   // Plating: end of turn gain block = stacks, then stacks -1
+  | { type: "plating";                      amount: number }    // Plating: end of turn gain block = stacks, then stacks -1
+  | { type: "exhaust_for_damage_bonus" };                       // Thrash: exhaust a card from hand; add its base damage to this card's base for the rest of the turn
 
 export interface Card {
   type:        CardType;
@@ -70,6 +71,7 @@ export interface Card {
   copyAttackOnN:        number;         // Juggling: 0 = inactive; N = copy the Nth attack to hand
   doubleNextAttacks:    number;         // One-Two Punch: N next attacks played this turn trigger twice
   minExhaustToPlay:     number;         // Pact's End: 0 = no requirement; N = exhaust pile must have ≥N cards
+  hasExhaustForDamageBonus: boolean;    // precomputed: has exhaust_for_damage_bonus effect (Thrash)
   effects:     CardEffect[];
   notes:       string;
 }
@@ -149,6 +151,7 @@ export interface CardJson {
   rupture?: number;                     // Rupture: gain N strength each time you lose HP
   stampede?: boolean;                   // Stampede: at end of turn, play 1 random attack from hand
   plating?: number;                     // Plating: end of turn gain block = stacks, then stacks -1
+  exhaustForDamageBonus?: boolean;      // Thrash: exhaust a card from hand; add its base damage to this card's base for the rest of the turn
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -211,6 +214,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.rupture)                    effects.push({ type: "rupture",                          amount: c.rupture });
   if (c.stampede)                   effects.push({ type: "stampede" });
   if (c.plating)                    effects.push({ type: "plating",                           amount: c.plating });
+  if (c.exhaustForDamageBonus)      effects.push({ type: "exhaust_for_damage_bonus" });
 
   return {
     type:        c.type,
@@ -232,6 +236,7 @@ function jsonToCard(c: CardJson): Card {
     copyAttackOnN:        c.copyAttackOnN ?? 0,
     doubleNextAttacks:    c.doubleNextAttacks ?? 0,
     minExhaustToPlay:     c.minExhaustToPlay ?? 0,
+    hasExhaustForDamageBonus: effects.some(e => e.type === "exhaust_for_damage_bonus"),
     effects,
     notes:       c.notes       ?? "",
   };

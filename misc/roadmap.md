@@ -30,7 +30,7 @@ The plating mechanic: end of turn you gain block euqal to your number of plating
 
 #### Cards to implement
 - ✅ Tear asunder. attack. cost 2. dmg 5. Hits an additional time for each time you lost HP this combat. Upgrade: dmg 7. Implemented with `--hp-loss-count N` CLI flag and GUI input.
-- ⬜ Thrash. attack. cost 1. dmg 4. hits 2. exhaust a random card in your hand and add its damage to this card (gets added after Thrash has dealt damage). Upgrade: dmg 6.
+- ✅ Thrash. attack. cost 1. dmg 4. hits 2. exhaust a random card in your hand and add its base damage to this card's base for the rest of the turn (so subsequent Thrash plays deal more). Upgrade: dmg 6. Modelled as optimal choice in DFS (overestimates vs. true random, matching True Grit precedent).
 - ⬜ Unmovable. power. cost 2. the first time you gain block FROM A CARD each turn, double the amount gained. Upgrade: cost 1.
 - ⬜ Vicious. power. cost 1. whenever you apply vulnerable, draw 1 card. Upgrade: whenever you apply vulnerable, draw 2 cards.
 
