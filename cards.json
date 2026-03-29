@@ -834,6 +834,16 @@
     }
   },
   {
+    "name": "Tear Asunder",
+    "type": "attack",
+    "cost": 2,
+    "damage": 5,
+    "hitsPerHpLoss": 1,
+    "upgraded": {
+      "damage": 7
+    }
+  },
+  {
     "name": "Giant Rock",
     "type": "attack",
     "cost": 1,

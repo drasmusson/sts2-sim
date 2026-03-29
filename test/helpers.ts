@@ -21,6 +21,7 @@ export const basePlayer: PlayerState = {
   strengthPerHpLoss: 0,
   stampedeCount: 0,
   plating: 0,
+  hpLossCount: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {
@@ -60,8 +61,8 @@ export function makeCard(overrides: Partial<Card>): Card {
 // Shorthand effect constructors for readable test code.
 // Usage: makeCard({ effects: [fx.damage(6), fx.draw(1)], cost: 1 })
 export const fx = {
-  damage:    (amount: number, hits = 1, bonusHitsIfVulnerable?: number): CardEffect =>
-    ({ type: "damage", amount, hits, ...(bonusHitsIfVulnerable ? { bonusHitsIfVulnerable } : {}) }),
+  damage:    (amount: number, hits = 1, bonusHitsIfVulnerable?: number, hitsPerHpLoss?: number): CardEffect =>
+    ({ type: "damage", amount, hits, ...(bonusHitsIfVulnerable ? { bonusHitsIfVulnerable } : {}), ...(hitsPerHpLoss ? { hitsPerHpLoss } : {}) }),
   blockAsDamage: (hits = 1): CardEffect =>
     ({ type: "damage", amount: 0, hits, useCurrentBlock: true }),
   block:     (amount: number): CardEffect =>

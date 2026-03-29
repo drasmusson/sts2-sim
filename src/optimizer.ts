@@ -36,6 +36,7 @@ export interface PlayerState {
   strengthPerHpLoss: number;      // Rupture passive: gain this much strength each time you lose HP
   stampedeCount: number;          // Stampede: number of end-of-turn attack triggers (0 = inactive)
   plating: number;                // Plating stacks: end of turn gain this much block, then stacks -1
+  hpLossCount: number;           // HP loss events this combat (from enemies + self-damage); set via --hp-loss-count
   totalCardsAnywhere: number;     // total cards across all zones (hand+draw+discard+exhaust+powers); set by DFS for Perfected Strike
 }
 
@@ -116,7 +117,8 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
         const base = (eff.useCurrentBlock ? player.currentBlock : eff.amount)
                    + strength + exhaustBonus + perCardBonus + rampageBonus;
         const bonusHits = (eff.bonusHitsIfVulnerable && vulnerableStacks > 0) ? eff.bonusHitsIfVulnerable : 0;
-        const hits = (card.xCost ? player.energyRemaining : eff.hits) + bonusHits;
+        const hpLossBonus = (eff.hitsPerHpLoss ?? 0) * player.hpLossCount;
+        const hits = (card.xCost ? player.energyRemaining : eff.hits) + bonusHits + hpLossBonus;
         damage += Math.floor(base * vulnMult * weakMult * hits);
         break;
       }
@@ -261,6 +263,7 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "self_damage":
         next = { ...next, selfDamageThisTurn: next.selfDamageThisTurn + 1,
+          hpLossCount: next.hpLossCount + 1,
           strength: next.strength + next.strengthPerHpLoss };
         break;
     }

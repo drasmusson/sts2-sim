@@ -99,6 +99,7 @@ function printResults(results: MCResult, config: Config): void {
   if (p.enemyAttack)          parts.push(`Enemy attack ${p.enemyAttack}×${p.enemyHits}`);
   if (p.enemyStrength)        parts.push(`Enemy strength ${p.enemyStrength}`);
   if (p.rampageDamageBonus)   parts.push(`Rampage bonus +${p.rampageDamageBonus}`);
+  if (p.hpLossCount)          parts.push(`HP loss count ${p.hpLossCount}`);
   if (parts.length)           console.log(`  Player state: ${parts.join(", ")}`);
   console.log(line);
 
@@ -194,6 +195,7 @@ const player: PlayerState = {
   strengthPerHpLoss: 0,
   stampedeCount: 0,
   plating: 0,
+  hpLossCount: parseIntArg(args["hp-loss-count"], 0),
   totalCardsAnywhere: 0,
 };
 
