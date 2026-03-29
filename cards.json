@@ -825,6 +825,15 @@
     }
   },
   {
+    "name": "Stone Armor",
+    "type": "power",
+    "cost": 1,
+    "plating": 4,
+    "upgraded": {
+      "plating": 6
+    }
+  },
+  {
     "name": "Giant Rock",
     "type": "attack",
     "cost": 1,

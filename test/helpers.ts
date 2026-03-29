@@ -20,6 +20,7 @@ export const basePlayer: PlayerState = {
   totalCardsAnywhere: 0,
   strengthPerHpLoss: 0,
   stampedeCount: 0,
+  plating: 0,
 };
 
 export function makeCard(overrides: Partial<Card>): Card {

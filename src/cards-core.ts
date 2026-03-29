@@ -47,7 +47,8 @@ export type CardEffect =
   | { type: "rage";                         amount: number }    // Rage: gain N block each time an attack is played this turn
   | { type: "rampage_bonus";               amount: number }    // Rampage: +amount to this card's damage each time it is played this combat
   | { type: "rupture";                      amount: number }    // Rupture: gain amount strength each time you lose HP
-  | { type: "stampede" };                                       // Stampede: at end of turn, play 1 random attack from hand
+  | { type: "stampede" }                                        // Stampede: at end of turn, play 1 random attack from hand
+  | { type: "plating";                      amount: number };   // Plating: end of turn gain block = stacks, then stacks -1
 
 export interface Card {
   type:        CardType;
@@ -146,6 +147,7 @@ export interface CardJson {
   rampageBonus?: number;                // Rampage: damage increases by N each time this card is played this combat
   rupture?: number;                     // Rupture: gain N strength each time you lose HP
   stampede?: boolean;                   // Stampede: at end of turn, play 1 random attack from hand
+  plating?: number;                     // Plating: end of turn gain block = stacks, then stacks -1
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -206,6 +208,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.rampageBonus)               effects.push({ type: "rampage_bonus",                   amount: c.rampageBonus });
   if (c.rupture)                    effects.push({ type: "rupture",                          amount: c.rupture });
   if (c.stampede)                   effects.push({ type: "stampede" });
+  if (c.plating)                    effects.push({ type: "plating",                           amount: c.plating });
 
   return {
     type:        c.type,

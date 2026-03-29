@@ -193,6 +193,7 @@ const player: PlayerState = {
   rampageDamageBonus: parseIntArg(args["rampage-bonus"], 0),
   strengthPerHpLoss: 0,
   stampedeCount: 0,
+  plating: 0,
   totalCardsAnywhere: 0,
 };
 

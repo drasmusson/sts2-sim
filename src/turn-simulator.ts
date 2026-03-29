@@ -390,8 +390,11 @@ function dfs(
   // Current state (playing no more cards) is always a valid candidate.
   // Stampede fires at end of turn: expected damage from 1 random remaining attack × copies.
   const stampedeDmg = stampedeEndOfTurnDamage(state.hand, state.energy, state.player, db);
+  // Plating fires at end of turn: gain block = plating stacks; triggers Juggernaut if active.
+  const platBlock = state.player.plating;
+  const platDmg   = platBlock > 0 ? state.player.damagePerBlockGain : 0;
   const candidate: TurnResult = {
-    played, totalDamage: damage + stampedeDmg, totalBlock: block, energySpent,
+    played, totalDamage: damage + stampedeDmg + platDmg, totalBlock: block + platBlock, energySpent,
     infinite: false, exhaustPile: state.exhaustPile, powersInPlay: state.powersInPlay,
   };
   if (isBetter(candidate, best.result, mode)) best.result = candidate;
