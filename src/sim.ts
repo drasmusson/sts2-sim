@@ -10,7 +10,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { parseJsonDb } from "./cards.js";
-import { PlayerState, Mode } from "./optimizer.js";
+import { PlayerState, Mode, defaultPlayerState } from "./optimizer.js";
 import { runMC, Config, MCResult } from "./mc.js";
 import { STARTING_DECKS, CHARACTER_NAMES } from "./characters.js";
 
@@ -162,42 +162,20 @@ const relics      = parseList(args.relics);
 const powersInPlay = parseList(args.powers);
 
 const player: PlayerState = {
-  strength:       parseIntArg(args.strength, 0),
+  ...defaultPlayerState(),
+  strength:         parseIntArg(args.strength, 0),
   vulnerableStacks: parseIntArg(args["enemy-vulnerable"], 0),
-  weak:           !!args.weak,
-  frail:          !!args.frail,
-  focus:          parseIntArg(args.focus, 0),
-  poisonTriggers: parseIntArg(args["poison-triggers"], 1),
-  enemyAttack:    parseIntArg(args["enemy-attack"], 0),
-  enemyHits:      parseIntArg(args["enemy-hits"], 1),
-  enemyWeak:      !!args["enemy-weak"],
-  enemyStrength:  parseIntArg(args["enemy-strength"], 0),
-  exhaust:              parseIntArg(args.exhaust, 0),
-  blockPerExhaustEvent: 0,
-  drawPerExhaustEvent:  0,
-  damagePerBlockGain:   0,
-  damagePerHpLoss:      0,
-  exhaustedThisTurn:    false,
-  currentBlock:         0,
-  energyRemaining:      0,
-  selfDamageThisTurn:   0,
-  attacksPlayedThisTurn: 0,
-  nextAttackFree: false,
-  noMoreDraws: false,
-  corruptionActive: false,
-  vulnMultBonus: 0,
-  hellraiserActive: false,
-  freeGeneratedCard: null,
-  copyAttackOnN: 0,
-  doubleNextAttacks: 0,
-  blockPerAttackPlayed: 0,
+  weak:             !!args.weak,
+  frail:            !!args.frail,
+  focus:            parseIntArg(args.focus, 0),
+  poisonTriggers:   parseIntArg(args["poison-triggers"], 1),
+  enemyAttack:      parseIntArg(args["enemy-attack"], 0),
+  enemyHits:        parseIntArg(args["enemy-hits"], 1),
+  enemyWeak:        !!args["enemy-weak"],
+  enemyStrength:    parseIntArg(args["enemy-strength"], 0),
+  exhaust:          parseIntArg(args.exhaust, 0),
   rampageDamageBonus: parseIntArg(args["rampage-bonus"], 0),
-  strengthPerHpLoss: 0,
-  stampedeCount: 0,
-  plating: 0,
-  hpLossCount: parseIntArg(args["hp-loss-count"], 0),
-  totalCardsAnywhere: 0,
-  thrashDamageBonus: 0,
+  hpLossCount:      parseIntArg(args["hp-loss-count"], 0),
 };
 
 if (!drawPile.length) {

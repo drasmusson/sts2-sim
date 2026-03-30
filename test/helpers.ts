@@ -1,29 +1,7 @@
 import { Card, CardEffect, CardType } from "../src/cards.js";
-import { PlayerState } from "../src/optimizer.js";
+import { PlayerState, defaultPlayerState } from "../src/optimizer.js";
 
-export const basePlayer: PlayerState = {
-  strength: 0, vulnerableStacks: 0, weak: false, frail: false, focus: 0, poisonTriggers: 1,
-  exhaust: 0, blockPerExhaustEvent: 0, drawPerExhaustEvent: 0, damagePerBlockGain: 0, damagePerHpLoss: 0, exhaustedThisTurn: false,
-  currentBlock: 0, energyRemaining: 0, enemyAttack: 0, enemyHits: 1, enemyWeak: false, enemyStrength: 0,
-  selfDamageThisTurn: 0,
-  attacksPlayedThisTurn: 0,
-  nextAttackFree: false,
-  noMoreDraws: false,
-  corruptionActive: false,
-  vulnMultBonus: 0,
-  hellraiserActive: false,
-  freeGeneratedCard: null,
-  copyAttackOnN: 0,
-  doubleNextAttacks: 0,
-  blockPerAttackPlayed: 0,
-  rampageDamageBonus: 0,
-  totalCardsAnywhere: 0,
-  strengthPerHpLoss: 0,
-  stampedeCount: 0,
-  plating: 0,
-  hpLossCount: 0,
-  thrashDamageBonus: 0,
-};
+export const basePlayer: PlayerState = defaultPlayerState();
 
 export function makeCard(overrides: Partial<Card>): Card {
   const card = {
