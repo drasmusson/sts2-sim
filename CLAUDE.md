@@ -55,12 +55,11 @@ A played card's effects (including draw) resolve fully before entering the disca
 
 Touch these files in order:
 1. `cards-core.ts` — add to `CardEffect` union + `CardJson` field + `jsonToCard` mapping
-2. `optimizer.ts` — add field to `PlayerState`, handle in `cardEffectiveValues` — for damage effects, fold into base (like `exhaustBonus`); for block/buff effects, update the relevant output field the same way
+2. `optimizer.ts` — add field to `PlayerState` **and** to `defaultPlayerState()` (single source of truth for defaults); handle in `cardEffectiveValues` and `applyCardState` — the exhaustive `assertNever` checks in both functions will give a compile error if you forget either switch
 3. `turn-simulator.ts` — compute `nextHand` *before* calling `cardEffectiveValues`; set the new `PlayerState` field inline at that call site
-4. `sim.ts` — initialize the new field to `0` in default PlayerState
-5. `cards.json` — add the card entry
+4. `cards.json` — add the card entry
 
-Skip steps 2–4 if the effect doesn't depend on live game state. `simulateTurn` calls `cardEffectiveValues` from `optimizer.ts` — new effects must be handled there, not only in `optimizer.ts`'s `bestPlay`.
+Skip steps 2–3 if the effect doesn't depend on live game state. `simulateTurn` calls `cardEffectiveValues` from `optimizer.ts` — new effects must be handled there, not only in `optimizer.ts`'s `bestPlay`.
 
 Existing pattern: `exhaustedThisTurn` → `exhaust_bonus`, `totalCardsAnywhere` → `damage_per_card_anywhere`.
 
@@ -73,7 +72,12 @@ Currently type-based (one JSON entry = one card type). Instance-based model is p
 ### Infernal Blade: random card generation
 The generated attack is pre-sampled before the DFS in `runOneSim` in `mc.ts` — randomness in the Monte Carlo layer, determinism in the DFS layer. The card is free to play via `PlayerState.freeGeneratedCard`. Known approximation: if the generated card has the same name as an existing hand card, the first instance played takes the free cost.
 
-### DFS branching: exhaust vs discard from hand
+### Branching effects (player chooses cards)
+
+Effects where the player picks cards from hand to exhaust/discard branch the DFS. Use `branchExhaustFromHand()` in `turn-simulator.ts` for any new "exhaust one card from hand" mechanic — pass an `extra` callback for anything specific to the card (e.g. Thrash updates `thrashDamageBonus`, Havoc applies `damagePerCard`/`blockPerCard`). The skeleton (remove card, exhaust event, Dark Embrace, Hellraiser, recurse) is handled inside the helper.
+
+Separate branching patterns (`discard_to_draw` over discard pile, `upgrade_hand` over upgradeable cards) each have their own functions (`resolveDiscardToDraw`, `dfsWithUpgrade`) and are not yet unified.
+
 When Silent discard-from-hand cards arrive, generalize `exhaust_hand` and the future `discard_hand` into a single "remove cards from hand" effect with `destination: "exhaust" | "discard"`. Wait until the first real discard card exists before doing this.
 
 ### `PlayerState` structure
