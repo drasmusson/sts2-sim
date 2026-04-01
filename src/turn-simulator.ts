@@ -352,6 +352,61 @@ function dfsWithUpgrade(
   }
 }
 
+// Mutable state that changes per branch when exhausting a card from hand.
+interface ExhaustBranchState {
+  hand:        string[];
+  drawPile:    string[];
+  discardPile: string[];
+  exhaustPile: string[];
+  player:      PlayerState;
+  block:       number;
+  damage:      number;
+}
+
+// Common skeleton for "branch on exhausting each unique card from a candidate list".
+// For each unique candidate: removes it from hand, fires applyExhaustEvent,
+// applyDarkEmbraceDraws, and applyHellraiserToDraw, applies an optional caller-supplied
+// `extra` transform, then calls `onBranch`.
+// When candidates is empty, calls `onBranch` with the unchanged state (no-exhaust fallback).
+function branchExhaustFromHand(
+  candidates: string[],
+  s:          ExhaustBranchState,
+  db:         CardDb,
+  extra:      ((s: ExhaustBranchState, exhausted: string) => ExhaustBranchState) | undefined,
+  onBranch:   (s: ExhaustBranchState) => void,
+): void {
+  if (candidates.length === 0) {
+    onBranch(s);
+    return;
+  }
+  const tried = new Set<string>();
+  for (const candidate of candidates) {
+    if (tried.has(candidate)) continue;
+    tried.add(candidate);
+
+    const ci         = s.hand.indexOf(candidate);
+    let cHand        = [...s.hand.slice(0, ci), ...s.hand.slice(ci + 1)];
+    const er         = applyExhaustEvent(candidate, s.exhaustPile, s.player);
+    let cExhaustPile = er.exhaustPile;
+    let cPlayer      = er.player;
+    let cBlock       = s.block  + er.blockGained;
+    let cDamage      = s.damage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
+
+    const deBefore   = cHand.length;
+    const de         = applyDarkEmbraceDraws(cHand, s.drawPile, s.discardPile, cPlayer);
+    cHand            = de.hand;
+    let cDrawPile    = de.drawPile;
+    let cDiscardPile = de.discardPile;
+    const hr         = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
+    cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
+
+    let bs: ExhaustBranchState = { hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
+                                   exhaustPile: cExhaustPile, player: cPlayer, block: cBlock, damage: cDamage };
+    if (extra) bs = extra(bs, candidate);
+    onBranch(bs);
+  }
+}
+
 // Expected damage from Stampede end-of-turn trigger: average damage of one random attack
 // in hand, scored at the current player state. Multiple Stampede copies multiply linearly.
 function stampedeEndOfTurnDamage(hand: string[], energy: number, player: PlayerState, db: CardDb): number {
@@ -575,38 +630,18 @@ function dfs(
 
         } else {
           // Exhaust N cards — DFS branches on each unique choice.
-          // Each iteration reads from pre-loop next* snapshots; c* vars are fresh per iteration.
           const candidates = nextHand.filter(n =>
             havocExHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
           );
-          if (candidates.length === 0) {
-            finishBranch(nextHand, nextDrawPile, nextDiscardPile, nextExhaustPile, nextPlayer, runningBlock, runningDamage);
-          } else {
-            const triedExhaust = new Set<string>();
-            for (const candidate of candidates) {
-              if (triedExhaust.has(candidate)) continue;
-              triedExhaust.add(candidate);
-
-              const ci         = nextHand.indexOf(candidate);
-              let cHand        = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
-              const er         = applyExhaustEvent(candidate, nextExhaustPile, nextPlayer);
-              let cExhaustPile = er.exhaustPile;
-              let cPlayer      = er.player;
-              let cBlock       = runningBlock + er.blockGained;
-              let cDamage      = runningDamage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
-              cDamage += havocExHandEff.damagePerCard;
-              cBlock  += havocExHandEff.blockPerCard;
-              const deBefore = cHand.length;
-              const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
-              cHand = de.hand;
-              let cDrawPile    = de.drawPile;
-              let cDiscardPile = de.discardPile;
-              const hr = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
-              cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
-
-              finishBranch(cHand, cDrawPile, cDiscardPile, cExhaustPile, cPlayer, cBlock, cDamage);
-            }
-          }
+          branchExhaustFromHand(
+            candidates,
+            { hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+              exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock, damage: runningDamage },
+            db,
+            (s, _) => ({ ...s, damage: s.damage + havocExHandEff.damagePerCard,
+                                block:  s.block  + havocExHandEff.blockPerCard }),
+            s => finishBranch(s.hand, s.drawPile, s.discardPile, s.exhaustPile, s.player, s.block, s.damage),
+          );
         }
 
       } else {
@@ -626,42 +661,26 @@ function dfs(
     // matching the True Grit precedent. The exhausted card's base damage is added to
     // thrashDamageBonus in PlayerState so subsequent Thrash plays use the updated base.
     if (card.hasExhaustForDamageBonus && nextHand.length > 0) {
-      const triedExhaust = new Set<string>();
-      for (const candidate of nextHand) {
-        if (triedExhaust.has(candidate)) continue;
-        triedExhaust.add(candidate);
-
-        const ci = nextHand.indexOf(candidate);
-        let cHand = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
-        const er = applyExhaustEvent(candidate, nextExhaustPile, nextPlayer);
-        let cExhaustPile = er.exhaustPile;
-        let cBlock       = runningBlock + er.blockGained;
-        let cDamage      = runningDamage + (er.blockGained > 0 ? er.player.damagePerBlockGain : 0);
-
+      const preThrashBonus = nextPlayer.thrashDamageBonus;
+      branchExhaustFromHand(
+        nextHand,
+        { hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock, damage: runningDamage },
+        db,
         // Add exhausted card's base damage to thrashDamageBonus for subsequent Thrash plays
-        const exhaustedDmgEff = db[candidate]?.effects.find(e => e.type === "damage") as
-          Extract<CardEffect, { type: "damage" }> | undefined;
-        let cPlayer = {
-          ...er.player,
-          thrashDamageBonus: nextPlayer.thrashDamageBonus + (exhaustedDmgEff?.amount ?? 0),
-        };
-
-        const deBefore = cHand.length;
-        const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
-        cHand = de.hand;
-        let cDrawPile    = de.drawPile;
-        let cDiscardPile = de.discardPile;
-        const hr = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
-        cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
-
-        resolveDiscardToDraw(name, card, {
-          hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
-          exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
+        (s, exhausted) => {
+          const dmgEff = db[exhausted]?.effects.find(e => e.type === "damage") as
+            Extract<CardEffect, { type: "damage" }> | undefined;
+          return { ...s, player: { ...s.player, thrashDamageBonus: preThrashBonus + (dmgEff?.amount ?? 0) } };
+        },
+        s => resolveDiscardToDraw(name, card, {
+          hand: s.hand, drawPile: s.drawPile, discardPile: s.discardPile,
+          exhaustPile: s.exhaustPile, powersInPlay: nextPowersInPlay, player: s.player, block: s.block,
           hellraiserDamage: 0,
           generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
           wasDoubledAttack,
-        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
-      }
+        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], s.damage, initialEnergy, best, threshold),
+      );
       continue; // All branches handled; skip exHandEff routing
     }
 
@@ -712,47 +731,20 @@ function dfs(
       const candidates = nextHand.filter(n =>
         exHandEff.filter === "non-attack" ? db[n]?.type !== "attack" : true
       );
-
-      if (candidates.length === 0) {
-        // No valid exhaust targets — treat as if no exhaust happened
-        resolveDiscardToDraw(name, card, {
-          hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
-          exhaustPile: nextExhaustPile, powersInPlay: nextPowersInPlay, player: nextPlayer, block: runningBlock,
+      branchExhaustFromHand(
+        candidates,
+        { hand: nextHand, drawPile: nextDrawPile, discardPile: nextDiscardPile,
+          exhaustPile: nextExhaustPile, player: nextPlayer, block: runningBlock, damage: runningDamage },
+        db,
+        undefined,
+        s => resolveDiscardToDraw(name, card, {
+          hand: s.hand, drawPile: s.drawPile, discardPile: s.discardPile,
+          exhaustPile: s.exhaustPile, powersInPlay: nextPowersInPlay, player: s.player, block: s.block,
           hellraiserDamage: 0,
           generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
           wasDoubledAttack,
-        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], runningDamage, initialEnergy, best, threshold);
-      } else {
-        // Branch on each unique exhaust choice
-        const triedExhaust = new Set<string>();
-        for (const candidate of candidates) {
-          if (triedExhaust.has(candidate)) continue;
-          triedExhaust.add(candidate);
-
-          const ci = nextHand.indexOf(candidate);
-          let cHand = [...nextHand.slice(0, ci), ...nextHand.slice(ci + 1)];
-          const er = applyExhaustEvent(candidate, nextExhaustPile, nextPlayer);
-          let cExhaustPile = er.exhaustPile;
-          let cPlayer      = er.player;
-          let cBlock       = runningBlock + er.blockGained;
-          let cDamage      = runningDamage + (er.blockGained > 0 ? cPlayer.damagePerBlockGain : 0);
-          const deBefore = cHand.length;
-          const de = applyDarkEmbraceDraws(cHand, nextDrawPile, nextDiscardPile, cPlayer);
-          cHand = de.hand;
-          let cDrawPile    = de.drawPile;
-          let cDiscardPile = de.discardPile;
-          const hr = applyHellraiserToDraw(cHand.slice(deBefore), cHand, cDiscardPile, cPlayer, db);
-          cHand = hr.hand; cDiscardPile = hr.discardPile; cPlayer = hr.player; cDamage += hr.damage;
-
-          resolveDiscardToDraw(name, card, {
-            hand: cHand, drawPile: cDrawPile, discardPile: cDiscardPile,
-            exhaustPile: cExhaustPile, powersInPlay: nextPowersInPlay, player: cPlayer, block: cBlock,
-            hellraiserDamage: 0,
-            generatedAttacks: state.generatedAttacks, generatedAttackIdx: runningGeneratedIdx,
-            wasDoubledAttack,
-          }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], cDamage, initialEnergy, best, threshold);
-        }
-      }
+        }, nextEnergy, effectivePlaysCount, db, mode, [...played, name], s.damage, initialEnergy, best, threshold),
+      );
 
     } else {
       // No exhaust-from-hand effect
