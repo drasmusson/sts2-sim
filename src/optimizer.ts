@@ -2,6 +2,12 @@
 
 import { Card, CardDb, CardEffect } from "./cards.js";
 
+// Compile-time exhaustiveness guard. Pass the narrowed-to-never discriminant
+// so TypeScript errors if any CardEffect variant is missing from a switch.
+function assertNever(x: never): never {
+  throw new Error(`Unhandled CardEffect type: ${(x as { type: string }).type}`);
+}
+
 export interface PlayerState {
   strength:       number;
   vulnerableStacks: number;   // current enemy vulnerable stacks (0 = not vulnerable; 1.5× damage if >0)
@@ -224,9 +230,45 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "damage_if_self_damaged":
         if (player.selfDamageThisTurn > 0) damage += eff.amount;
         break;
-      // exhaust_bonus / damage_per_card_anywhere: pre-computed above and folded into damage effects
-      // Other effect types (draw, energy_gain, exhaust_*, upgrade_hand, self_damage, etc.)
-      // don't contribute to immediate damage/block scoring
+
+      // Effects pre-computed above and folded into the damage case — no further action here.
+      case "exhaust_bonus":
+      case "damage_per_card_anywhere":
+      case "rampage_bonus":
+      case "exhaust_for_damage_bonus":
+      // Rage block is applied after the loop via player.blockPerAttackPlayed — no action here.
+      case "rage":
+      // Turn-structural effects resolved by the turn-simulator, not by scoring.
+      case "draw":
+      case "draw_if_self_damaged":
+      case "draw_until_non_attack":
+      case "draw_per_exhaust_event":
+      case "exhaust_hand":
+      case "exhaust_draw":
+      case "upgrade_hand":
+      case "discard_to_draw":
+      case "copy_to_discard":
+      case "play_top_and_exhaust":
+      case "cascade":
+      case "stampede":
+      case "plating":
+      // State mutations applied by applyCardState — no contribution to immediate damage/block.
+      case "energy_gain":
+      case "energy_if_exhausted_turn":
+      case "str_gain":
+      case "str_gain_per_vuln_stack":
+      case "vuln":
+      case "double_vuln_stacks":
+      case "vuln_mult_bonus":
+      case "block_per_exhaust_event":
+      case "damage_per_block_gain":
+      case "damage_per_hp_loss":
+      case "self_damage":
+      case "rupture":
+        break;
+
+      default:
+        assertNever(eff);
     }
   }
 
@@ -311,6 +353,41 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
           hpLossCount: next.hpLossCount + 1,
           strength: next.strength + next.strengthPerHpLoss };
         break;
+
+      // Damage/block scoring — no state mutation needed here (handled by cardEffectiveValues).
+      case "damage":
+      case "block":
+      case "orb":
+      case "poison":
+      case "doom":
+      case "exhaust_bonus":
+      case "damage_per_self_damage":
+      case "damage_if_self_damaged":
+      case "block_if_exhausted_turn":
+      case "damage_per_vuln_stack":
+      case "damage_per_attack_played":
+      case "damage_reduction_if_enemy_vuln":
+      case "thorns":
+      case "damage_per_card_anywhere":
+      case "rampage_bonus":
+      case "exhaust_for_damage_bonus":
+      // Turn-structural effects resolved by the turn-simulator — no state mutation here.
+      case "draw":
+      case "draw_if_self_damaged":
+      case "draw_until_non_attack":
+      case "exhaust_hand":
+      case "exhaust_draw":
+      case "upgrade_hand":
+      case "discard_to_draw":
+      case "copy_to_discard":
+      case "play_top_and_exhaust":
+      case "cascade":
+      case "stampede":
+      case "plating":
+        break;
+
+      default:
+        assertNever(eff);
     }
   }
 
