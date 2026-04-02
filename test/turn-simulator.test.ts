@@ -517,21 +517,38 @@ test("ordering: Bash vs Pommel (Energy Constraint)", () => {
 });
 
 test("ordering: Pommel drawing Bludgeon beats playing Bash first", () => {
-  // hand: pommel(1e, 9dmg, draw 1), bash(2e, 8dmg, vuln)
-  // pile: [bludgeon(3e, 32dmg)]
-  // energy: 4
-  // Option A: Bash(2) → Pommel(1) = 8 + 13 = 21 dmg. Bludgeon remains in pile.
-  // Option B: Pommel(1) [draws bludgeon] → Bludgeon(3) = 9 + 32 = 41 dmg. Bash remains in hand.
+  // Hand: Pommel Strike (draw 1, 9 dmg, 1 cost), Bash (8 dmg, vuln, 2 cost)
+  // Pile: [Bludgeon+] (42 dmg, 3 cost) — what Pommel would draw
+  // Energy: 4
+  //
+  // Option A: Pommel → Bludgeon+         = 9 + 42 = 51 dmg, costs 4 ✓
+  // Option B: Bash → Pommel (×1.5 vuln)  = 8 + 13 = 21 dmg, costs 3
+  //           (only 1 energy left — can't afford Bludgeon+)
   const db: CardDb = {
     bash:     makeCard({ cost: 2, effects: [fx.damage(8), fx.vuln(2)] }),
     pommel:   makeCard({ cost: 1, effects: [fx.damage(9), fx.draw(1)] }),
-    bludgeon: makeCard({ cost: 3, effects: [fx.damage(32)] }),
+    bludgeon: makeCard({ cost: 3, effects: [fx.damage(42)] }),
   };
   const result = sim(["bash", "pommel"], ["bludgeon"], db, 4, "dmg");
-  assert.equal(result.totalDamage, 41);
+  assert.equal(result.totalDamage, 51);
   assert.ok(result.played.includes("pommel"));
   assert.ok(result.played.includes("bludgeon"));
   assert.ok(!result.played.includes("bash"));
+});
+
+test("ordering: vuln card is correct first play when energy allows the full combo", () => {
+  // 6 energy — all three are affordable (bash 2 + pommel 1 + bludgeon 3 = 6)
+  // Bash → Pommel (×1.5) → Bludgeon (×1.5) = 8 + 13 + 63 = 84 dmg
+  const db: CardDb = {
+    bash:     makeCard({ cost: 2, effects: [fx.damage(8), fx.vuln(2)] }),
+    pommel:   makeCard({ cost: 1, effects: [fx.damage(9), fx.draw(1)] }),
+    bludgeon: makeCard({ cost: 3, effects: [fx.damage(42)] }),
+  };
+  const result = sim(["bash", "pommel"], ["bludgeon"], db, 6, "dmg");
+  assert.equal(result.totalDamage, 84);
+  assert.ok(result.played.includes("bash"));
+  assert.ok(result.played.includes("pommel"));
+  assert.ok(result.played.includes("bludgeon"));
 });
 
 test("ordering: stable tiebreak for equal value plays", () => {
