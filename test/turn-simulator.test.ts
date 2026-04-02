@@ -463,3 +463,82 @@ test("hellraiser: pre-existing, all Strikes in initial hand auto-play, none left
   assert.equal(result.totalDamage, 18);
   assert.deepEqual(result.played, []);
 });
+
+// ─── Ordering Scenarios (Regression vs Legacy Tests) ─────────────────────────
+
+test("ordering: Body Slam sorts after block cards for max damage", () => {
+  const db: CardDb = {
+    defend:    makeCard({ type: "skill", cost: 1, effects: [fx.block(5)] }),
+    "body slam": makeCard({ type: "attack", cost: 1, effects: [fx.blockAsDamage(1)] }),
+  };
+  // Defend(1) + Body Slam(1) = 2 energy.
+  // Order A: Defend → Body Slam = 5 dmg + 5 block
+  // Order B: Body Slam → Defend = 0 dmg + 5 block
+  // DFS should pick Order A.
+  const result = sim(["body slam", "defend"], [], db, 2, "dmg");
+  assert.equal(result.totalDamage, 5);
+  assert.deepEqual(result.played, ["defend", "body slam"]);
+});
+
+test("ordering: Inflame before Whirlwind boosts multi-hit damage", () => {
+  const db: CardDb = {
+    inflame:   makeCard({ type: "power", cost: 1, effects: [fx.strGain(2)] }),
+    whirlwind: makeCard({ type: "attack", cost: 0, xCost: true, effects: [fx.damage(5)] }),
+  };
+  // 3 energy.
+  // Order A: Inflame(1) → Whirlwind(2e) = (5+2)×2 = 14 dmg
+  // Order B: Whirlwind(3e) → Inflame(0e) = (5)×3 = 15 dmg (Actually B is better here!)
+  // Let's try 2 energy:
+  // Order A: Inflame(1) → Whirlwind(1e) = (5+2)×1 = 7 dmg
+  // Order B: Whirlwind(2e) → Inflame(0e) = (5)×2 = 10 dmg (Still B!)
+  // Let's try 5 energy:
+  // Order A: Inflame(1) → Whirlwind(4e) = (5+2)×4 = 28 dmg
+  // Order B: Whirlwind(5e) → Inflame(0e) = (5)×5 = 25 dmg (A is better!)
+  const result = sim(["inflame", "whirlwind"], [], db, 5, "dmg");
+  assert.equal(result.totalDamage, 28);
+  assert.deepEqual(result.played, ["inflame", "whirlwind"]);
+});
+
+test("ordering: Bash vs Pommel (Energy Constraint)", () => {
+  // hand: pommel(1e, 9dmg, draw 1), bash(2e, 8dmg, vuln), bludgeon(3e, 32dmg)
+  // pile: [] (nothing for pommel to draw)
+  // energy: 3
+  // Option A: Bash(2) + Pommel(1) = 8 + (9×1.5) = 8 + 13 = 21 dmg
+  // Option B: Pommel(1) + Bash(2) = 9 + 8 = 17 dmg
+  // Option C: Bludgeon(3) = 32 dmg
+  const db: CardDb = {
+    bash:     makeCard({ cost: 2, effects: [fx.damage(8), fx.vuln(2)] }),
+    pommel:   makeCard({ cost: 1, effects: [fx.damage(9), fx.draw(1)] }),
+    bludgeon: makeCard({ cost: 3, effects: [fx.damage(32)] }),
+  };
+  const result = sim(["bash", "pommel", "bludgeon"], [], db, 3, "dmg");
+  assert.equal(result.totalDamage, 32);
+  assert.deepEqual(result.played, ["bludgeon"]);
+});
+
+test("ordering: Pommel drawing Bludgeon beats playing Bash first", () => {
+  // hand: pommel(1e, 9dmg, draw 1), bash(2e, 8dmg, vuln)
+  // pile: [bludgeon(3e, 32dmg)]
+  // energy: 4
+  // Option A: Bash(2) → Pommel(1) = 8 + 13 = 21 dmg. Bludgeon remains in pile.
+  // Option B: Pommel(1) [draws bludgeon] → Bludgeon(3) = 9 + 32 = 41 dmg. Bash remains in hand.
+  const db: CardDb = {
+    bash:     makeCard({ cost: 2, effects: [fx.damage(8), fx.vuln(2)] }),
+    pommel:   makeCard({ cost: 1, effects: [fx.damage(9), fx.draw(1)] }),
+    bludgeon: makeCard({ cost: 3, effects: [fx.damage(32)] }),
+  };
+  const result = sim(["bash", "pommel"], ["bludgeon"], db, 4, "dmg");
+  assert.equal(result.totalDamage, 41);
+  assert.ok(result.played.includes("pommel"));
+  assert.ok(result.played.includes("bludgeon"));
+  assert.ok(!result.played.includes("bash"));
+});
+
+test("ordering: stable tiebreak for equal value plays", () => {
+  // Two strikes: both 6 dmg. Order should be stable (alphabetical or insertion order).
+  // Our DFS uses index-based exploration and 'tried' set for deduplication.
+  const db: CardDb = { strike: makeCard({ effects: [fx.damage(6)], cost: 1 }) };
+  const result = sim(["strike", "strike"], [], db, 2, "dmg");
+  assert.equal(result.totalDamage, 12);
+  assert.equal(result.played.length, 2);
+});
