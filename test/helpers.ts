@@ -62,12 +62,12 @@ export const fx = {
     ({ type: "poison", amount }),
   doom:      (amount: number): CardEffect =>
     ({ type: "doom", amount }),
-  orb:       (orbType: string, count = 1): CardEffect =>
-    ({ type: "orb", orbType, count }),
+  orb: (orbType: string, count: number = 1): CardEffect =>
+    ({ type: "orb", orbType: orbType as any, count }),
   exhaustBonus: (amount: number): CardEffect =>
     ({ type: "exhaust_bonus", amount }),
-  exhaustHand: (count: number, opts?: { filter?: string; choice?: boolean; damagePerCard?: number; blockPerCard?: number; drawPerCard?: number }): CardEffect =>
-    ({ type: "exhaust_hand", count, filter: opts?.filter ?? "", choice: opts?.choice ?? false, damagePerCard: opts?.damagePerCard ?? 0, blockPerCard: opts?.blockPerCard ?? 0, drawPerCard: opts?.drawPerCard ?? 0 }),
+  exhaustHand: (count: number, opts?: { filter?: string, choice?: boolean, damagePerCard?: number, blockPerCard?: number, drawPerCard?: number }): CardEffect =>
+    ({ type: "exhaust_hand", count, filter: (opts?.filter ?? "") as any, choice: opts?.choice ?? false, damagePerCard: opts?.damagePerCard ?? 0, blockPerCard: opts?.blockPerCard ?? 0, drawPerCard: opts?.drawPerCard ?? 0 }),
   exhaustDraw: (count: number): CardEffect =>
     ({ type: "exhaust_draw", count }),
   upgradeHand: (count: number): CardEffect =>

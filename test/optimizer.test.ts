@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cardEffectiveValues, simulateCombo, optimalComboOrder, applyCardState, bestPlay } from "../src/optimizer.js";
+import { cardEffectiveValues, simulateCombo, applyCardState } from "../src/optimizer.js";
 import { simulateTurn } from "../src/turn-simulator.js";
 import { CardDb } from "../src/cards.js";
 import { basePlayer, makeCard, fx } from "./helpers.js";
@@ -369,66 +369,13 @@ test("strGain: boosts subsequent attack damage", () => {
   assert.equal(totalDamage, 8);
 });
 
-test("strGain card sorts before damage card", () => {
-  const ordered = optimalComboOrder(["Strike", "Inflame"], strDb, basePlayer, "dmg");
-  assert.equal(ordered[0], "Inflame");
-});
-
-test("strGain card sorts before damage card regardless of input order", () => {
-  const a = optimalComboOrder(["Strike", "Inflame"], strDb, basePlayer, "dmg");
-  const b = optimalComboOrder(["Inflame", "Strike"], strDb, basePlayer, "dmg");
-  assert.equal(a.join(" → "), b.join(" → "));
-  assert.equal(a[0], "Inflame");
-});
-
-// ─── optimalComboOrder ────────────────────────────────────────────────────────
+// ─── simulateCombo ────────────────────────────────────────────────────────────
 
 const db = {
   Bash:   makeCard({ effects: [fx.damage(8), fx.vuln(2)], cost: 2 }),
   Strike: makeCard({ effects: [fx.damage(6)], cost: 1 }),
   Defend: makeCard({ effects: [fx.block(5)], cost: 1 }),
 };
-
-test("Bash sorts before Strike in dmg mode", () => {
-  const ordered = optimalComboOrder(["Strike", "Bash"], db, basePlayer, "dmg");
-  assert.equal(ordered[0], "Bash");
-  assert.equal(ordered[1], "Strike");
-});
-
-test("ordering is stable when no state interaction", () => {
-  const ordered = optimalComboOrder(["Strike", "Strike"], db, basePlayer, "dmg");
-  assert.equal(ordered.length, 2);
-});
-
-test("equal-value cards are ordered alphabetically as tiebreak", () => {
-  // Strike and Twin Strike have no state interaction — equal pairwise value
-  // Alphabetical tiebreak: Strike < Twin Strike
-  const equalDb = {
-    Strike:      makeCard({ effects: [fx.damage(6)], cost: 1 }),
-    "Twin Strike": makeCard({ effects: [fx.damage(6)], cost: 1 }),
-  };
-  const ordered = optimalComboOrder(["Twin Strike", "Strike"], equalDb, basePlayer, "dmg");
-  assert.equal(ordered[0], "Strike");
-  assert.equal(ordered[1], "Twin Strike");
-});
-
-test("optimalComboOrder produces same result regardless of input order", () => {
-  // Strike + Twin Strike + Twin Strike: no state interaction, should always sort the same
-  const multiDb = {
-    Strike:        makeCard({ effects: [fx.damage(6)], cost: 1 }),
-    "Twin Strike": makeCard({ effects: [fx.damage(10)], cost: 1 }),
-  };
-  const permutations = [
-    ["Strike", "Twin Strike", "Twin Strike"],
-    ["Twin Strike", "Strike", "Twin Strike"],
-    ["Twin Strike", "Twin Strike", "Strike"],
-  ];
-  const results = permutations.map(p => optimalComboOrder(p, multiDb, basePlayer, "dmg").join(" → "));
-  assert.equal(results[1], results[0]);
-  assert.equal(results[2], results[0]);
-});
-
-// ─── simulateCombo ────────────────────────────────────────────────────────────
 
 test("Bash then Strike: 8 + 9 = 17 (Bash applies Vulnerable)", () => {
   const { totalDamage } = simulateCombo(["Bash", "Strike"], db, basePlayer);
@@ -501,12 +448,6 @@ test("Body Slam: Defend before Body Slam accumulates correctly", () => {
   assert.equal(totalDamage, 5);
 });
 
-test("Body Slam sorts after block cards", () => {
-  const ordered = optimalComboOrder(["Body Slam", "Defend"], bodyDb, basePlayer, "dmg");
-  assert.equal(ordered[0], "Defend");
-  assert.equal(ordered[1], "Body Slam");
-});
-
 // ─── xCost (Whirlwind) ────────────────────────────────────────────────────────
 
 test("Whirlwind: 0 damage with 0 energy", () => {
@@ -546,17 +487,6 @@ test("Whirlwind: Inflame before Whirlwind boosts damage", () => {
   assert.equal(totalDamage, 14);
 });
 
-test("Whirlwind sorts after Inflame", () => {
-  const whirlDb = {
-    Inflame:   makeCard({ effects: [fx.strGain(2)], cost: 1 }),
-    Whirlwind: makeCard({ effects: [fx.damage(5)], xCost: true, cost: 0 }),
-  };
-  const player = { ...basePlayer, energyRemaining: 2 };
-  const ordered = optimalComboOrder(["Whirlwind", "Inflame"], whirlDb, player, "dmg");
-  assert.equal(ordered[0], "Inflame");
-  assert.equal(ordered[1], "Whirlwind");
-});
-
 // ─── energyGain ───────────────────────────────────────────────────────────────
 
 const energyDb = {
@@ -586,34 +516,8 @@ test("energyGain: card is affordable after energy is generated", () => {
   assert.equal(damage, 12);
 });
 
-test("energyGain: Turbo sorts before Cinder when Cinder needs the energy", () => {
-  const player = { ...basePlayer, energyRemaining: 1 };
-  const ordered = optimalComboOrder(["Cinder", "Turbo"], energyDb, player, "dmg");
-  assert.equal(ordered[0], "Turbo");
-  assert.equal(ordered[1], "Cinder");
-});
-
 test("energyGain: simulateCombo gives correct damage with Turbo before Cinder", () => {
   const player = { ...basePlayer, energyRemaining: 1 };
   const { totalDamage } = simulateCombo(["Turbo", "Cinder"], energyDb, player);
   assert.equal(totalDamage, 12);
-});
-
-test("energyGain: bestPlay includes card only affordable via energy gain", () => {
-  // energy=1, Cinder costs 2 — unaffordable alone, but Turbo (+2 energy) enables it
-  const result = bestPlay(["Turbo", "Cinder"], [], energyDb, basePlayer, 1, "dmg");
-  // optimalComboOrder sorts Turbo before Cinder (energy-generator before consumer)
-  assert.deepEqual(result.played, ["Turbo", "Cinder"]);
-  assert.equal(result.totalDamage, 12);
-});
-
-test("energyGain: bestPlay includes hand card enabled by energy gain drawn mid-turn", () => {
-  // energy=1, hand=[Quill(draw 1, cost 1), Cinder(12 dmg, cost 2)], bonus pool=[Turbo(+2 energy)]
-  // Quill draws Turbo; Turbo's +2 energy makes Cinder affordable despite energy=1
-  // net cost: Quill(1) + Cinder(2) - Turbo(+2) = 1 ✓
-  const result = bestPlay(["Quill", "Cinder"], ["Turbo"], energyDb, basePlayer, 1, "dmg");
-  assert.ok(result.played.includes("Quill"));
-  assert.ok(result.played.includes("Turbo"));
-  assert.ok(result.played.includes("Cinder"));
-  assert.equal(result.totalDamage, 12);
 });

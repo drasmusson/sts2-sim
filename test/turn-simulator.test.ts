@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { simulateTurn, TurnResult } from "../src/turn-simulator.js";
-import { bestPlay } from "../src/optimizer.js";
 import { CardDb } from "../src/cards.js";
 import { basePlayer, makeCard, fx } from "./helpers.js";
 
@@ -173,38 +172,6 @@ test("large but finite hand is NOT flagged as infinite", () => {
   assert.equal(result.totalDamage, 60);
 });
 
-// ─── Regression vs bestPlay ───────────────────────────────────────────────────
-
-const regressionDb: CardDb = {
-  bash:    makeCard({ effects: [fx.damage(8), fx.vuln(2)], cost: 2 }),
-  strike:  makeCard({ effects: [fx.damage(6)], cost: 1 }),
-  defend:  makeCard({ effects: [fx.block(5)], cost: 1, type: "skill" }),
-  turbo:   makeCard({ effects: [fx.energyGain(2)], cost: 0 }),
-  cinder:  makeCard({ effects: [fx.damage(12)], cost: 2 }),
-};
-
-test("regression: bash+strike at energy 3 matches bestPlay", () => {
-  const hand = ["bash", "strike", "strike"];
-  const bpResult  = bestPlay(hand, [], regressionDb, basePlayer, 3, "dmg");
-  const simResult = simulateTurn(hand, [], [], regressionDb, basePlayer, 3, "dmg");
-  assert.equal(simResult.totalDamage, bpResult.totalDamage);
-  assert.equal(simResult.totalBlock,  bpResult.totalBlock);
-});
-
-test("regression: turbo+cinder at energy 1 matches bestPlay", () => {
-  const hand = ["turbo", "cinder"];
-  const bpResult  = bestPlay(hand, [], regressionDb, basePlayer, 1, "dmg");
-  const simResult = simulateTurn(hand, [], [], regressionDb, basePlayer, 1, "dmg");
-  assert.equal(simResult.totalDamage, bpResult.totalDamage);
-});
-
-test("regression: block mode prefers defend over strike", () => {
-  const hand = ["strike", "defend"];
-  const bpResult  = bestPlay(hand, [], regressionDb, basePlayer, 1, "block");
-  const simResult = simulateTurn(hand, [], [], regressionDb, basePlayer, 1, "block");
-  assert.equal(simResult.totalBlock,  bpResult.totalBlock);
-  assert.equal(simResult.totalDamage, bpResult.totalDamage);
-});
 
 // ─── Stomp dynamic cost ───────────────────────────────────────────────────────
 

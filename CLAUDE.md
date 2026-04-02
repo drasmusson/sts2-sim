@@ -39,8 +39,6 @@ Full reference including player state flags and workarounds: see `README.md`.
 - **Infinite combos**: detected via play-count threshold (`max(deckSize × 3, 20)`); once any branch exceeds it the result is flagged `infinite: true` and all others abort immediately
 - **Duplicate deduplication**: `tried = new Set<string>()` prevents trying Strike[0]→Strike[1] and Strike[1]→Strike[0] as separate branches (exponential blowup without this)
 
-`bestPlay` in `src/optimizer.ts` is the older subset-enumeration approach, kept as a reference implementation only — not called by the live sim.
-
 ### Discard timing
 A played card's effects (including draw) resolve fully before entering the discard pile. This prevents a card from drawing itself back via reshuffle.
 
@@ -59,7 +57,7 @@ Touch these files in order:
 3. `turn-simulator.ts` — compute `nextHand` *before* calling `cardEffectiveValues`; set the new `PlayerState` field inline at that call site
 4. `cards.json` — add the card entry
 
-Skip steps 2–3 if the effect doesn't depend on live game state. `simulateTurn` calls `cardEffectiveValues` from `optimizer.ts` — new effects must be handled there, not only in `optimizer.ts`'s `bestPlay`.
+Skip steps 2–3 if the effect doesn't depend on live game state. `simulateTurn` calls `cardEffectiveValues` from `optimizer.ts` — new effects must be handled there.
 
 Existing pattern: `exhaustedThisTurn` → `exhaust_bonus`, `totalCardsAnywhere` → `damage_per_card_anywhere`.
 
