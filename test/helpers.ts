@@ -112,4 +112,6 @@ export const fx = {
     ({ type: "stampede" }),
   exhaustForDamageBonus: (): CardEffect =>
     ({ type: "exhaust_for_damage_bonus" }),
+  doubleNextBlockCard: (): CardEffect =>
+    ({ type: "double_next_block_card" }),
 };
