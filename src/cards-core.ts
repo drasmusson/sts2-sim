@@ -15,9 +15,9 @@ export type CardEffect =
   | { type: "weak";                     amount: number }
   | { type: "poison";                   amount: number }
   | { type: "doom";                     amount: number }
-  | { type: "orb";                      orbType: string; count: number }
+  | { type: "orb";                      orbType: "lightning" | "frost" | "dark" | "plasma"; count: number }
   | { type: "exhaust_bonus";            amount: number }   // +amount dmg per card in exhaust pile
-  | { type: "exhaust_hand";             count: number; filter: string; choice: boolean; damagePerCard: number; blockPerCard: number; drawPerCard: number }
+  | { type: "exhaust_hand";             count: number; filter: "" | "attack" | "skill" | "power" | "non-attack"; choice: boolean; damagePerCard: number; blockPerCard: number; drawPerCard: number }
   | { type: "exhaust_draw";             count: number }
   | { type: "upgrade_hand";             count: number }    // -1 = all, 1 = one (DFS branches)
   | { type: "discard_to_draw";          count: number }    // put N cards from discard on top of draw (player chooses)
@@ -163,6 +163,21 @@ export interface CardJson {
   upgraded?: Omit<CardJson, "name" | "upgraded">;
 }
 
+type OrbType = "lightning" | "frost" | "dark" | "plasma";
+const VALID_ORB_TYPES: readonly OrbType[] = ["lightning", "frost", "dark", "plasma"];
+function toOrbType(s: string): OrbType {
+  const v = s.toLowerCase() as OrbType;
+  if (!VALID_ORB_TYPES.includes(v)) throw new Error(`Unknown orb type: "${s}"`);
+  return v;
+}
+
+type ExhaustFilter = "" | "attack" | "skill" | "power" | "non-attack";
+const VALID_EXHAUST_FILTERS: readonly ExhaustFilter[] = ["", "attack", "skill", "power", "non-attack"];
+function toExhaustFilter(s: string): ExhaustFilter {
+  if (!VALID_EXHAUST_FILTERS.includes(s as ExhaustFilter)) throw new Error(`Unknown exhaust filter: "${s}"`);
+  return s as ExhaustFilter;
+}
+
 function jsonToCard(c: CardJson): Card {
   const effects: CardEffect[] = [];
 
@@ -181,8 +196,8 @@ function jsonToCard(c: CardJson): Card {
   if (c.weak)                   effects.push({ type: "weak",                     amount: c.weak });
   if (c.poison)                 effects.push({ type: "poison",                   amount: c.poison });
   if (c.doom)                   effects.push({ type: "doom",                     amount: c.doom });
-  if (c.orbType)                effects.push({ type: "orb",                      orbType: c.orbType.toLowerCase(), count: c.orbCount ?? 1 });
-  if (c.exhaustHand)            effects.push({ type: "exhaust_hand",             count: c.exhaustHand.count, filter: c.exhaustHand.filter ?? "", choice: c.exhaustHand.choice ?? false, damagePerCard: c.exhaustHand.damagePerCard ?? 0, blockPerCard: c.exhaustHand.blockPerCard ?? 0, drawPerCard: c.exhaustHand.drawPerCard ?? 0 });
+  if (c.orbType)                effects.push({ type: "orb",                      orbType: toOrbType(c.orbType), count: c.orbCount ?? 1 });
+  if (c.exhaustHand)            effects.push({ type: "exhaust_hand",             count: c.exhaustHand.count, filter: toExhaustFilter(c.exhaustHand.filter ?? ""), choice: c.exhaustHand.choice ?? false, damagePerCard: c.exhaustHand.damagePerCard ?? 0, blockPerCard: c.exhaustHand.blockPerCard ?? 0, drawPerCard: c.exhaustHand.drawPerCard ?? 0 });
   if (c.exhaustDraw)            effects.push({ type: "exhaust_draw",             count: c.exhaustDraw });
   if (c.upgradeHand)            effects.push({ type: "upgrade_hand",             count: c.upgradeHand });
   if (c.blockPerExhaustEvent)   effects.push({ type: "block_per_exhaust_event",  amount: c.blockPerExhaustEvent });
