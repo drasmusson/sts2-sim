@@ -834,6 +834,15 @@
     }
   },
   {
+    "name": "Unmovable",
+    "type": "power",
+    "cost": 2,
+    "doubleNextBlockCard": true,
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
     "name": "Thrash",
     "type": "attack",
     "cost": 1,

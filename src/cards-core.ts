@@ -49,7 +49,8 @@ export type CardEffect =
   | { type: "rupture";                      amount: number }    // Rupture: gain amount strength each time you lose HP
   | { type: "stampede" }                                        // Stampede: at end of turn, play 1 random attack from hand
   | { type: "plating";                      amount: number }    // Plating: end of turn gain block = stacks, then stacks -1
-  | { type: "exhaust_for_damage_bonus" };                       // Thrash: exhaust a card from hand; add its base damage to this card's base for the rest of the turn
+  | { type: "exhaust_for_damage_bonus" }                        // Thrash: exhaust a card from hand; add its base damage to this card's base for the rest of the turn
+  | { type: "double_next_block_card" };                         // Unmovable: next block-effect card this turn plays at 2× block
 
 export interface Card {
   type:        CardType;
@@ -152,6 +153,7 @@ export interface CardJson {
   stampede?: boolean;                   // Stampede: at end of turn, play 1 random attack from hand
   plating?: number;                     // Plating: end of turn gain block = stacks, then stacks -1
   exhaustForDamageBonus?: boolean;      // Thrash: exhaust a card from hand; add its base damage to this card's base for the rest of the turn
+  doubleNextBlockCard?: boolean;        // Unmovable: double block from next block-effect card this turn
   exhaustHand?: {
     count:          number;             // -1 = all
     filter?:        string;             // "attack" | "skill" | "power"
@@ -230,6 +232,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.stampede)                   effects.push({ type: "stampede" });
   if (c.plating)                    effects.push({ type: "plating",                           amount: c.plating });
   if (c.exhaustForDamageBonus)      effects.push({ type: "exhaust_for_damage_bonus" });
+  if (c.doubleNextBlockCard)        effects.push({ type: "double_next_block_card" });
 
   return {
     type:        c.type,

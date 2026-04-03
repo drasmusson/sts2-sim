@@ -45,6 +45,7 @@ export interface PlayerState {
   readonly hpLossCount: number;           // HP loss events this combat (from enemies + self-damage); set via --hp-loss-count
   readonly totalCardsAnywhere: number;     // total cards across all zones (hand+draw+discard+exhaust+powers); set by DFS for Perfected Strike
   readonly thrashDamageBonus: number;      // Thrash: accumulated base-damage bonus from prior Thrash exhausts this turn
+  readonly doubleNextBlockCard: boolean;   // Unmovable: true until the first block-effect card is played this turn
 }
 
 export function defaultPlayerState(): PlayerState {
@@ -85,6 +86,7 @@ export function defaultPlayerState(): PlayerState {
     hpLossCount:          0,
     totalCardsAnywhere:   0,
     thrashDamageBonus:    0,
+    doubleNextBlockCard:  false,
   };
 }
 
@@ -156,7 +158,7 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
         break;
       }
       case "block":
-        block += Math.floor(eff.amount * frailMult);
+        block += Math.floor(eff.amount * (player.doubleNextBlockCard ? 2 : 1) * frailMult);
         break;
       case "orb": {
         const base = ORB_BASE[eff.orbType];
@@ -247,6 +249,8 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "damage_per_hp_loss":
       case "self_damage":
       case "rupture":
+      // State set by applyCardState; no immediate scoring contribution.
+      case "double_next_block_card":
         break;
 
       default:
@@ -335,6 +339,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
           hpLossCount: next.hpLossCount + 1,
           strength: next.strength + next.strengthPerHpLoss };
         break;
+      case "double_next_block_card":
+        next = { ...next, doubleNextBlockCard: true };
+        break;
 
       // Damage/block scoring — no state mutation needed here (handled by cardEffectiveValues).
       case "damage":
@@ -372,6 +379,10 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         assertNever(eff);
     }
   }
+
+  // Unmovable: reset after the first block-effect card is played.
+  if (state.doubleNextBlockCard && card.effects.some(e => e.type === "block"))
+    next = { ...next, doubleNextBlockCard: false };
 
   // Attacks consume any pending nextAttackFree and doubleNextAttacks; card may set those for the following attack.
   if (card.type === "attack") next = { ...next, attacksPlayedThisTurn: next.attacksPlayedThisTurn + 1, nextAttackFree: false,
