@@ -18,6 +18,8 @@ export interface PlayerState {
   readonly exhaust:              number;
   readonly blockPerExhaustEvent: number;   // Feel No Pain passive: block gained per exhaust event
   readonly drawPerExhaustEvent:  number;   // Dark Embrace passive: cards drawn per exhaust event
+  readonly drawPerVulnEvent:     number;   // Vicious passive: cards drawn per vuln application event
+  readonly pendingViciousDraws:  number;   // queued draws from Vicious; set by applyCardState "vuln" case, consumed in turn-simulator
   readonly damagePerBlockGain:   number;   // Grapple passive: flat damage dealt per block gain event this turn
   readonly damagePerHpLoss:      number;   // Inferno passive: flat damage dealt per HP loss event this turn
   readonly exhaustedThisTurn:    boolean;  // true if any card was exhausted this turn (for Evil Eye)
@@ -59,6 +61,8 @@ export function defaultPlayerState(): PlayerState {
     exhaust:              0,
     blockPerExhaustEvent: 0,
     drawPerExhaustEvent:  0,
+    drawPerVulnEvent:     0,
+    pendingViciousDraws:  0,
     damagePerBlockGain:   0,
     damagePerHpLoss:      0,
     exhaustedThisTurn:    false,
@@ -227,6 +231,7 @@ export function cardEffectiveValues(card: Card, player: PlayerState): CardValues
       case "draw_if_self_damaged":
       case "draw_until_non_attack":
       case "draw_per_exhaust_event":
+      case "draw_per_vuln_event":
       case "exhaust_hand":
       case "exhaust_draw":
       case "upgrade_hand":
@@ -285,6 +290,8 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "vuln":
         next = { ...next, vulnerableStacks: next.vulnerableStacks + eff.amount };
+        if (eff.amount > 0 && next.drawPerVulnEvent > 0)
+          next = { ...next, pendingViciousDraws: next.pendingViciousDraws + next.drawPerVulnEvent };
         break;
       case "double_vuln_stacks":
         if (next.vulnerableStacks > 0)
@@ -318,6 +325,9 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
         break;
       case "draw_per_exhaust_event":
         next = { ...next, drawPerExhaustEvent: next.drawPerExhaustEvent + eff.amount };
+        break;
+      case "draw_per_vuln_event":
+        next = { ...next, drawPerVulnEvent: next.drawPerVulnEvent + eff.amount };
         break;
       case "rage":
         next = { ...next, blockPerAttackPlayed: next.blockPerAttackPlayed + eff.amount };
@@ -364,6 +374,7 @@ export function applyCardState(state: PlayerState, card: Card): PlayerState {
       case "draw":
       case "draw_if_self_damaged":
       case "draw_until_non_attack":
+      case "draw_per_vuln_event":
       case "exhaust_hand":
       case "exhaust_draw":
       case "upgrade_hand":

@@ -637,6 +637,15 @@
     }
   },
   {
+    "name": "Vicious",
+    "type": "power",
+    "cost": 1,
+    "drawPerVulnEvent": 1,
+    "upgraded": {
+      "drawPerVulnEvent": 2
+    }
+  },
+  {
     "name": "Cruelty",
     "type": "power",
     "cost": 1,

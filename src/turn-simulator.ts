@@ -54,6 +54,28 @@ function applyDarkEmbraceDraws(
   return { hand: [...hand, ...drawn.hand], drawPile: drawn.drawPile, discardPile: drawn.discardPile };
 }
 
+// Draws cards queued by Vicious (pendingViciousDraws) after a vuln-applying effect resolves.
+// pendingViciousDraws is set in applyCardState's "vuln" case whenever vuln stacks are applied
+// and drawPerVulnEvent > 0. Consuming it here (rather than inspecting the card) means the
+// trigger fires for any mechanism that routes through applyCardState — not only card effects.
+function applyViciousDraws(
+  hand:        string[],
+  drawPile:    string[],
+  discardPile: string[],
+  player:      PlayerState,
+): { hand: string[]; drawPile: string[]; discardPile: string[]; player: PlayerState } {
+  if (player.pendingViciousDraws <= 0 || player.noMoreDraws)
+    return { hand, drawPile, discardPile, player };
+  const count = player.pendingViciousDraws;
+  const drawn = drawCards(drawPile, discardPile, count, hand.length);
+  return {
+    hand:        [...hand, ...drawn.hand],
+    drawPile:    drawn.drawPile,
+    discardPile: drawn.discardPile,
+    player:      { ...player, pendingViciousDraws: 0 },
+  };
+}
+
 // Called whenever a card enters the exhaust pile.
 // Updates exhaustPile, increments player.exhaust (for exhaustBonus), sets exhaustedThisTurn.
 // Returns the block gained from Feel No Pain passive (blockPerExhaustEvent).
@@ -156,7 +178,17 @@ function resolvePostExhaust(
     hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
     hellraiserDamage += hr.damage;
   }
-  // 1b. One-Two Punch: doubled attack replays draw effects a second time
+  // 1b. Vicious: consume draws queued by applyCardState when vuln was applied this card play
+  if (player.pendingViciousDraws > 0 && !player.noMoreDraws) {
+    const before = hand.length;
+    const vic = applyViciousDraws(hand, drawPile, discardPile, player);
+    hand = vic.hand; drawPile = vic.drawPile; discardPile = vic.discardPile; player = vic.player;
+    const hr = applyHellraiserToDraw(hand.slice(before), hand, discardPile, player, db);
+    hand = hr.hand; discardPile = hr.discardPile; player = hr.player;
+    hellraiserDamage += hr.damage;
+  }
+
+  // 1c. One-Two Punch: doubled attack replays draw effects a second time
   if (s.wasDoubledAttack && !player.noMoreDraws && drawEff && drawEff.amount > 0) {
     const before = hand.length;
     const drawn  = drawCards(drawPile, discardPile, drawEff.amount, hand.length);
@@ -168,7 +200,7 @@ function resolvePostExhaust(
     hellraiserDamage += hr.damage;
   }
 
-  // 1c. Draw until non-attack (Pillage): draw one card at a time until a non-attack lands in hand.
+  // 1d. Draw until non-attack (Pillage): draw one card at a time until a non-attack lands in hand.
   // Cap = draw+discard at the start of the effect to prevent infinite loops in all-attack decks
   // (including Hellraiser routing attacks back to discard and causing reshuffles).
   if (!player.noMoreDraws && card.effects.some(e => e.type === "draw_until_non_attack")) {
