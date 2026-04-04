@@ -81,6 +81,8 @@ function readConfig(): WebConfig {
     exhaust:              parseInt(d.get("exhaust") as string)         || 0,
     blockPerExhaustEvent: 0,
     drawPerExhaustEvent:  0,
+    drawPerVulnEvent:     0,
+    pendingViciousDraws:  0,
     damagePerBlockGain:   0,
     damagePerHpLoss:      0,
     exhaustedThisTurn:    false,
