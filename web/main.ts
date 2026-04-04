@@ -98,6 +98,13 @@ function readConfig(): WebConfig {
     freeGeneratedCard:    null,
     copyAttackOnN:        0,
     doubleNextAttacks:    0,
+    blockPerAttackPlayed: 0,
+    rampageDamageBonus:   0,
+    strengthPerHpLoss:    0,
+    stampedeCount:        0,
+    plating:              0,
+    thrashDamageBonus:    0,
+    doubleNextBlockCard:  false,
     hpLossCount:    parseInt(d.get("hp-loss-count") as string) || 0,
   };
 
