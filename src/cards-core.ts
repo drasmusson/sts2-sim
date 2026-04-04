@@ -28,6 +28,7 @@ export type CardEffect =
   | { type: "draw_if_self_damaged";     amount: number }   // draw N cards if any self-damage was taken this turn
   | { type: "block_per_exhaust_event";  amount: number }   // Feel No Pain passive
   | { type: "draw_per_exhaust_event";   amount: number }   // Dark Embrace passive
+  | { type: "draw_per_vuln_event";      amount: number }   // Vicious: draw N cards per vuln application event
   | { type: "block_if_exhausted_turn";  amount: number }   // Evil Eye conditional
   | { type: "double_vuln_stacks" }                         // Molten Fist: doubles enemy vulnerable stacks
   | { type: "damage_per_vuln_stack";    amount: number }   // Bully: +N dmg per enemy vulnerable stack
@@ -110,6 +111,7 @@ export interface CardJson {
   exhaustDraw?:           number;
   blockPerExhaustEvent?:  number;
   drawPerExhaustEvent?:   number;
+  drawPerVulnEvent?:      number;
   blockIfExhaustedTurn?:  number;
   damagePerExhaustedHand?: number;
   blockPerExhaustedHand?: number;
@@ -204,6 +206,7 @@ function jsonToCard(c: CardJson): Card {
   if (c.upgradeHand)            effects.push({ type: "upgrade_hand",             count: c.upgradeHand });
   if (c.blockPerExhaustEvent)   effects.push({ type: "block_per_exhaust_event",  amount: c.blockPerExhaustEvent });
   if (c.drawPerExhaustEvent)    effects.push({ type: "draw_per_exhaust_event",   amount: c.drawPerExhaustEvent });
+  if (c.drawPerVulnEvent)       effects.push({ type: "draw_per_vuln_event",      amount: c.drawPerVulnEvent });
   if (c.blockIfExhaustedTurn)   effects.push({ type: "block_if_exhausted_turn",  amount: c.blockIfExhaustedTurn });
   if (c.fetchDiscard)           effects.push({ type: "discard_to_draw",          count: c.fetchDiscard });
   if (c.copyToDiscard)          effects.push({ type: "copy_to_discard" });
