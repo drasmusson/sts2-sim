@@ -823,6 +823,12 @@ export function simulateTurn(
 
   const deckSize  = startHand.length + drawPile.length + startDiscard.length;
   const threshold = Math.max(deckSize * 3, 20);
+  // Known limitation: this is a heuristic, not a true cycle detector. For large decks
+  // with heavy draw engines it can false-positive (flagging a long-but-finite combo as
+  // infinite) and skip finding the actual best line. A proper fix would hash canonical
+  // TurnState (sorted hand/draw/discard + energy + PlayerState fields) at each DFS node
+  // and treat a revisit as the cycle. Deferred because the false-positive case is rare
+  // in practice and cycle-hashing adds per-node overhead across 10,000 sims.
 
   const emptyResult: TurnResult = {
     played: [], totalDamage: startDamage, totalBlock: 0, energySpent: 0,

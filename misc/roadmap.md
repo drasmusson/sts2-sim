@@ -49,6 +49,7 @@ The plating mechanic: end of turn you gain block euqal to your number of plating
 
 ### Known Limitations
 - **No parallelism in the web UI** — the web sim runs single-threaded inside one Web Worker; parallelism would require spawning nested sub-workers from within the worker, which Vite supports but adds bundling and progress-aggregation complexity; CLI `--parallel` flag is the workaround for large sim counts
+- **Infinite combo detection is a heuristic** — threshold `max(deckSize × 3, 20)` works for typical decks but can false-positive on large decks with heavy draw engines (e.g. a 20-card deck legitimately playing 60+ cards in one turn gets flagged as infinite). A correct fix is cycle detection: hash canonical TurnState (sorted hand/draw/discard + energy + all PlayerState fields) at each DFS node and treat a revisit as a cycle. Deferred due to per-node hashing cost across 10,000 sims.
 
 ### Out of Scope (for now)
 - 🚫 Card instances + enchantments — full instance-based model with per-copy stat overrides. Custom cards (above) cover most practical cases as a workaround.
