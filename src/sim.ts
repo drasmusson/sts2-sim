@@ -116,7 +116,7 @@ function printResults(results: MCResult, config: Config): void {
   }
 
   console.log("\n  DRAW FREQUENCY (% of sims where card appears in initial hand; excludes mid-turn draws)");
-  for (const { name, pct } of results.drawFreq.slice(0, 8)) {
+  for (const { name, pct } of results.drawFreq) {
     const bar = "█".repeat(Math.round(parseFloat(pct) / 5));
     console.log(`    ${name.padEnd(16)} ${String(pct + "%").padStart(6)}  ${bar}`);
   }
@@ -135,6 +135,8 @@ function printResults(results: MCResult, config: Config): void {
     const inf   = infinite ? "  [INFINITE COMBO]" : "";
     console.log(`    ${String(pct + "%").padStart(6)}  ${combo.padEnd(40)}  ${stats}${inf}`);
   }
+  const topCoverage = results.topPlays.reduce((s, p) => s + parseFloat(p.pct), 0);
+  console.log(`\n  Top ${results.topPlays.length} cover ${topCoverage.toFixed(1)}% of outcomes  (${results.totalDistinctPlays} distinct plays total)`);
 
   console.log("\n" + line + "\n");
 }
@@ -201,12 +203,29 @@ if (unknownPowers.length)
 
 const config: Config = { drawPile, discardPile, ...(hand.length ? { hand } : {}), ...(powersInPlay.length ? { powersInPlay } : {}), energy, draws, relics, db, mode, player };
 
+const onProgress = (done: number) => {
+  process.stderr.write(`\r  Simulating… ${done.toLocaleString()} / ${N.toLocaleString()}`);
+};
+
+const formatTiming = (n: number, elapsedMs: number): string => {
+  const s = (elapsedMs / 1000).toFixed(1);
+  const rate = elapsedMs > 0 ? Math.round(n / (elapsedMs / 1000)).toLocaleString() : "—";
+  return `  Completed ${n.toLocaleString()} sims in ${s}s (${rate} sims/sec)`;
+};
+
+const t0 = performance.now();
 if (args.parallel) {
   const { runMCParallel } = await import("./mc-parallel.js");
   const { result, workers } = await runMCParallel(config, N, cardsJson);
+  const elapsed = performance.now() - t0;
+  process.stderr.write("\r\x1b[K");
   console.log(`  (parallel: ${workers} workers)`);
   printResults(result, config);
+  console.log(formatTiming(N, elapsed) + "\n");
 } else {
-  const results = runMC(config, N);
+  const results = runMC(config, N, onProgress);
+  const elapsed = performance.now() - t0;
+  process.stderr.write("\r\x1b[K");
   printResults(results, config);
+  console.log(formatTiming(N, elapsed) + "\n");
 }

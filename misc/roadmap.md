@@ -51,6 +51,16 @@ The plating mechanic: end of turn you gain block euqal to your number of plating
 - **No parallelism in the web UI** — the web sim runs single-threaded inside one Web Worker; parallelism would require spawning nested sub-workers from within the worker, which Vite supports but adds bundling and progress-aggregation complexity; CLI `--parallel` flag is the workaround for large sim counts
 - **Infinite combo detection is a heuristic** — threshold `max(deckSize × 3, 20)` works for typical decks but can false-positive on large decks with heavy draw engines (e.g. a 20-card deck legitimately playing 60+ cards in one turn gets flagged as infinite). A correct fix is cycle detection: hash canonical TurnState (sorted hand/draw/discard + energy + all PlayerState fields) at each DFS node and treat a revisit as a cycle. Deferred due to per-node hashing cost across 10,000 sims.
 
+### UX & Analysis Features
+
+- ⬜ **URL state persistence (web UI)** — serialize the full form state (draw pile, discard, energy, draws, mode, player-state flags) into URL search params on submit; hydrate from URL on page load. Enables bookmarking a deck config and opening two tabs to compare tweaks without re-entering data. Primary workflow is iterative ("what if I swap Bash for Carnage?") — right now every change requires re-typing the entire deck.
+
+- ⬜ **A/B comparison mode** — run two configs side-by-side and diff the results. CLI: `--compare` flag that accepts a second draw pile; web: split panel with two form inputs. Output: delta in avg damage/block, overlaid histograms showing how the distributions shift, and change in top plays. Converts the tool from "describe this deck" to "help me make this decision" — every card reward and upgrade screen in STS2 is an A/B choice.
+
+- ⬜ **Marginal card value analysis** — for every card in the draw pile, run the sim once with it and once without it, report the marginal change in expected damage. Output: a ranked table (`Bash: +8.3 avg dmg | Defend: -0.2 avg dmg (dilutes draws)`). Negative values mean the card is actively hurting expected output via draw dilution. Requires K+1 sim runs for a K-card deck; all runs are independent so parallelizable. Answers the real question players are trying to answer: "is my deck better with or without this card?"
+
+- ⬜ **Live-streaming progressive charts (web UI)** — stream partial `dmgDist`/`blkDist` snapshots from the web worker every ~500 sims and re-render the chart incrementally. The worker already fires `onProgress` every 100 sims — extend it to carry partial result data. Add early stopping: if rolling avg damage hasn't changed by more than 0.1 over the last 2k sims, halt early. Two benefits: visual confirmation the sim is working, and real performance win for simple decks where convergence happens well before 10k sims.
+
 ### Out of Scope (for now)
 - 🚫 Card instances + enchantments — full instance-based model with per-copy stat overrides. Custom cards (above) cover most practical cases as a workaround.
 - 🚫 Relic support — partially stubbed but deferred.

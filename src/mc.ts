@@ -24,13 +24,14 @@ export interface Config {
 
 export interface Stats { avg: string; p25: number; p50: number; p75: number; min: number; max: number; }
 export interface MCResult {
-  damage:   Stats;
-  block:    Stats;
-  drawFreq: { name: string; pct: string }[];
-  dmgDist:  Record<number, number>;
-  blkDist:  Record<number, number>;
-  peakPlay: { combo: string; damage: number; block: number; infinite: boolean };
-  topPlays: { combo: string; pct: string; damage: number; block: number; infinite: boolean }[];
+  damage:       Stats;
+  block:        Stats;
+  drawFreq:     { name: string; pct: string }[];
+  dmgDist:      Record<number, number>;
+  blkDist:      Record<number, number>;
+  peakPlay:     { combo: string; damage: number; block: number; infinite: boolean };
+  topPlays:     { combo: string; pct: string; damage: number; block: number; infinite: boolean }[];
+  totalDistinctPlays: number;
 }
 
 // ─── RELIC DEFINITIONS ───────────────────────────────────────────────────────
@@ -176,6 +177,7 @@ export function computeMCResult(raw: MCRawResult, n: number): MCResult {
         pct: (count / n * 100).toFixed(1),
         infinite,
       })),
+    totalDistinctPlays: Object.keys(playFreq).length,
   };
 }
 
