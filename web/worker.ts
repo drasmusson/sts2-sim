@@ -1,6 +1,6 @@
 import { parseJsonDb } from "../src/cards-core";
-import { runMC } from "../src/mc";
-import type { Config, MCResult } from "../src/mc";
+import { runMC, computeMarginals } from "../src/mc";
+import type { Config, MCResult, MarginalValue } from "../src/mc";
 import type { PlayerState, Mode } from "../src/optimizer";
 
 export interface WebConfig {
@@ -12,10 +12,11 @@ export interface WebConfig {
   draws:          number;
   mode:           Mode;
   player:         PlayerState;
+  marginals?:     boolean;
 }
 
 export interface RunRequest  { type: "run";      cardsJson: string; config: WebConfig; n: number; }
-export interface RunComplete { type: "complete"; result: MCResult; approximations: string[]; }
+export interface RunComplete { type: "complete"; result: MCResult; approximations: string[]; marginals?: MarginalValue[]; }
 export interface RunError    { type: "error";    message: string; }
 export interface RunProgress { type: "progress"; done: number; total: number; }
 
@@ -45,7 +46,12 @@ self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
       }
     }
 
-    self.postMessage({ type: "complete", result, approximations } satisfies RunComplete);
+    let marginalValues: MarginalValue[] | undefined;
+    if (data.config.marginals) {
+      marginalValues = computeMarginals(config, data.n);
+    }
+
+    self.postMessage({ type: "complete", result, approximations, marginals: marginalValues } satisfies RunComplete);
   } catch (e) {
     self.postMessage({ type: "error", message: String(e) } satisfies RunError);
   }

@@ -184,3 +184,50 @@ export function computeMCResult(raw: MCRawResult, n: number): MCResult {
 export function runMC(config: Config, n: number, onProgress?: (done: number) => void): MCResult {
   return computeMCResult(runMCRaw(config, n, onProgress), n);
 }
+
+// ─── MARGINAL CARD VALUE ──────────────────────────────────────────────────────
+export interface MarginalValue {
+  card:          string;   // card name (lowercase)
+  copies:        number;   // copies of this card in the original drawPile
+  baselineAvg:   number;   // avg primary metric with full deck
+  withoutAvg:    number;   // avg primary metric with one copy removed
+  marginalValue: number;   // baselineAvg - withoutAvg (positive = card helps)
+}
+
+export function computeMarginals(
+  config: Config,
+  n: number,
+  onProgress?: (done: number, total: number, card: string) => void,
+): MarginalValue[] {
+  const primary = config.mode === "dmg" ? "damages" : "blocks";
+  const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
+
+  const baseRaw    = runMCRaw(config, n);
+  const baselineAvg = avg(baseRaw[primary]);
+
+  const uniqueCards = [...new Set(config.drawPile)];
+  const results: MarginalValue[] = [];
+  let completed = 0;
+
+  for (const card of uniqueCards) {
+    const modified = [...config.drawPile];
+    modified.splice(modified.indexOf(card), 1);
+    if (modified.length === 0) continue;
+
+    const withoutRaw  = runMCRaw({ ...config, drawPile: modified }, n);
+    const withoutAvg  = avg(withoutRaw[primary]);
+    completed++;
+    onProgress?.(completed, uniqueCards.length, card);
+
+    results.push({
+      card,
+      copies:        config.drawPile.filter(c => c === card).length,
+      baselineAvg,
+      withoutAvg,
+      marginalValue: baselineAvg - withoutAvg,
+    });
+  }
+
+  results.sort((a, b) => b.marginalValue - a.marginalValue);
+  return results;
+}

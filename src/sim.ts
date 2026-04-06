@@ -11,7 +11,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { parseJsonDb } from "./cards.js";
 import { PlayerState, Mode, defaultPlayerState } from "./optimizer.js";
-import { runMC, Config, MCResult } from "./mc.js";
+import { runMC, Config, MCResult, computeMarginals, MarginalValue } from "./mc.js";
 import { STARTING_DECKS, CHARACTER_NAMES } from "./characters.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -141,6 +141,24 @@ function printResults(results: MCResult, config: Config): void {
   console.log("\n" + line + "\n");
 }
 
+function printMarginals(values: MarginalValue[], mode: Mode): void {
+  const metric = mode === "dmg" ? "damage" : "block";
+  const line = "─".repeat(52);
+  console.log("\n" + line);
+  console.log(`  MARGINAL CARD VALUES (${metric} mode)`);
+  console.log(line);
+  console.log(`    ${"Card".padEnd(20)} ${"Copies".padStart(6)}  ${"Baseline".padStart(8)}  ${"Without".padStart(8)}  ${"Delta".padStart(8)}`);
+  console.log("    " + "─".repeat(52));
+  for (const v of values) {
+    const delta = v.marginalValue >= 0 ? `+${v.marginalValue.toFixed(1)}` : v.marginalValue.toFixed(1);
+    console.log(
+      `    ${v.card.padEnd(20)} ${String(v.copies).padStart(6)}  ` +
+      `${v.baselineAvg.toFixed(1).padStart(8)}  ${v.withoutAvg.toFixed(1).padStart(8)}  ${delta.padStart(8)}`
+    );
+  }
+  console.log(line + "\n");
+}
+
 // ─── MAIN ────────────────────────────────────────────────────────────────────
 const args = parseArgs(process.argv);
 
@@ -162,6 +180,7 @@ const draws       = parseIntArg(args.draws, 5);
 const mode        = (args.mode === "block" ? "block" : "dmg") as Mode;
 const relics      = parseList(args.relics);
 const powersInPlay = parseList(args.powers);
+const marginals   = !!args.marginals;
 
 const player: PlayerState = {
   ...defaultPlayerState(),
@@ -228,4 +247,13 @@ if (args.parallel) {
   process.stderr.write("\r\x1b[K");
   printResults(results, config);
   console.log(formatTiming(N, elapsed) + "\n");
+}
+
+if (marginals) {
+  const marginalProgress = (done: number, total: number, card: string) => {
+    process.stderr.write(`\r  Marginal analysis… ${card} (${done}/${total})`);
+  };
+  const mv = computeMarginals(config, N, marginalProgress);
+  process.stderr.write("\r\x1b[K");
+  printMarginals(mv, mode);
 }
