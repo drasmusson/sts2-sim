@@ -890,5 +890,836 @@
     "upgraded": {
       "transformAttacksToCard": "Giant Rock+"
     }
+  },
+  {
+    "name": "Shiv",
+    "type": "attack",
+    "cost": 0,
+    "damage": 3,
+    "selfExhaust": true,
+    "notes": "Generated card used by Silent skills",
+    "upgraded": {
+      "damage": 5
+    }
+  },
+  {
+    "name": "Abrasive",
+    "type": "power",
+    "cost": 3,
+    "thorns": 4,
+    "notes": "Sly. Gain 1 Dexterity (not modelled)",
+    "upgraded": {
+      "thorns": 6
+    }
+  },
+  {
+    "name": "Accelerant",
+    "type": "power",
+    "cost": 1,
+    "notes": "Poison is triggered 1 additional time (not modelled)",
+    "upgraded": {
+      "notes": "Poison is triggered 2 additional times (not modelled)"
+    }
+  },
+  {
+    "name": "Accuracy",
+    "type": "power",
+    "cost": 1,
+    "notes": "Shivs deal 4 additional damage (not modelled)",
+    "upgraded": {
+      "notes": "Shivs deal 6 additional damage (not modelled)"
+    }
+  },
+  {
+    "name": "Acrobatics",
+    "type": "skill",
+    "cost": 1,
+    "draw": 3,
+    "notes": "Discard 1 card (not modelled)",
+    "upgraded": {
+      "draw": 4
+    }
+  },
+  {
+    "name": "Adrenaline",
+    "type": "skill",
+    "cost": 0,
+    "energyGain": 1,
+    "draw": 2,
+    "selfExhaust": true,
+    "upgraded": {
+      "energyGain": 2
+    }
+  },
+  {
+    "name": "Afterimage",
+    "type": "power",
+    "cost": 1,
+    "notes": "Whenever you play a card, gain 1 Block (not modelled). Upgrade: gains Innate",
+    "upgraded": {}
+  },
+  {
+    "name": "Anticipate",
+    "type": "skill",
+    "cost": 0,
+    "notes": "Gain 3 Dexterity this turn (not modelled)",
+    "upgraded": {
+      "notes": "Gain 5 Dexterity this turn (not modelled)"
+    }
+  },
+  {
+    "name": "Assassinate",
+    "type": "attack",
+    "cost": 0,
+    "damage": 10,
+    "vuln": 1,
+    "selfExhaust": true,
+    "notes": "Innate (not modelled)",
+    "upgraded": {
+      "damage": 13,
+      "vuln": 2
+    }
+  },
+  {
+    "name": "Backflip",
+    "type": "skill",
+    "cost": 1,
+    "block": 5,
+    "draw": 2,
+    "upgraded": {
+      "block": 8
+    }
+  },
+  {
+    "name": "Backstab",
+    "type": "attack",
+    "cost": 0,
+    "damage": 11,
+    "selfExhaust": true,
+    "notes": "Innate (not modelled)",
+    "upgraded": {
+      "damage": 15
+    }
+  },
+  {
+    "name": "Blade Dance",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "notes": "Add 3 Shivs to hand (not modelled). Upgrade: Add 4 Shivs",
+    "upgraded": {}
+  },
+  {
+    "name": "Blade of Ink",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Whenever you play an Attack this turn, gain 2 Strength this turn (not modelled)",
+    "upgraded": {
+      "notes": "Whenever you play an Attack this turn, gain 3 Strength this turn (not modelled)"
+    }
+  },
+  {
+    "name": "Blur",
+    "type": "skill",
+    "cost": 1,
+    "block": 5,
+    "notes": "Block is not removed at start of next turn (not modelled)",
+    "upgraded": {
+      "block": 8
+    }
+  },
+  {
+    "name": "Bouncing Flask",
+    "type": "skill",
+    "cost": 2,
+    "poison": 9,
+    "notes": "Apply 3 Poison 3 times (modelled as 9 total)",
+    "upgraded": {
+      "poison": 12,
+      "notes": "Apply 3 Poison 4 times (modelled as 12 total)"
+    }
+  },
+  {
+    "name": "Bubble Bubble",
+    "type": "skill",
+    "cost": 1,
+    "poison": 9,
+    "notes": "Only applies if enemy has Poison (condition not modelled — always applies)",
+    "upgraded": {
+      "poison": 12
+    }
+  },
+  {
+    "name": "Bullet Time",
+    "type": "skill",
+    "cost": 3,
+    "blocksFutureDraws": true,
+    "notes": "ALL cards in Hand are free to play this turn (not modelled)",
+    "upgraded": {
+      "cost": 2
+    }
+  },
+  {
+    "name": "Burst",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Your next Skill is played an extra time this turn (not modelled)",
+    "upgraded": {
+      "notes": "Your next 2 Skills are played an extra time this turn (not modelled)"
+    }
+  },
+  {
+    "name": "Calculated Gamble",
+    "type": "skill",
+    "cost": 0,
+    "selfExhaust": true,
+    "notes": "Discard your Hand then draw that many cards (not modelled). Upgrade: gains Retain",
+    "upgraded": {}
+  },
+  {
+    "name": "Cloak and Dagger",
+    "type": "skill",
+    "cost": 1,
+    "block": 6,
+    "notes": "Add 1 Shiv to hand (not modelled). Upgrade: Add 2 Shivs",
+    "upgraded": {}
+  },
+  {
+    "name": "Corrosive Wave",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Whenever you draw a card this turn, apply 3 Poison to ALL enemies (not modelled)",
+    "upgraded": {
+      "notes": "Whenever you draw a card this turn, apply 4 Poison to ALL enemies (not modelled)"
+    }
+  },
+  {
+    "name": "Dagger Spray",
+    "type": "attack",
+    "cost": 1,
+    "damage": 4,
+    "hits": 2,
+    "upgraded": {
+      "damage": 6
+    }
+  },
+  {
+    "name": "Dagger Throw",
+    "type": "attack",
+    "cost": 1,
+    "damage": 9,
+    "draw": 1,
+    "notes": "Discard 1 card (not modelled)",
+    "upgraded": {
+      "damage": 12
+    }
+  },
+  {
+    "name": "Dash",
+    "type": "attack",
+    "cost": 2,
+    "damage": 10,
+    "block": 10,
+    "upgraded": {
+      "damage": 13,
+      "block": 13
+    }
+  },
+  {
+    "name": "Deadly Poison",
+    "type": "skill",
+    "cost": 1,
+    "poison": 5,
+    "upgraded": {
+      "poison": 7
+    }
+  },
+  {
+    "name": "Deflect",
+    "type": "skill",
+    "cost": 0,
+    "block": 4,
+    "upgraded": {
+      "block": 7
+    }
+  },
+  {
+    "name": "Dodge and Roll",
+    "type": "skill",
+    "cost": 1,
+    "block": 4,
+    "notes": "Next turn, gain 4 Block (not modelled)",
+    "upgraded": {
+      "block": 6,
+      "notes": "Next turn, gain 6 Block (not modelled)"
+    }
+  },
+  {
+    "name": "Echoing Slash",
+    "type": "attack",
+    "cost": 1,
+    "damage": 10,
+    "notes": "Repeat for each enemy killed (not modelled)",
+    "upgraded": {
+      "damage": 13
+    }
+  },
+  {
+    "name": "Envenom",
+    "type": "power",
+    "cost": 2,
+    "notes": "Whenever an Attack deals unblocked damage, apply 1 Poison (not modelled)",
+    "upgraded": {
+      "notes": "Whenever an Attack deals unblocked damage, apply 2 Poison (not modelled)"
+    }
+  },
+  {
+    "name": "Escape Plan",
+    "type": "skill",
+    "cost": 0,
+    "draw": 1,
+    "notes": "If you draw a Skill, gain 3 Block (not modelled)",
+    "upgraded": {
+      "notes": "If you draw a Skill, gain 5 Block (not modelled)"
+    }
+  },
+  {
+    "name": "Expertise",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Draw cards until you have 6 in your Hand (not modelled)",
+    "upgraded": {
+      "notes": "Draw cards until you have 7 in your Hand (not modelled)"
+    }
+  },
+  {
+    "name": "Expose",
+    "type": "skill",
+    "cost": 0,
+    "vuln": 2,
+    "selfExhaust": true,
+    "notes": "Remove all Artifact and Block from enemy (not modelled)",
+    "upgraded": {
+      "vuln": 3
+    }
+  },
+  {
+    "name": "Fan of Knives",
+    "type": "power",
+    "cost": 2,
+    "notes": "Shivs now hit ALL enemies. Add 4 Shivs to hand (not modelled)",
+    "upgraded": {
+      "notes": "Shivs now hit ALL enemies. Add 5 Shivs to hand (not modelled)"
+    }
+  },
+  {
+    "name": "Finisher",
+    "type": "attack",
+    "cost": 1,
+    "damage": 0,
+    "damagePerAttackPlayed": 6,
+    "upgraded": {
+      "damagePerAttackPlayed": 8
+    }
+  },
+  {
+    "name": "Flanking",
+    "type": "skill",
+    "cost": 2,
+    "notes": "Enemy takes double damage from other players this turn (multiplayer, not modelled)",
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
+    "name": "Flechettes",
+    "type": "attack",
+    "cost": 1,
+    "damage": 0,
+    "notes": "Deal 5 damage for each Skill in your Hand (not modelled)",
+    "upgraded": {
+      "notes": "Deal 7 damage for each Skill in your Hand (not modelled)"
+    }
+  },
+  {
+    "name": "Flick-Flack",
+    "type": "attack",
+    "cost": 1,
+    "damage": 7,
+    "notes": "Sly (not modelled)",
+    "upgraded": {
+      "damage": 9
+    }
+  },
+  {
+    "name": "Follow Through",
+    "type": "attack",
+    "cost": 1,
+    "damage": 6,
+    "notes": "If last card played was a Skill, apply 1 Weak to ALL enemies (not modelled)",
+    "upgraded": {
+      "damage": 8,
+      "notes": "If last card played was a Skill, apply 2 Weak to ALL enemies (not modelled)"
+    }
+  },
+  {
+    "name": "Footwork",
+    "type": "power",
+    "cost": 1,
+    "notes": "Gain 2 Dexterity (not modelled)",
+    "upgraded": {
+      "notes": "Gain 3 Dexterity (not modelled)"
+    }
+  },
+  {
+    "name": "Grand Finale",
+    "type": "attack",
+    "cost": 0,
+    "damage": 50,
+    "notes": "Can only be played if Draw Pile is empty (condition not modelled)",
+    "upgraded": {
+      "damage": 60
+    }
+  },
+  {
+    "name": "Hand Trick",
+    "type": "skill",
+    "cost": 1,
+    "block": 7,
+    "notes": "Add Sly to a Skill in your Hand this turn (not modelled)",
+    "upgraded": {
+      "block": 10
+    }
+  },
+  {
+    "name": "Haze",
+    "type": "skill",
+    "cost": 3,
+    "poison": 4,
+    "notes": "Sly (not modelled)",
+    "upgraded": {
+      "poison": 6
+    }
+  },
+  {
+    "name": "Hidden Daggers",
+    "type": "skill",
+    "cost": 0,
+    "notes": "Discard 2 cards. Add 2 Shivs to hand (not modelled)",
+    "upgraded": {
+      "notes": "Discard 2 cards. Add 2 Shiv+ to hand (not modelled)"
+    }
+  },
+  {
+    "name": "Infinite Blades",
+    "type": "power",
+    "cost": 1,
+    "notes": "At start of your turn, add 1 Shiv to hand (not modelled). Upgrade: gains Innate",
+    "upgraded": {}
+  },
+  {
+    "name": "Knife Trap",
+    "type": "skill",
+    "cost": 2,
+    "notes": "Play every Shiv in your Exhaust Pile on the enemy (not modelled)",
+    "upgraded": {
+      "notes": "Upgrade and play every Shiv in your Exhaust Pile on the enemy (not modelled)"
+    }
+  },
+  {
+    "name": "Leading Strike",
+    "type": "attack",
+    "cost": 1,
+    "damage": 7,
+    "notes": "Add 1 Shiv to hand (not modelled)",
+    "upgraded": {
+      "damage": 10
+    }
+  },
+  {
+    "name": "Leg Sweep",
+    "type": "skill",
+    "cost": 2,
+    "weak": 2,
+    "block": 11,
+    "upgraded": {
+      "weak": 3,
+      "block": 14
+    }
+  },
+  {
+    "name": "Malaise",
+    "type": "skill",
+    "cost": 0,
+    "xCost": true,
+    "selfExhaust": true,
+    "notes": "Enemy loses X Strength. Apply X Weak. X-scaling strDown/weak not modelled",
+    "upgraded": {
+      "notes": "Enemy loses X+1 Strength. Apply X+1 Weak. X-scaling strDown/weak not modelled"
+    }
+  },
+  {
+    "name": "Master Planner",
+    "type": "power",
+    "cost": 2,
+    "notes": "When you play a Skill, it gains Sly (not modelled)",
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
+    "name": "Memento Mori",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "notes": "Deals 4 additional damage for each card discarded this turn (not modelled)",
+    "upgraded": {
+      "damage": 10,
+      "notes": "Deals 5 additional damage for each card discarded this turn (not modelled)"
+    }
+  },
+  {
+    "name": "Mirage",
+    "type": "skill",
+    "cost": 1,
+    "selfExhaust": true,
+    "notes": "Gain Block equal to Poison on ALL enemies (not modelled)",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Murder",
+    "type": "attack",
+    "cost": 3,
+    "damage": 1,
+    "notes": "Deals 1 additional damage for each card drawn this combat (not modelled)",
+    "upgraded": {
+      "cost": 2
+    }
+  },
+  {
+    "name": "Nightmare",
+    "type": "skill",
+    "cost": 3,
+    "selfExhaust": true,
+    "notes": "Choose a card. Next turn, add 3 copies to your Hand (not modelled)",
+    "upgraded": {
+      "cost": 2
+    }
+  },
+  {
+    "name": "Noxious Fumes",
+    "type": "power",
+    "cost": 1,
+    "notes": "At start of your turn, apply 2 Poison to ALL enemies (not modelled)",
+    "upgraded": {
+      "notes": "At start of your turn, apply 3 Poison to ALL enemies (not modelled)"
+    }
+  },
+  {
+    "name": "Outbreak",
+    "type": "power",
+    "cost": 1,
+    "notes": "Every 3 times you apply Poison, deal 11 damage to ALL enemies (not modelled)",
+    "upgraded": {
+      "notes": "Every 3 times you apply Poison, deal 15 damage to ALL enemies (not modelled)"
+    }
+  },
+  {
+    "name": "Phantom Blades",
+    "type": "power",
+    "cost": 1,
+    "notes": "Shivs gain Retain. First Shiv each turn deals 9 additional damage (not modelled)",
+    "upgraded": {
+      "notes": "Shivs gain Retain. First Shiv each turn deals 12 additional damage (not modelled)"
+    }
+  },
+  {
+    "name": "Piercing Wail",
+    "type": "skill",
+    "cost": 1,
+    "strDown": 6,
+    "selfExhaust": true,
+    "upgraded": {
+      "strDown": 8
+    }
+  },
+  {
+    "name": "Pinpoint",
+    "type": "attack",
+    "cost": 3,
+    "damage": 17,
+    "notes": "Costs 1 less for each Skill played this turn (not modelled)",
+    "upgraded": {
+      "damage": 22
+    }
+  },
+  {
+    "name": "Poisoned Stab",
+    "type": "attack",
+    "cost": 1,
+    "damage": 6,
+    "poison": 3,
+    "upgraded": {
+      "damage": 8,
+      "poison": 4
+    }
+  },
+  {
+    "name": "Pounce",
+    "type": "attack",
+    "cost": 2,
+    "damage": 12,
+    "notes": "The next Skill you play costs 0 (not modelled)",
+    "upgraded": {
+      "damage": 18
+    }
+  },
+  {
+    "name": "Precise Cut",
+    "type": "attack",
+    "cost": 0,
+    "damage": 13,
+    "notes": "Deals 2 less damage for each other card in your Hand (not modelled)",
+    "upgraded": {
+      "damage": 16
+    }
+  },
+  {
+    "name": "Predator",
+    "type": "attack",
+    "cost": 2,
+    "damage": 15,
+    "notes": "Next turn, draw 2 cards (not modelled)",
+    "upgraded": {
+      "damage": 20
+    }
+  },
+  {
+    "name": "Prepared",
+    "type": "skill",
+    "cost": 0,
+    "draw": 1,
+    "notes": "Discard 1 card (not modelled)",
+    "upgraded": {
+      "draw": 2,
+      "notes": "Discard 2 cards (not modelled)"
+    }
+  },
+  {
+    "name": "Reflex",
+    "type": "skill",
+    "cost": 3,
+    "draw": 2,
+    "notes": "Sly (not modelled)",
+    "upgraded": {
+      "draw": 3
+    }
+  },
+  {
+    "name": "Ricochet",
+    "type": "attack",
+    "cost": 2,
+    "damage": 3,
+    "hits": 4,
+    "notes": "Sly (not modelled)",
+    "upgraded": {
+      "hits": 5
+    }
+  },
+  {
+    "name": "Serpent Form",
+    "type": "power",
+    "cost": 3,
+    "notes": "Whenever you play a card, deal 4 damage to a random enemy (not modelled)",
+    "upgraded": {
+      "notes": "Whenever you play a card, deal 5 damage to a random enemy (not modelled)"
+    }
+  },
+  {
+    "name": "Shadow Step",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Discard your Hand. Next turn, Attacks deal double damage (not modelled)",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Shadowmeld",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Double your Block gain this turn (not modelled)",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Skewer",
+    "type": "attack",
+    "cost": 0,
+    "xCost": true,
+    "damage": 7,
+    "upgraded": {
+      "damage": 10
+    }
+  },
+  {
+    "name": "Slice",
+    "type": "attack",
+    "cost": 0,
+    "damage": 6,
+    "upgraded": {
+      "damage": 9
+    }
+  },
+  {
+    "name": "Snakebite",
+    "type": "skill",
+    "cost": 2,
+    "poison": 7,
+    "notes": "Retain (not modelled)",
+    "upgraded": {
+      "poison": 10
+    }
+  },
+  {
+    "name": "Sneaky",
+    "type": "power",
+    "cost": 2,
+    "notes": "Sly. Whenever another player attacks an enemy, gain 1 Block (multiplayer, not modelled)",
+    "upgraded": {
+      "notes": "Sly. Whenever another player attacks an enemy, gain 2 Block (multiplayer, not modelled)"
+    }
+  },
+  {
+    "name": "Speedster",
+    "type": "power",
+    "cost": 2,
+    "notes": "Whenever you draw a card during your turn, deal 2 damage to ALL enemies (not modelled)",
+    "upgraded": {
+      "notes": "Whenever you draw a card during your turn, deal 3 damage to ALL enemies (not modelled)"
+    }
+  },
+  {
+    "name": "Storm of Steel",
+    "type": "skill",
+    "cost": 1,
+    "notes": "Discard your Hand. Add 1 Shiv per card discarded (not modelled)",
+    "upgraded": {
+      "notes": "Discard your Hand. Add 1 Shiv+ per card discarded (not modelled)"
+    }
+  },
+  {
+    "name": "Strangle",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "notes": "Whenever you play a card this turn, enemy loses 2 HP (not modelled)",
+    "upgraded": {
+      "damage": 10,
+      "notes": "Whenever you play a card this turn, enemy loses 3 HP (not modelled)"
+    }
+  },
+  {
+    "name": "Sucker Punch",
+    "type": "attack",
+    "cost": 1,
+    "damage": 8,
+    "weak": 1,
+    "upgraded": {
+      "damage": 10,
+      "weak": 2
+    }
+  },
+  {
+    "name": "Suppress",
+    "type": "attack",
+    "cost": 0,
+    "damage": 11,
+    "weak": 3,
+    "selfExhaust": true,
+    "notes": "Innate (not modelled)",
+    "upgraded": {
+      "damage": 17,
+      "weak": 5
+    }
+  },
+  {
+    "name": "Tactician",
+    "type": "skill",
+    "cost": 3,
+    "energyGain": 1,
+    "notes": "Sly (not modelled)",
+    "upgraded": {
+      "energyGain": 2
+    }
+  },
+  {
+    "name": "The Hunt",
+    "type": "attack",
+    "cost": 1,
+    "damage": 10,
+    "selfExhaust": true,
+    "notes": "If Fatal, gain an additional card reward (not modelled)",
+    "upgraded": {
+      "damage": 15
+    }
+  },
+  {
+    "name": "Tools of the Trade",
+    "type": "power",
+    "cost": 1,
+    "notes": "At start of your turn, draw 1 card and discard 1 card (not modelled)",
+    "upgraded": {
+      "cost": 0
+    }
+  },
+  {
+    "name": "Tracking",
+    "type": "power",
+    "cost": 2,
+    "notes": "Weak enemies take double damage from Attacks (not modelled)",
+    "upgraded": {
+      "cost": 1
+    }
+  },
+  {
+    "name": "Untouchable",
+    "type": "skill",
+    "cost": 2,
+    "block": 9,
+    "notes": "Sly (not modelled)",
+    "upgraded": {
+      "block": 12
+    }
+  },
+  {
+    "name": "Up My Sleeve",
+    "type": "skill",
+    "cost": 2,
+    "notes": "Add 3 Shivs to hand. Reduce this card's cost by 1 (not modelled)",
+    "upgraded": {
+      "notes": "Add 4 Shivs to hand. Reduce this card's cost by 1 (not modelled)"
+    }
+  },
+  {
+    "name": "Well-Laid Plans",
+    "type": "power",
+    "cost": 1,
+    "notes": "At end of your turn, Retain up to 1 card (not modelled)",
+    "upgraded": {
+      "notes": "At end of your turn, Retain up to 2 cards (not modelled)"
+    }
+  },
+  {
+    "name": "Wraith Form",
+    "type": "power",
+    "cost": 3,
+    "notes": "Gain 2 Intangible. At start of your turn, lose 1 Dexterity (not modelled)",
+    "upgraded": {
+      "notes": "Gain 3 Intangible. At start of your turn, lose 1 Dexterity (not modelled)"
+    }
   }
 ]
