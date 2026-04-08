@@ -1,5 +1,5 @@
 import { parseJsonDb } from "../src/cards-core";
-import { runMC, computeMarginals } from "../src/mc";
+import { runMCRaw, computeMCResult, computeMarginals } from "../src/mc";
 import type { Config, MCResult, MarginalValue } from "../src/mc";
 import type { PlayerState, Mode } from "../src/optimizer";
 
@@ -26,9 +26,18 @@ self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
   try {
     const db = parseJsonDb(data.cardsJson);
     const config: Config = { ...data.config, relics: [], db };
-    const result = runMC(config, data.n, (done) => {
-      self.postMessage({ type: "progress", done, total: data.n } satisfies RunProgress);
+
+    // Calculate total sims upfront so progress spans both phases.
+    const uniqueCards = data.config.marginals ? [...new Set(data.config.drawPile)] : [];
+    const totalSims = data.n * (1 + uniqueCards.length);
+    let simsCompleted = 0;
+
+    // Phase 1: baseline simulation.
+    const raw = runMCRaw(config, data.n, (done) => {
+      simsCompleted = done;
+      self.postMessage({ type: "progress", done: simsCompleted, total: totalSims } satisfies RunProgress);
     });
+    const result = computeMCResult(raw, data.n);
 
     // Detect cards in the deck whose exhaust effect is random (not player-chosen).
     // These are modeled as optimal choice in the DFS, which overestimates their average value.
@@ -48,7 +57,19 @@ self.onmessage = ({ data }: MessageEvent<RunRequest>) => {
 
     let marginalValues: MarginalValue[] | undefined;
     if (data.config.marginals) {
-      marginalValues = computeMarginals(config, data.n);
+      // Extract numeric baseline avg from raw (Stats.avg is a formatted string, so use the array).
+      const primary = data.config.mode === "dmg" ? "damages" : "blocks";
+      const baselineAvg = raw[primary].reduce((s, v) => s + v, 0) / data.n;
+      const baseAtCompletion = simsCompleted; // = data.n after phase 1
+
+      // Phase 2: marginal analysis. Progress offsets from where phase 1 ended.
+      marginalValues = computeMarginals(config, data.n, baselineAvg, (done) => {
+        self.postMessage({
+          type: "progress",
+          done: baseAtCompletion + done,
+          total: totalSims,
+        } satisfies RunProgress);
+      });
     }
 
     self.postMessage({ type: "complete", result, approximations, marginals: marginalValues } satisfies RunComplete);
