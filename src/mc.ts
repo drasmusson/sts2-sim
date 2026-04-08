@@ -43,7 +43,7 @@ export const RELICS: Record<string, Relic> = {
 };
 
 // ─── SINGLE SIMULATION ───────────────────────────────────────────────────────
-export function runOneSim(config: Config): SimResult {
+export function runOneSim(config: Config, precomputedAttackPool?: string[]): SimResult {
   const { drawPile, discardPile, energy, draws, relics, db, mode } = config;
   const powersInPlay = config.powersInPlay ?? [];
   let player = config.player;
@@ -79,7 +79,8 @@ export function runOneSim(config: Config): SimResult {
 
   // Pre-sample generated attacks for Infernal Blade plays this sim.
   // Randomness is resolved here (Monte Carlo layer) so the DFS never branches on it.
-  const attackPool = Object.keys(patchedDb).filter(
+  // attackPool filters by type only (not cost), so it is stable across Snecko Eye cost randomization.
+  const attackPool = precomputedAttackPool ?? Object.keys(patchedDb).filter(
     n => patchedDb[n]!.type === "attack" && !n.endsWith("+"));
   const ibCount = [...hand, ...remainingDraw].filter(n => patchedDb[n]?.generatesRandomAttack).length;
   const generatedAttacks = attackPool.length > 0
@@ -109,7 +110,14 @@ export interface MCRawResult {
 
 // Inner accumulation loop. Returns raw data without computing stats.
 // Called directly by workers; runMC wraps this with computeMCResult.
-export function runMCRaw(config: Config, n: number, onProgress?: (done: number) => void): MCRawResult {
+// options.light = true skips playFreq/drawFreq/dmgDist/blkDist/peakPlay — use when only
+// the damages/blocks arrays are needed (e.g. marginal analysis), to avoid costly .join() calls.
+export function runMCRaw(
+  config: Config, n: number,
+  onProgress?: (done: number) => void,
+  options?: { light?: boolean },
+): MCRawResult {
+  const light = options?.light ?? false;
   const damages: number[] = [], blocks: number[] = [];
   const drawFreq: Record<string, number> = {};
   const dmgDist:  Record<number, number> = {};
@@ -118,23 +126,29 @@ export function runMCRaw(config: Config, n: number, onProgress?: (done: number) 
   const primary = config.mode === "dmg" ? "damage" : "block";
   let peakPlay: { combo: string; damage: number; block: number; infinite: boolean } = { combo: "", damage: 0, block: 0, infinite: false };
 
+  // attackPool only depends on card type (never changes per-sim), so compute once.
+  const attackPool = Object.keys(config.db).filter(
+    n => config.db[n]!.type === "attack" && !n.endsWith("+"));
+
   for (let i = 0; i < n; i++) {
-    const r = runOneSim(config);
-    if (r[primary] > peakPlay[primary])
-      peakPlay = { combo: r.play.played.join(" → "), damage: r.damage, block: r.block, infinite: r.play.infinite };
+    const r = runOneSim(config, attackPool);
     damages.push(r.damage);
     blocks.push(r.block);
-    dmgDist[r.damage] = (dmgDist[r.damage] ?? 0) + 1;
-    blkDist[r.block]  = (blkDist[r.block]  ?? 0) + 1;
-    const key = r.play.played.join(" → ");
-    if (key) {
-      if (!playFreq[key]) playFreq[key] = { count: 0, totalDamage: 0, totalBlock: 0, infinite: r.play.infinite };
-      playFreq[key]!.count++;
-      playFreq[key]!.totalDamage += r.damage;
-      playFreq[key]!.totalBlock  += r.block;
-    }
-    for (const c of new Set(r.hand)) {
-      drawFreq[c] = (drawFreq[c] ?? 0) + 1;
+    if (!light) {
+      if (r[primary] > peakPlay[primary])
+        peakPlay = { combo: r.play.played.join(" → "), damage: r.damage, block: r.block, infinite: r.play.infinite };
+      dmgDist[r.damage] = (dmgDist[r.damage] ?? 0) + 1;
+      blkDist[r.block]  = (blkDist[r.block]  ?? 0) + 1;
+      const key = r.play.played.join(" → ");
+      if (key) {
+        if (!playFreq[key]) playFreq[key] = { count: 0, totalDamage: 0, totalBlock: 0, infinite: r.play.infinite };
+        playFreq[key]!.count++;
+        playFreq[key]!.totalDamage += r.damage;
+        playFreq[key]!.totalBlock  += r.block;
+      }
+      for (const c of new Set(r.hand)) {
+        drawFreq[c] = (drawFreq[c] ?? 0) + 1;
+      }
     }
     if (onProgress && i % 100 === 99) onProgress(i + 1);
   }
@@ -183,4 +197,53 @@ export function computeMCResult(raw: MCRawResult, n: number): MCResult {
 
 export function runMC(config: Config, n: number, onProgress?: (done: number) => void): MCResult {
   return computeMCResult(runMCRaw(config, n, onProgress), n);
+}
+
+// ─── MARGINAL CARD VALUE ──────────────────────────────────────────────────────
+export interface MarginalValue {
+  card:          string;   // card name (lowercase)
+  copies:        number;   // copies of this card in the original drawPile
+  baselineAvg:   number;   // avg primary metric with full deck
+  withoutAvg:    number;   // avg primary metric with one copy removed
+  marginalValue: number;   // baselineAvg - withoutAvg (positive = card helps)
+}
+
+export function computeMarginals(
+  config: Config,
+  n: number,
+  baselineAvg?: number,
+  onProgress?: (simsCompleted: number) => void,
+): MarginalValue[] {
+  const primary = config.mode === "dmg" ? "damages" : "blocks";
+  const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
+
+  // Skip the baseline re-run when the caller already has the average (e.g. the worker).
+  const resolvedBaselineAvg = baselineAvg ??
+    avg(runMCRaw(config, n, undefined, { light: true })[primary]);
+
+  const uniqueCards = [...new Set(config.drawPile)];
+  const results: MarginalValue[] = [];
+
+  for (let cardIdx = 0; cardIdx < uniqueCards.length; cardIdx++) {
+    const card = uniqueCards[cardIdx]!;
+    const modified = [...config.drawPile];
+    modified.splice(modified.indexOf(card), 1);
+    if (modified.length === 0) continue;
+
+    const withoutRaw = runMCRaw({ ...config, drawPile: modified }, n, (done) => {
+      onProgress?.(cardIdx * n + done);
+    }, { light: true });
+    const withoutAvg = avg(withoutRaw[primary]);
+
+    results.push({
+      card,
+      copies:        config.drawPile.filter(c => c === card).length,
+      baselineAvg:   resolvedBaselineAvg,
+      withoutAvg,
+      marginalValue: resolvedBaselineAvg - withoutAvg,
+    });
+  }
+
+  results.sort((a, b) => b.marginalValue - a.marginalValue);
+  return results;
 }

@@ -1,4 +1,4 @@
-import type { MCResult } from "../src/mc";
+import type { MCResult, MarginalValue } from "../src/mc";
 import type { WebConfig } from "./worker";
 import { renderCharts } from "./charts";
 
@@ -38,7 +38,7 @@ function infiniteBadge(infinite: boolean): string {
   return infinite ? ' <span class="badge-infinite">[INFINITE COMBO]</span>' : "";
 }
 
-export function renderResults(results: MCResult, config: WebConfig, approximations: string[] = []): void {
+export function renderResults(results: MCResult, config: WebConfig, approximations: string[] = [], marginals?: MarginalValue[]): void {
   const panel = el("results-panel");
   const inner = el("results-inner");
 
@@ -139,6 +139,25 @@ export function renderResults(results: MCResult, config: WebConfig, approximatio
       ⚠ <strong>${approximations.map(n => n.charAt(0).toUpperCase() + n.slice(1)).join(", ")}</strong>
       exhaust${approximations.length === 1 ? "s" : ""} a random card — modeled here as optimal choice,
       so results may be slightly optimistic.
+    </div>` : ""}
+    ${marginals?.length ? `
+    <div class="section">
+      <h2>Marginal Card Values</h2>
+      <p class="section-subtitle">Change in avg ${config.mode === "dmg" ? "damage" : "block"} when one copy is removed from the deck</p>
+      <table class="plays-table">
+        <thead><tr><th>Card</th><th>Copies</th><th>Baseline</th><th>Without</th><th>Delta</th></tr></thead>
+        <tbody>
+          ${marginals.map(v => `
+            <tr>
+              <td class="card-name">${v.card}</td>
+              <td>${v.copies}</td>
+              <td>${v.baselineAvg.toFixed(1)}</td>
+              <td>${v.withoutAvg.toFixed(1)}</td>
+              <td class="${v.marginalValue >= 0 ? "positive" : "negative"}">${v.marginalValue >= 0 ? "+" : ""}${v.marginalValue.toFixed(1)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
     </div>` : ""}
   `;
 

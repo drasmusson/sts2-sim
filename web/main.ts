@@ -109,6 +109,7 @@ function readConfig(): WebConfig {
   };
 
   const rawDraws = parseInt(d.get("draws") as string ?? "");
+  const marginals = (document.getElementById("marginals-input") as HTMLInputElement).checked;
   return {
     drawPile:    parseCardList(d.get("draw")    as string ?? ""),
     discardPile: parseCardList(d.get("discard") as string ?? ""),
@@ -118,6 +119,7 @@ function readConfig(): WebConfig {
     draws:       Number.isNaN(rawDraws) ? 5 : rawDraws,
     mode:        (d.get("mode") as Mode) ?? "dmg",
     player,
+    marginals,
   };
 }
 
@@ -136,7 +138,7 @@ function runSim(config: WebConfig, n: number): void {
     setRunning(false);
     if (data.type === "complete") {
       clearError();
-      renderResults(data.result, config, data.approximations);
+      renderResults(data.result, config, data.approximations, data.marginals);
     } else {
       renderError(data.message);
     }
